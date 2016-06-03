@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Download Psytools files from the Delosis server.
 
-Finds authentication tokens in ~/.netrc.
+Retrieve authentication tokens from ~/.netrc.
 
 ==========
 Attributes
