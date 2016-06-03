@@ -17,8 +17,7 @@ Notes
 
 """
 
-from random import randrange, shuffle
-from itertools import groupby
+from random import shuffle
 from jellyfish import damerau_levenshtein_distance
 
 DIGITS = 10
@@ -89,8 +88,6 @@ def code_generator(digits, max_value, min_distance):
 
     for i in candidates:
         i = str(i)
-        if max(len(list(g)) for k, g in groupby(i)) > 2:  # avoid more than 2 consecutive identical characters
-            continue
         i = i.zfill(digits)
         if not lexicode or min(damerau_levenshtein_distance(i, j) for j in lexicode) >= min_distance:
             lexicode.append(i)
