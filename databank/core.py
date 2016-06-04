@@ -71,7 +71,7 @@ def _initialize_dob_from_psc1(path):
                     raise Exception('unexpected birth date: {0}'.format(dob))
                 dob_from_psc1[psc1] = datetime.date(year, month, day)
             else:
-                    logger.error('unexpected line: %s: %s', path, line)
+                logger.error('unexpected line: %s: %s', path, line)
                 raise Exception('unexpected line: {0}'.format(line))
     return dob_from_psc1
 
