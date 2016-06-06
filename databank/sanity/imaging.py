@@ -11,36 +11,17 @@ try:
 except ImportError:
     from zipfile import BadZipfile as BadZipFile  # Python 2
 from zipfile import is_zipfile
+from tempfile import TemporaryDirectory
 
 # import ../../databank
 try:
-    from databank import PSC2_FROM_PSC1
+    from .. core import PSC2_FROM_PSC1
+    from .. core import Error
 except:
     import sys
     sys.path.append(os.path.join(os.path.dirname(__file__), u'../..'))
     from databank import PSC2_FROM_PSC1
-
-
-class Error(object):
-    """Error while reading imaging data from a ZIP file.
-
-    Attributes
-    ----------
-    filename : str
-        CANTAB file name.
-    message : str
-        Message explaining the error.
-
-    """
-    def __init__(self, filename, message):
-        self.filename = filename
-        self.message = message
-
-    def __str__(self):
-        if self.filename:
-            return self.message + ': ' + self.filename
-        else:
-            return self.message
+    from databank import Error
 
 
 class ZipTree:
@@ -214,8 +195,8 @@ def check(path):
 
     Parameters
     ----------
-    path : strs
-        Path names to the ZIP file.
+    path : str
+        Path name to the ZIP file.
 
     Returns
     -------
@@ -258,6 +239,38 @@ def check(path):
     errors.extend(e)
 
     return (psc1, errors)
+
+
+def extended_check(path):
+    """Extended sanity check of the contents of a ZIP file.
+
+    Parameters
+    ----------
+    path : str
+        Path name to the ZIP file.
+
+    Returns
+    -------
+    result: tuple
+        In case of errors, return the tuple ([], errors) where errors is
+        a list of errors. Oterwise return the tuple (psc1, errors) where psc1
+        is a liste of dectected PSC1 code and errors is an empty list.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the file does not exist.
+
+    """
+    psc1 = []
+    errors = []
+
+    basename = os.path.basename(path)
+
+    with ZipFile(path, 'r') as z:
+        with TemporaryDirectory() as root:
+            z.extractall(root)
+            ### TODO: run dcm2nii on files ###
 
 
 def main():

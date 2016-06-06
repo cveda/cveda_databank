@@ -9,8 +9,8 @@ logger = logging.getLogger(__name__)
 #
 # reference file that maps birth dates, PSC1 and PSC2 codes
 #
-_PSC_PATH = '/dev/null'  #~ '/cveda/psc.csv'
-_DOB_PATH = '/dev/null'  #~ '/cveda/dob.csv'
+_PSC_PATH = '/dev/null'  # '/cveda/psc.csv'
+_DOB_PATH = '/dev/null'  # '/cveda/dob.csv'
 
 
 def _initialize_psc2_from_psc1(path):
@@ -79,3 +79,28 @@ def _initialize_dob_from_psc1(path):
 PSC2_FROM_PSC1 = _initialize_psc2_from_psc1(_PSC_PATH)
 PSC1_FROM_PSC2 = {v: k for k, v in PSC2_FROM_PSC1.items()}
 DOB_FROM_PSC1 = _initialize_dob_from_psc1(_DOB_PATH)
+
+
+class Error:
+    """Error while parsing files.
+
+    Returned by functions that parse imaging data.
+
+    Attributes
+    ----------
+    path : str
+        File name.
+    message : str
+        Message explaining the error.
+
+    """
+
+    def __init__(self, path, message):
+        self.path = path
+        self.message = message
+
+    def __str__(self):
+        if self.path:
+            return '{0}: {1}'.format(self.message, self.path)
+        else:
+            return '{0}'.format(self.message)
