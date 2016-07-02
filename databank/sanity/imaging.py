@@ -38,7 +38,6 @@ try:
     from zipfile import BadZipFile
 except ImportError:
     from zipfile import BadZipfile as BadZipFile  # Python 2
-from zipfile import is_zipfile
 from tempfile import TemporaryDirectory
 
 # import ../../databank
@@ -50,6 +49,46 @@ except:
     sys.path.append(os.path.join(os.path.dirname(__file__), u'../..'))
     from databank import PSC2_FROM_PSC1
     from databank import Error
+
+
+def _check_psc1(subject_id, suffix=None, psc1=None):
+    """
+    """
+    if suffix:
+        if subject_id.endswith(suffix):
+            subject_id = subject_id[:-len(suffix)]
+        elif len(subject_id) <= 12 or subject_id.isdigit():
+            yield 'PSC1 code "{0}" should end with suffix "{1}"'.format(subject_id, suffix)
+    if subject_id.isdigit():
+        if len(subject_id) != 12:
+            yield 'PSC1 code "{0}" contains {1} digits instead of 12'.format(subject_id, len(subject_id))
+    elif len(subject_id) > 12 and subject_id[:12].isdigit() and not subject_id[12].isdigit():
+        yield 'PSC1 code "{0}" ends with unexpected suffix "{1}"'.format(subject_id, subject_id[12:])
+        subject_id = subject_id[:12]
+    if not subject_id.isdigit():
+        yield 'PSC1 code "{0}" should contain 12 digits'.format(subject_id)
+    elif len(subject_id) != 12:
+        yield 'PSC1 code "{0}" contains {1} characters instead of 12'.format(subject_id, len(subject_id))
+    elif subject_id not in PSC2_FROM_PSC1:
+        yield 'PSC1 code "{0}" is not valid'.format(subject_id)
+    elif psc1:
+        if suffix and psc1.endswith(suffix):
+            psc1 = psc1[:-len(suffix)]
+        if subject_id != psc1:
+            yield'PSC1 code "{0}" was expected to be "{1}"'.format(subject_id, psc1)
+
+
+def check_zip_name(path, psc1=None, timepoint=None):
+    """
+    """
+    basename = os.path.basename(path)
+    if basename.endswith('.zip'):
+        subject_id = basename[:-len('.zip')]
+        error_list = [Error(basename, 'Incorrect ZIP file name: ' + message)
+                      for message in _check_psc1(subject_id, timepoint, psc1)]
+        return subject_id, error_list
+    else:
+        return None, [Error(basename, 'Not a valid ZIP file name')]
 
 
 class ZipTree:
@@ -145,12 +184,12 @@ def _check_empty_files(ziptree):
     for f, zipinfo in ziptree.files.items():
         if zipinfo.file_size == 0:
             yield Error(zipinfo.filename, 'File is empty')
-    for d, ziptree in ziptree.directories.values():
+    for d, ziptree in ziptree.directories.items():
         for error in _check_empty_files(ziptree):
             yield error
 
 
-def _check_image_data(ziptree):
+def _check_image_data(path, ziptree):
     """Check the "ImageData" folder of a ZipTree.
 
     Parameters
@@ -158,18 +197,18 @@ def _check_image_data(ziptree):
     ziptree : ZipTree
         "ImageData" branch with the meta-data read from the ZIP file.
 
-    Yields
-    -------
-    error: Error
-
     """
+    subject_ids = set()
+    error_list = []
+
     if len(ziptree.directories) == 0 and len(ziptree.files) == 0:
-        yield Error(ziptree.filename, 'Folder "ImageData" is empty')
-    for error in _check_empty_files(ziptree):
-        yield error
+        error_list.append(Error(ziptree.filename, 'Folder is empty'))
+    error_list.extend(_check_empty_files(ziptree))
+
+    return subject_ids, error_list
 
 
-def _check_ziptree(basename, ziptree):
+def _check_ziptree(path, ziptree, psc1=None, suffix=None):
     """Check the uppermost folder of a ZipTree.
 
     Parameters
@@ -188,37 +227,46 @@ def _check_ziptree(basename, ziptree):
         is the dectected PSC1 code and errors is an empty list.
 
     """
-    psc1 = []
-    errors = []
+    subject_ids = set()
+    error_list = []
 
-    if len(ziptree.directories) != 1 or len(ziptree.files) > 0:
-        errors.append(Error(basename, 'The ZIP file must contain a single '
-                                      'uppermost folder and only that folder'))
+    basename = os.path.basename(path)
+    for f, zipinfo in ziptree.files.items():
+        error_list.append(Error(zipinfo.filename,
+                                'Unexpected file at the root of the ZIP file'))
+
+    if len(ziptree.directories) < 1:
+        error_list.append(Error(basename,
+                                'ZIP file lacks an uppermost folder'))
+    elif len(ziptree.directories) > 1:
+        error_list.append(Error(basename,
+                                'ZIP file contains multiple uppermost folders: {0}'
+                                .format(', '.join(d.filename for d in ziptree.directories.values()))))
+
     for d, z in ziptree.directories.items():
-        # is the name of the uppermost directory a valid PSC1 code?
-        if not d.isdigit():
-            errors.append(Error(z.filename, 'The name of the uppermost folder "{0}" '
-                                            'must be a PSC1 code made of digits'.format(d)))
-        elif len(d) != 12:
-            errors.append(Error(z.filename, 'The name of the uppermost folder "{0}" contains '
-                                            '{1} digits instead of 12'.format(d, len(d))))
-        elif d not in PSC2_FROM_PSC1:
-            errors.append(Error(z.filename, 'The name of the uppermost folder "{0}" '
-                                            'is not a valid PSC1 code'.format(d)))
-        else:
-            psc1.append(d)
-        # ImagingData
+        # uppermost directory
+        subject_id = d
+        error_list.extend([Error(z.filename, 'Incorrect uppermost folder name: ' + message)
+                           for message in _check_psc1(subject_id, suffix, psc1)])
+        for f in z.files:
+            error_list.append(Error(f, 'Unexpected file in the uppermost folder'))
+        for d in z.directories:
+            if d != 'AdditionalData' and d != 'ImageData':
+                error_list.append(Error(z.filename,
+                                        'Unexpected folder subfolder in the uppermost folder'))
+        # ImageData
         if 'ImageData' in z.directories:
-            i = z.directories['ImageData']
-            for error in _check_image_data(i):
-                errors.append(error)
+            s, e = _check_image_data(path, z.directories['ImageData'])
+            subject_ids.update(s)
+            error_list.extend(e)
         else:
-            errors.append(Error(z.filename + 'ImageData/', 'Folder "ImageData" is missing'))
+            error_list.append(Error(z.filename + 'ImageData/',
+                                    'Folder "ImageData" is missing'))
 
-        return psc1, errors
+    return subject_ids, error_list
 
 
-def check(path):
+def check_zip_content(path, psc1=None, timepoint=None):
     """Rapid sanity check of a ZIP file containing imaging data for a subject.
 
     Parameters
@@ -231,7 +279,7 @@ def check(path):
     result: tuple
         In case of errors, return the tuple ([], errors) where errors is
         a list of errors. Oterwise return the tuple (psc1, errors) where psc1
-        is a liste of dectected PSC1 code and errors is an empty list.
+        is a list of dectected PSC1 code and errors is an empty list.
 
     Raises
     ------
@@ -269,41 +317,10 @@ def check(path):
     return (psc1, errors)
 
 
-def extended_check(path):
-    """Extended sanity check of the contents of a ZIP file.
-
-    Parameters
-    ----------
-    path : str
-        Path name to the ZIP file.
-
-    Returns
-    -------
-    result: tuple
-        In case of errors, return the tuple ([], errors) where errors is
-        a list of errors. Oterwise return the tuple (psc1, errors) where psc1
-        is a liste of dectected PSC1 code and errors is an empty list.
-
-    Raises
-    ------
-    FileNotFoundError
-        If the file does not exist.
-
-    """
-    psc1 = []
-    errors = []
-
-    basename = os.path.basename(path)
-
-    with ZipFile(path, 'r') as z:
-        with TemporaryDirectory() as root:
-            z.extractall(root)
-            ### TODO: run dcm2nii on files ###
-
-
 def main():
     ZIPFILE = '/volatile/test.zip'
-    psc1, errors = check(ZIPFILE)
+    (psc1, errors) = check_zip_name(ZIPFILE, None, 'FU3')
+    (psc1, errors) = check_zip_content(ZIPFILE, psc1, 'FU3')
     if errors:
         for e in errors:
             print('▸ ' + str(e))
