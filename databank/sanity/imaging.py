@@ -238,10 +238,6 @@ def _check_ziptree(path, ziptree, psc1=None, suffix=None):
     if len(ziptree.directories) < 1:
         error_list.append(Error(basename,
                                 'ZIP file lacks an uppermost folder'))
-    elif len(ziptree.directories) > 1:
-        error_list.append(Error(basename,
-                                'ZIP file contains multiple uppermost folders: {0}'
-                                .format(', '.join(d.filename for d in ziptree.directories.values()))))
 
     for d, z in ziptree.directories.items():
         # uppermost directory
@@ -251,7 +247,7 @@ def _check_ziptree(path, ziptree, psc1=None, suffix=None):
         for f in z.files:
             error_list.append(Error(f, 'Unexpected file in the uppermost folder'))
         for d in z.directories:
-            if d != 'AdditionalData' and d != 'ImageData':
+            if d != 'ImageData':
                 error_list.append(Error(z.filename,
                                         'Unexpected folder subfolder in the uppermost folder'))
         # ImageData
