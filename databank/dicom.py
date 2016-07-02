@@ -201,8 +201,8 @@ def _time_from_tm(tm):
 def read_metadata(path, force=False):
     """Read select metadata from a DICOM file.
 
-    We always attempt to read the following DICOM tags. An exception is raised
-    if one of the tags cannot be read:
+    We always attempt to read the following required DICOM tags. An exception
+    is raised if one of the tags cannot be read:
         - SOPClassUID
         - SeriesInstanceUID
         - SeriesNumber
@@ -210,7 +210,7 @@ def read_metadata(path, force=False):
         - ImageType
         - SOPInstanceUID
 
-    We also attempt to read the following DICOM tags if they are present:
+    We also attempt to read the following optional DICOM tags:
         - AcquisitionDateTime
         - AcquisitionDate
         - AcquisitionTime
@@ -243,7 +243,7 @@ def read_metadata(path, force=False):
     elif 'ProtocolName' in dataset:
         description = dataset.ProtocolName
     else:
-        description = dataset.SeriesDescription  # raise an exception!
+        description = dataset.SeriesDescription  # raises an exception!
 
     metadata = {
         'SOPInstanceUID': dataset.SOPInstanceUID,

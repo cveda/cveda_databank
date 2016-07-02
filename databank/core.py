@@ -120,15 +120,25 @@ class Error:
         File name.
     message : str
         Message explaining the error.
+    sample : str
+        Part of the file that generated the error.
 
     """
+    _SAMPLE_LEN = 30
 
-    def __init__(self, path, message):
+    def __init__(self, path, message, sample=None):
         self.path = path
         self.message = message
+        self.sample = sample
 
     def __str__(self):
         if self.path:
-            return '{0}: {1}'.format(self.message, self.path)
+            if self.sample:
+                sample = repr(self.sample)
+                if len(sample) > self._SAMPLE_LEN:
+                    sample = sample[:self._SAMPLE_LEN] + '...'
+                return '{0}: <{1}>: {2}'.format(self.message, sample, self.path)
+            else:
+                return '{0}: {1}'.format(self.message, self.path)
         else:
             return '{0}'.format(self.message)
