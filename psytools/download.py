@@ -61,10 +61,10 @@ TMT_DIGEST = 'TMT digest'
 BASIC_DIGEST = 'Basic digest'
 
 CVEDA_PSYTOOLS_DATASETS = (
-    ('cVEDA-cVEDA_TMT', TMT_DIGEST),
-    ('cVEDA-cVEDA_IPIP50', BASIC_DIGEST),
-    ('cVEDA-cVEDA_TCI', BASIC_DIGEST),
-    ('VEDA-cVEDA_MINI5', BASIC_DIGEST),
+    ('cVEDA_TMT', TMT_DIGEST),
+    ('cVEDA_IPIP50', BASIC_DIGEST),
+    ('cVEDA_TCI', BASIC_DIGEST),
+    ('cVEDA_MINI5', BASIC_DIGEST),
 )
 
 QUOTED_PATTERN = re.compile(r'".*?"', re.DOTALL)
@@ -73,7 +73,7 @@ QUOTED_PATTERN = re.compile(r'".*?"', re.DOTALL)
 def main():
     for task, digest in CVEDA_PSYTOOLS_DATASETS:
         digest = digest.upper().replace(' ', '_')
-        dataset = 'IMAGEN-{task}-{digest}.csv'.format(task=task, digest=digest)
+        dataset = 'cVEDA-{task}-{digest}.csv'.format(task=task, digest=digest)
         logging.info('downloading: {0}'.format(dataset))
         url = BASE_URL + dataset + '.gz'
         # let Requests use ~/.netrc instead of passing an auth parameter
