@@ -55,8 +55,8 @@ PSYTOOLS_PSC2_DIR : str
 
 """
 
-PSYTOOLS_PSC1_DIR = '/cveda/BL/raw/PSC1/psytools'
-PSYTOOLS_PSC2_DIR = '/cveda/BL/raw/PSC2/psytools'
+PSYTOOLS_PSC1_DIR = '/cveda/databank/BL/raw/PSC1/psytools'
+PSYTOOLS_PSC2_DIR = '/cveda/databank/BL/raw/PSC2/psytools'
 
 import logging
 logging.basicConfig(level=logging.INFO)
