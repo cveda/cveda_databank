@@ -45,9 +45,9 @@ PSYTOOLS_PSC1_DIR : str
 
 """
 
-PSYTOOLS_PSC1_DIR = '/tmp'  #~ '/cveda/BL/raw/PSC1/psytools'
-BASE_URL = 'https://psytools.delosis.com/psytools-server/dataservice/dataset/'
-CA_BUNDLE = #~ '/cveda/delosisCA.pem'
+PSYTOOLS_PSC1_DIR = '/cveda/BL/raw/PSC1/psytools'
+BASE_URL = 'https://www.delosis.com/psytools-server/dataservice/dataset/'
+CA_BUNDLE = '/cveda/databank/framework/delosisCA.pem'
 
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -58,10 +58,14 @@ from io import BytesIO, TextIOWrapper
 import gzip
 import re
 
+TMT_DIGEST = 'TMT digest'
 BASIC_DIGEST = 'Basic digest'
 
 CVEDA_PSYTOOLS_DATASETS = (
-    ('IMGN_ESPAD_PARENT_RC5', BASIC_DIGEST),  # (Drug Use Questionnaire)
+    ('cVEDA-cVEDA_TMT', TMT_DIGEST),
+    ('cVEDA-cVEDA_IPIP50', BASIC_DIGEST),
+    ('cVEDA-cVEDA_TCI', BASIC_DIGEST),
+    ('VEDA-cVEDA_MINI5', BASIC_DIGEST),
 )
 
 QUOTED_PATTERN = re.compile(r'".*?"', re.DOTALL)
