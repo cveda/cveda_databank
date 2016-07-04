@@ -45,7 +45,7 @@ PSYTOOLS_PSC1_DIR : str
 
 """
 
-PSYTOOLS_PSC1_DIR = '/cveda/BL/raw/PSC1/psytools'
+PSYTOOLS_PSC1_DIR = '/cveda/databank/BL/raw/PSC1/psytools'
 BASE_URL = 'https://www.delosis.com/psytools-server/dataservice/dataset/'
 
 import logging
