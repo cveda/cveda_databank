@@ -45,22 +45,22 @@ PSYTOOLS_PSC1_DIR : str
 
 """
 
-PSYTOOLS_PSC1_DIR = '/cveda/databank/BL/raw/PSC1/psytools'
-BASE_URL = 'https://www.delosis.com/psytools-server/dataservice/dataset/'
-
 import logging
 logging.basicConfig(level=logging.INFO)
 
 import os
-import requests  # so much easier than most HTTP Python libraries!
+import requests
 from io import BytesIO, TextIOWrapper
 import gzip
 import re
 
+PSYTOOLS_PSC1_DIR = '/cveda/databank/BL/raw/PSC1/psytools'
+BASE_URL = 'https://www.delosis.com/psytools-server/dataservice/dataset/'
+
 TMT_DIGEST = 'TMT digest'
 BASIC_DIGEST = 'Basic digest'
 
-CVEDA_PSYTOOLS_DATASETS = (
+PSYTOOLS_DATASETS = (
     ('cVEDA_TMT', TMT_DIGEST),
     ('cVEDA_IPIP50', BASIC_DIGEST),
     ('cVEDA_TCI', BASIC_DIGEST),
@@ -78,7 +78,6 @@ def main():
         url = BASE_URL + dataset + '.gz'
         # let Requests use ~/.netrc instead of passing an auth parameter
         #     auth = requests.auth.HTTPBasicAuth('...', '...')
-        # no need to expose identifiers in the code!
         r = requests.get(url)
         compressed_data = BytesIO(r.content)
         with gzip.GzipFile(fileobj=compressed_data) as uncompressed_data:
