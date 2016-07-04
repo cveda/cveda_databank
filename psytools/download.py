@@ -47,7 +47,6 @@ PSYTOOLS_PSC1_DIR : str
 
 PSYTOOLS_PSC1_DIR = '/cveda/BL/raw/PSC1/psytools'
 BASE_URL = 'https://www.delosis.com/psytools-server/dataservice/dataset/'
-CA_BUNDLE = '/cveda/databank/framework/delosisCA.pem'
 
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -80,7 +79,7 @@ def main():
         # let Requests use ~/.netrc instead of passing an auth parameter
         #     auth = requests.auth.HTTPBasicAuth('...', '...')
         # no need to expose identifiers in the code!
-        r = requests.get(url, verify=CA_BUNDLE)
+        r = requests.get(url)
         compressed_data = BytesIO(r.content)
         with gzip.GzipFile(fileobj=compressed_data) as uncompressed_data:
             # unfold quoted text spanning multiple lines
