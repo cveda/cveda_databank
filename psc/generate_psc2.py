@@ -51,7 +51,7 @@ from jellyfish import damerau_levenshtein_distance
 
 DIGITS = 10
 MIN_DISTANCE = 3
-PREFIX = '0000'
+PREFIX = '00'
 
 
 def code_generator(lexicode, digits, prefix, min_distance):
@@ -102,8 +102,8 @@ def main():
         existing.add(line)
 
     # take into account above codes when calculating distance between codes
-    for code in code_generator(existing, DIGITS, MAX_VALUE, MIN_DISTANCE):
-        print(code)
+    for code in code_generator(existing, DIGITS, PREFIX, MIN_DISTANCE):
+        print('00' + code)
 
 
 if __name__ == '__main__':
