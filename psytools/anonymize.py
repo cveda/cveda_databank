@@ -65,11 +65,11 @@ import os
 from datetime import time
 from datetime import datetime
 
-# import ../databank
+# import ../cveda_databank
 import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
-from databank import PSC2_FROM_PSC1
-from databank import DOB_FROM_PSC2
+from cveda_databank import PSC2_FROM_PSC1
+from cveda_databank import DOB_FROM_PSC2
 
 
 def _create_psc2_file(psc1_path, psc2_path):
