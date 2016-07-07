@@ -63,12 +63,11 @@ def code_generator(lexicode, digits, prefix, min_distance):
         Existing codes, new codes must be distant enough from existing codes.
 
     digits : int
-        Number of digits the code is made of. If needed the string will be
-        padded with zeroes.
+        Number of digits the codes will be made of.
 
     prefix : str
-        First characters of the generated code, obviously their length must
-        be less than `digits`.
+        First characters of the generated code, obviously the length must be
+        less than `digits`.
 
     min_distance : int
         Minimal Damerau-Levenshtein distance between codes.
@@ -79,16 +78,18 @@ def code_generator(lexicode, digits, prefix, min_distance):
         A code is a string made of `digits` characters.
 
     """
-    assert prefix.isdigit() and len(prefix) < digits
-    lexicode = set(x[-digits:].zfill(digits)
-                   for x in lexicode)
-    digits -= len(prefix)
-    candidates = set((prefix + str(x))
-                     for x in range(10 ** (digits - 1), 10 ** digits))
-    candidates -= lexicode
-    shuffle(list(candidates))
+    assert digits > 0 and prefix.isdigit() and len(prefix) < digits
 
+    lexicode = set(x[-digits:].zfill(digits) for x in lexicode)
+
+    digits -= len(prefix)
+    candidates = [(prefix + str(x))
+                  for x in range(10 ** (digits - 1), 10 ** digits)]
+    shuffle(candidates)
+    
     for i in candidates:
+        if i in lexicode:
+            continue
         if not lexicode or min(damerau_levenshtein_distance(i, j) for j in lexicode) >= min_distance:
             lexicode.add(i)
             yield i
@@ -103,7 +104,7 @@ def main():
 
     # take into account above codes when calculating distance between codes
     for code in code_generator(existing, DIGITS, PREFIX, MIN_DISTANCE):
-        print('00' + code)
+        print(code)
 
 
 if __name__ == '__main__':
