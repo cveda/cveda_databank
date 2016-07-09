@@ -4,17 +4,17 @@
 # Copyright (c) 2014-2016 CEA
 #
 # This software is governed by the CeCILL license under French law and
-# abiding by the rules of distribution of free software. You can use, 
+# abiding by the rules of distribution of free software. You can use,
 # modify and/ or redistribute the software under the terms of the CeCILL
 # license as circulated by CEA, CNRS and INRIA at the following URL
-# "http://www.cecill.info". 
+# "http://www.cecill.info".
 #
 # As a counterpart to the access to the source code and rights to copy,
 # modify and redistribute granted by the license, users are provided only
 # with a limited warranty and the software's author, the holder of the
 # economic rights, and the successive licensors have only limited
-# liability. 
-# 
+# liability.
+#
 # In this respect, the user's attention is drawn to the risks associated
 # with loading, using, modifying and/or developing or reproducing the
 # software by the user in light of its specific status of free software,
@@ -22,15 +22,12 @@
 # therefore means that it is reserved for developers and experienced
 # professionals having in-depth computer knowledge. Users are therefore
 # encouraged to load and test the software's suitability as regards their
-# requirements in conditions enabling the security of their systems and/or 
-# data to be ensured and, more generally, to use and operate it in the 
-# same conditions as regards security. 
+# requirements in conditions enabling the security of their systems and/or
+# data to be ensured and, more generally, to use and operate it in the
+# same conditions as regards security.
 #
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
-
-import logging
-logger = logging.getLogger(__name__)
 
 import os
 from zipfile import ZipFile
@@ -40,6 +37,9 @@ except ImportError:
     from zipfile import BadZipfile as BadZipFile  # Python 2
 from tempfile import TemporaryDirectory
 
+import logging
+logger = logging.getLogger(__name__)
+
 # import ../../databank
 try:
     from .. core import PSC2_FROM_PSC1
@@ -47,11 +47,20 @@ try:
 except:
     import sys
     sys.path.append(os.path.join(os.path.dirname(__file__), u'../..'))
-    from databank import PSC2_FROM_PSC1
-    from databank import Error
+    from cveda_databank import PSC2_FROM_PSC1
+    from cveda_databank import Error
+
+SEQUENCE_FOLDERS = {
+    'T1w',
+    'dwi',
+    'dwi_rev',
+    'rest',
+    'FLAIR',
+    'T2w',
+}
 
 
-def _check_psc1(subject_id, suffix=None, psc1=None):
+def _check_psc1(subject_id, psc1=None, suffix=None):
     """
     """
     if suffix:
@@ -79,14 +88,32 @@ def _check_psc1(subject_id, suffix=None, psc1=None):
 
 
 def check_zip_name(path, psc1=None, timepoint=None):
-    """
+    """Check correctness of a ZIP filename.
+
+    Parameters
+    ----------
+    path : str
+        Pathname or filename of the ZIP file.
+    psc1 : str, optional
+        Expected 12-digit PSC1 code.
+    timepoint : str, optional
+        Time point identifier, found as a suffix in subject identifiers.
+
+    Returns
+    -------
+    result: tuple
+        In case of errors, return the tuple (psc1, errors) where psc1 is
+        a collection of PSC1 codes found in the ZIP file and errors is an
+        empty list if the ZIP file passes the check and a list of errors
+        otherwise.
+
     """
     basename = os.path.basename(path)
     if basename.endswith('.zip'):
         subject_id = basename[:-len('.zip')]
-        error_list = [Error(basename, 'Incorrect ZIP file name: ' + message)
-                      for message in _check_psc1(subject_id, timepoint, psc1)]
-        return subject_id, error_list
+        errors = [Error(basename, 'Incorrect ZIP file name: ' + message)
+                  for message in _check_psc1(subject_id, psc1, timepoint)]
+        return subject_id, errors
     else:
         return None, [Error(basename, 'Not a valid ZIP file name')]
 
@@ -189,35 +216,21 @@ def _check_empty_files(ziptree):
             yield error
 
 
-def _check_image_data(path, ziptree):
-    """Check the "ImageData" folder of a ZipTree.
-
-    Parameters
-    ----------
-    ziptree : ZipTree
-        "ImageData" branch with the meta-data read from the ZIP file.
-
-    """
-    subject_ids = set()
-    error_list = []
-
-    if len(ziptree.directories) == 0 and len(ziptree.files) == 0:
-        error_list.append(Error(ziptree.filename, 'Folder is empty'))
-    error_list.extend(_check_empty_files(ziptree))
-
-    return subject_ids, error_list
-
-
-def _check_ziptree(path, ziptree, psc1=None, suffix=None):
+def _check_ziptree(path, ziptree, psc1, sequences, timepoint=None):
     """Check the uppermost folder of a ZipTree.
 
     Parameters
     ----------
-    basename : str
-        Basename of the ZIP file.
-
+    path : str
+        Path name of the ZIP file.
     ziptree : ZipTree
         Meta-data read from the ZIP file.
+    psc1 : str
+        Expected 12-digit PSC1 code.
+    sequences : dict
+        Which sequences to expect.
+    timepoint : str, optional
+        Time point identifier, found as a suffix in subject identifiers.
 
     Returns
     -------
@@ -228,47 +241,38 @@ def _check_ziptree(path, ziptree, psc1=None, suffix=None):
 
     """
     subject_ids = set()
-    error_list = []
+    errors = []
 
     basename = os.path.basename(path)
     for f, zipinfo in ziptree.files.items():
-        error_list.append(Error(zipinfo.filename,
-                                'Unexpected file at the root of the ZIP file'))
+        errors.append(Error(zipinfo.filename,
+                            'Unexpected file at the root of the ZIP file'))
 
     if len(ziptree.directories) < 1:
-        error_list.append(Error(basename,
-                                'ZIP file lacks an uppermost folder'))
+        errors.append(Error(basename,
+                            'This folder lacks any sequence folder'))
 
     for d, z in ziptree.directories.items():
-        # uppermost directory
-        subject_id = d
-        error_list.extend([Error(z.filename, 'Incorrect uppermost folder name: ' + message)
-                           for message in _check_psc1(subject_id, suffix, psc1)])
-        for f in z.files:
-            error_list.append(Error(f, 'Unexpected file in the uppermost folder'))
-        for d in z.directories:
-            if d != 'ImageData':
-                error_list.append(Error(z.filename,
-                                        'Unexpected folder subfolder in the uppermost folder'))
-        # ImageData
-        if 'ImageData' in z.directories:
-            s, e = _check_image_data(path, z.directories['ImageData'])
-            subject_ids.update(s)
-            error_list.extend(e)
-        else:
-            error_list.append(Error(z.filename + 'ImageData/',
-                                    'Folder "ImageData" is missing'))
+        sequence = d
 
-    return subject_ids, error_list
+    errors.extend(_check_empty_files(ziptree))
+
+    return subject_ids, errors
 
 
-def check_zip_content(path, psc1=None, timepoint=None):
+def check_zip_content(path, psc1, sequences, timepoint=None):
     """Rapid sanity check of a ZIP file containing imaging data for a subject.
 
     Parameters
     ----------
     path : str
-        Path name to the ZIP file.
+        Path name of the ZIP file.
+    psc1 : str
+        Expected 12-digit PSC1 code.
+    sequences : dict
+        Which sequences to expect.
+    timepoint : str, optional
+        Time point identifier, found as a suffix in subject identifiers.
 
     Returns
     -------
@@ -283,7 +287,7 @@ def check_zip_content(path, psc1=None, timepoint=None):
         If the file does not exist.
 
     """
-    psc1 = []
+    subject_ids = []
     errors = []
 
     basename = os.path.basename(path)
@@ -306,11 +310,11 @@ def check_zip_content(path, psc1=None, timepoint=None):
         return (psc1, errors)
 
     # check tree structure
-    p, e = _check_ziptree(basename, ziptree)
-    psc1.extend(p)
+    p, e = _check_ziptree(path, ziptree, psc1, sequences, timepoint)
+    subject_ids.extend(p)
     errors.extend(e)
 
-    return (psc1, errors)
+    return (subject_ids, errors)
 
 
 def main():
