@@ -216,50 +216,6 @@ def _check_empty_files(ziptree):
             yield error
 
 
-def _check_ziptree(path, ziptree, psc1, sequences, timepoint=None):
-    """Check the uppermost folder of a ZipTree.
-
-    Parameters
-    ----------
-    path : str
-        Path name of the ZIP file.
-    ziptree : ZipTree
-        Meta-data read from the ZIP file.
-    psc1 : str
-        Expected 12-digit PSC1 code.
-    sequences : dict
-        Which sequences to expect.
-    timepoint : str, optional
-        Time point identifier, found as a suffix in subject identifiers.
-
-    Returns
-    -------
-    result: tuple
-        In case of errors, return the tuple (None, errors) where errors is
-        a list of errors. Oterwise return the tuple (psc1, errors) where psc1
-        is the dectected PSC1 code and errors is an empty list.
-
-    """
-    subject_ids = set()
-    errors = []
-
-    basename = os.path.basename(path)
-    for f, zipinfo in ziptree.files.items():
-        errors.append(Error(zipinfo.filename,
-                            'Unexpected file at the root of the ZIP file'))
-
-    if len(ziptree.directories) < 1:
-        errors.append(Error(basename,
-                            'This folder lacks any sequence folder'))
-
-    for d, z in ziptree.directories.items():
-        sequence = d
-
-    errors.extend(_check_empty_files(ziptree))
-
-    return subject_ids, errors
-
-
 def check_zip_content(path, psc1, sequences, timepoint=None):
     """Rapid sanity check of a ZIP file containing imaging data for a subject.
 
@@ -310,9 +266,18 @@ def check_zip_content(path, psc1, sequences, timepoint=None):
         return (psc1, errors)
 
     # check tree structure
-    p, e = _check_ziptree(path, ziptree, psc1, sequences, timepoint)
-    subject_ids.extend(p)
-    errors.extend(e)
+    for f, zipinfo in ziptree.files.items():
+        errors.append(Error(zipinfo.filename,
+                            'Unexpected file at the root of the ZIP file'))
+
+    if len(ziptree.directories) < 1:
+        errors.append(Error(basename,
+                            'This folder lacks any sequence folder'))
+
+    for d, z in ziptree.directories.items():
+        sequence = d
+
+    errors.extend(_check_empty_files(ziptree))
 
     return (subject_ids, errors)
 
