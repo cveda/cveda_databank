@@ -86,7 +86,7 @@ def code_generator(lexicode, digits, prefix, min_distance):
     candidates = [(prefix + str(x))
                   for x in range(10 ** (digits - 1), 10 ** digits)]
     shuffle(candidates)
-    
+
     for i in candidates:
         if i in lexicode:
             continue
