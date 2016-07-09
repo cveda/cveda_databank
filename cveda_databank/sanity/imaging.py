@@ -268,15 +268,14 @@ def check_zip_content(path, psc1, sequences, timepoint=None):
 
     # check tree structure
     for f, z in ziptree.files.items():
-        errors.append(Error('#'.join((basename, f)),
-                            'Unexpected file at the root of the ZIP file'))
+        errors.append(Error(f, 'Unexpected file at the root of the ZIP file'))
 
     for sequence, status in sequences.items():
         if status is 'Missing':
             if sequence in ziptree.directories:
                 errors.append(Error(basename,
-                                    'Sequence "{0}" is declared missing, '
-                                    'however the ZIP file contains folder "{0}"'
+                                    'Sequence "{0}" has been declared missing, '
+                                    'but ZIP file contains folder "{0}"'
                                     .format(sequence)))
         else:
             if sequence not in ziptree.directories:
@@ -295,7 +294,23 @@ def check_zip_content(path, psc1, sequences, timepoint=None):
 
 
 def main():
-    ZIPFILE = '/volatile/SANITY/cveda.zip'
+    # wrong names
+    ZIPFILE = '/volatile/SANITY/080000188813.zip'
+    (psc1, errors) = check_zip_name(ZIPFILE, '010000123456')
+    print('✘ ' + ZIPFILE)
+    if errors:
+        for e in errors:
+            print('  ▷ ' + str(e))
+
+    ZIPFILE = '/volatile/SANITY/080000188813FU1.zip'
+    (psc1, errors) = check_zip_name(ZIPFILE, '010000123456')
+    print('✘ ' + ZIPFILE)
+    if errors:
+        for e in errors:
+            print('  ▷ ' + str(e))
+
+    # correct content
+    ZIPFILE = '/volatile/SANITY/cveda_good.zip'
     SEQUENCES = {
         'T1w': 'Good',
         'dwi': 'Bad',
@@ -304,8 +319,25 @@ def main():
         'FLAIR': 'Good',
         'T2w': 'Good',
     }
-    (psc1, errors) = check_zip_name(ZIPFILE, None)
     (psc1, errors) = check_zip_content(ZIPFILE, '080000191816', SEQUENCES)
+    print('✔ ' + ZIPFILE)
+    if errors:
+        for e in errors:
+            print('▸ ' + str(e))
+
+    # wrong content
+    ZIPFILE = '/volatile/SANITY/cveda_bad.zip'
+    SEQUENCES = {
+        'T1w': 'Good',
+        'dwi': 'Bad',
+        'dwi_rev': 'Dubious',
+        'rest': 'Good',
+        'FLAIR': 'Missing',
+        'T2w': 'Good',
+        'BOGUS': 'Missing',
+    }
+    (psc1, errors) = check_zip_content(ZIPFILE, '080000191816', SEQUENCES)
+    print('✘ ' + ZIPFILE)
     if errors:
         for e in errors:
             print('▸ ' + str(e))
