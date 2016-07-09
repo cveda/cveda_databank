@@ -34,7 +34,6 @@ try:
     from zipfile import BadZipFile
 except ImportError:
     from zipfile import BadZipfile as BadZipFile  # Python 2
-from tempfile import TemporaryDirectory
 
 import logging
 logger = logging.getLogger(__name__)
