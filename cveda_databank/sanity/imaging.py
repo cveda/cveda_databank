@@ -270,23 +270,28 @@ def check_zip_content(path, psc1, sequences, timepoint=None):
         errors.append(Error(f, 'Unexpected file at the root of the ZIP file'))
 
     for sequence, status in sequences.items():
-        if status is 'Missing':
-            if sequence in ziptree.directories:
-                errors.append(Error(basename,
-                                    'Sequence "{0}" has been declared missing, '
-                                    'but ZIP file contains folder "{0}"'
-                                    .format(sequence)))
-        else:
-            if sequence not in ziptree.directories:
-                errors.append(Error(basename,
-                                    'Sequence "{0}" is missing'
-                                    .format(sequence)))
+        if sequence not in ziptree.directories:
+            errors.append(Error(basename,
+                                'Sequence "{0}" is missing'
+                                .format(sequence)))
 
     for d, z in ziptree.directories.items():
         if d not in EXPECTED_SEQUENCES:
             errors.append(Error(basename,
                                 'Unexpected top-level folder "{0}"'
                                 .format(d)))
+        elif d not in sequences:
+            errors.append(Error(basename,
+                                'Sequence "{0}" has not been declared, '
+                                'but ZIP file contains folder "{0}"'
+                                .format(d)))
+        elif sequences[d] == 'Missing':
+            errors.append(Error(basename,
+                                'Sequence "{0}" has been declared missing, '
+                                'but ZIP file contains folder "{0}"'
+                                .format(d)))
+        else:
+            pass  # FIXME: there must be at least a DICOM file, check it!
         errors.extend(_check_empty_files(z))
 
     return (subject_ids, errors)
@@ -331,8 +336,7 @@ def main():
         'dwi': 'Bad',
         'dwi_rev': 'Dubious',
         'rest': 'Good',
-        'FLAIR': 'Missing',
-        'T2w': 'Good',
+        'T2w': 'Missing',
         'BOGUS': 'Missing',
     }
     (psc1, errors) = check_zip_content(ZIPFILE, '080000191816', SEQUENCES)
