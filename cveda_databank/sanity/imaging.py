@@ -29,6 +29,8 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 import os
+import tempfile
+import shutil
 from zipfile import ZipFile
 try:
     from zipfile import BadZipFile
@@ -42,11 +44,13 @@ logger = logging.getLogger(__name__)
 try:
     from .. core import PSC2_FROM_PSC1
     from .. core import Error
+    from .. dicom_utils import read_metadata
 except:
     import sys
     sys.path.append(os.path.join(os.path.dirname(__file__), u'../..'))
     from cveda_databank import PSC2_FROM_PSC1
     from cveda_databank import Error
+    from cveda_databank import read_metadata
 
 
 def _check_psc1(subject_id, psc1=None, suffix=None):
@@ -73,7 +77,7 @@ def _check_psc1(subject_id, psc1=None, suffix=None):
         if suffix and psc1.endswith(suffix):
             psc1 = psc1[:-len(suffix)]
         if subject_id != psc1:
-            yield'PSC1 code "{0}" was expected to be "{1}"'.format(subject_id, psc1)
+            yield 'PSC1 code "{0}" was expected to be "{1}"'.format(subject_id, psc1)
 
 
 def check_zip_name(path, psc1=None, timepoint=None):
@@ -205,6 +209,27 @@ def _check_empty_files(ziptree):
             yield error
 
 
+def _check_sequence_content(path, ziptree, sequence, psc1, timepoint=None):
+    subject_ids = []
+    errors = []
+
+    if len(ziptree.files) < 1:
+        errors.append(Error(ziptree.filename, 'Sequence is empty'))
+    else:
+        sample = ziptree.files.keys()[0]
+        tempdir = tempfile.mkdtemp('cveda')
+        with ZipFile(path, 'r') as z:
+            dicom_file = z.extract(ziptree.filename + sample, tempdir)
+            metadata = read_metadata(dicom_file)
+            print(metadata['SeriesDescription'])
+            # TODO: report inconsistencies in:
+            # * subject ID
+            # * sequence name
+        shutil.rmtree(tempdir)
+
+    return (subject_ids, errors)
+
+
 def check_zip_content(path, psc1, sequences, timepoint=None):
     """Rapid sanity check of a ZIP file containing imaging data for a subject.
 
@@ -256,14 +281,14 @@ def check_zip_content(path, psc1, sequences, timepoint=None):
     # is the file empty?
     if os.path.getsize(path) == 0:
         errors.append(Error(basename, 'File is empty'))
-        return (psc1, errors)
+        return (subject_ids, errors)
 
     # read the ZIP file into a tree structure
     try:
         ziptree = ZipTree.create(path)
     except BadZipFile as e:
         errors.append(Error(basename, 'Cannot unzip: "{0}"'.format(e)))
-        return (psc1, errors)
+        return (subject_ids, errors)
 
     # check tree structure
     for f, z in ziptree.files.items():
@@ -291,7 +316,9 @@ def check_zip_content(path, psc1, sequences, timepoint=None):
                                 'but ZIP file contains folder "{0}"'
                                 .format(d)))
         else:
-            pass  # FIXME: there must be at least a DICOM file, check it!
+            s, e = _check_sequence_content(path, z, d, psc1, timepoint)
+            subject_ids.extend(s)
+            errors.extend(e)
         errors.extend(_check_empty_files(z))
 
     return (subject_ids, errors)

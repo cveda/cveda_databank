@@ -37,7 +37,7 @@ import datetime
 from collections import namedtuple
 from collections import Counter
 
-from . dicom import read_metadata
+from . dicom_utils import read_metadata
 
 
 def walk_image_data(path, force=False):
