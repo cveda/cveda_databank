@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2014-2016 CEA
@@ -49,15 +48,6 @@ except:
     sys.path.append(os.path.join(os.path.dirname(__file__), u'../..'))
     from cveda_databank import PSC2_FROM_PSC1
     from cveda_databank import Error
-
-SEQUENCE_FOLDERS = {
-    'T1w',
-    'dwi',
-    'dwi_rev',
-    'rest',
-    'FLAIR',
-    'T2w',
-}
 
 
 def _check_psc1(subject_id, psc1=None, suffix=None):
@@ -248,14 +238,25 @@ def check_zip_content(path, psc1, sequences, timepoint=None):
 
     basename = os.path.basename(path)
 
+    # internal check on sequences given as argument
+    EXPECTED_SEQUENCES = {
+        'T1w',
+        'dwi',
+        'dwi_rev',
+        'rest',
+        'FLAIR',
+        'T2w',
+    }
+    for sequence in sequences:
+        if sequence not in EXPECTED_SEQUENCES:
+            logger.error('Unexpected sequence "{0}"'.format(sequence))
+            errors.append(Error(__file__,
+                                'INTERNAL ERROR: Unexpected sequence "{0}"'
+                                .format(sequence)))
+
     # is the file empty?
     if os.path.getsize(path) == 0:
         errors.append(Error(basename, 'File is empty'))
-        return (psc1, errors)
-
-    # does it look like a ZIP file?
-    if not is_zipfile(path):
-        errors.append(Error(basename, 'This is not a ZIP file'))
         return (psc1, errors)
 
     # read the ZIP file into a tree structure
@@ -266,26 +267,45 @@ def check_zip_content(path, psc1, sequences, timepoint=None):
         return (psc1, errors)
 
     # check tree structure
-    for f, zipinfo in ziptree.files.items():
-        errors.append(Error(zipinfo.filename,
+    for f, z in ziptree.files.items():
+        errors.append(Error('#'.join((basename, f)),
                             'Unexpected file at the root of the ZIP file'))
 
-    if len(ziptree.directories) < 1:
-        errors.append(Error(basename,
-                            'This folder lacks any sequence folder'))
+    for sequence, status in sequences.items():
+        if status is 'Missing':
+            if sequence in ziptree.directories:
+                errors.append(Error(basename,
+                                    'Sequence "{0}" is declared missing, '
+                                    'however the ZIP file contains folder "{0}"'
+                                    .format(sequence)))
+        else:
+            if sequence not in ziptree.directories:
+                errors.append(Error(basename,
+                                    'Sequence "{0}" is missing'
+                                    .format(sequence)))
 
     for d, z in ziptree.directories.items():
-        sequence = d
-
-    errors.extend(_check_empty_files(ziptree))
+        if d not in EXPECTED_SEQUENCES:
+            errors.append(Error(basename,
+                                'Unexpected top-level folder "{0}"'
+                                .format(d)))
+        errors.extend(_check_empty_files(z))
 
     return (subject_ids, errors)
 
 
 def main():
-    ZIPFILE = '/volatile/test.zip'
-    (psc1, errors) = check_zip_name(ZIPFILE, None, 'FU3')
-    (psc1, errors) = check_zip_content(ZIPFILE, psc1, 'FU3')
+    ZIPFILE = '/volatile/SANITY/cveda.zip'
+    SEQUENCES = {
+        'T1w': 'Good',
+        'dwi': 'Bad',
+        'dwi_rev': 'Dubious',
+        'rest': 'Good',
+        'FLAIR': 'Good',
+        'T2w': 'Good',
+    }
+    (psc1, errors) = check_zip_name(ZIPFILE, None)
+    (psc1, errors) = check_zip_content(ZIPFILE, '080000191816', SEQUENCES)
     if errors:
         for e in errors:
             print('▸ ' + str(e))

@@ -28,5 +28,6 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-from . imaging import check as check_imaging
+from . imaging import check_zip_name
+from . imaging import check_zip_content
 from . imaging import ZipTree
