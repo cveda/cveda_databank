@@ -287,7 +287,7 @@ def check_zip_content(path, psc1, sequences, timepoint=None):
                                 .format(d)))
         elif sequences[d] == 'Missing':
             errors.append(Error(basename,
-                                'Sequence "{0}" has been declared missing, '
+                                'Sequence "{0}" has been declared Missing, '
                                 'but ZIP file contains folder "{0}"'
                                 .format(d)))
         else:
