@@ -192,17 +192,36 @@ class ZipTree:
 class TemporaryDirectory(object):
     """Backport from Python 3.
     """
-    def __init__(self, suffix="", prefix=template, dir=None):
-        self.pathname = mkdtemp(suffix, prefix, dir)
+    def __init__(self, suffix='', prefix=tempfile.gettempprefix(), dir=None):
+        self.pathname = tempfile.mkdtemp(suffix, prefix, dir)
 
     def __repr__(self):
-        return "<{} {!r}>".format(self.__class__.__name__, self.name)
+        return '<{} {!r}>'.format(self.__class__.__name__, self.name)
 
     def __enter__(self):
         return self.pathname
 
     def __exit__(self, exc, value, tb):
         shutil.rmtree(self.pathname)
+
+
+def _files(ziptree):
+    """List files in a ZipTree.
+
+    Parameters
+    ----------
+    ziptree : ZipTree
+
+    Yields
+    -------
+    f: str
+
+    """
+    for f, zipinfo in ziptree.files.items():
+        yield ziptree.filename + f
+    for d, ziptree in ziptree.directories.items():
+        for f in _files(ziptree):
+            yield f
 
 
 def _check_empty_files(ziptree):
@@ -252,10 +271,12 @@ def _check_sequence_content(path, ziptree, sequence, psc1, timepoint=None):
     subject_ids = []
     errors = []
 
-    if len(ziptree.files) < 1:
+    # check zip tree is not empty and does not contain empty files
+    files = list(_files(ziptree))
+    if len(files) < 1:
         errors.append(Error(ziptree.filename, 'Sequence is empty'))
     else:
-        error_list.extend(_check_empty_files(ziptree))
+        errors.extend(_check_empty_files(ziptree))
 
         # choose a file from zip tree and check its DICOM tags
         with TemporaryDirectory('cveda') as tempdir:
