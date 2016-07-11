@@ -189,6 +189,22 @@ class ZipTree:
         self._print_children(indent, last)
 
 
+class TemporaryDirectory(object):
+    """Backport from Python 3.
+    """
+    def __init__(self, suffix="", prefix=template, dir=None):
+        self.pathname = mkdtemp(suffix, prefix, dir)
+
+    def __repr__(self):
+        return "<{} {!r}>".format(self.__class__.__name__, self.name)
+
+    def __enter__(self):
+        return self.pathname
+
+    def __exit__(self, exc, value, tb):
+        shutil.rmtree(self.pathname)
+
+
 def _check_empty_files(ziptree):
     """Recursively check for empty files in a ZipTree.
 
@@ -210,22 +226,52 @@ def _check_empty_files(ziptree):
 
 
 def _check_sequence_content(path, ziptree, sequence, psc1, timepoint=None):
+    """Rapid sanity check of a ZIP subfolder containing an MRI sequence.
+
+    Parameters
+    ----------
+    path : str
+        Path name of the ZIP file.
+    ziptree : ZipTree
+        Tree under the specific sequence folder.
+    sequence : dict
+        Which sequence to expect.
+    psc1 : str
+        Expected 12-digit PSC1 code.
+    timepoint : str, optional
+        Time point identifier, found as a suffix in subject identifiers.
+
+    Returns
+    -------
+    result: tuple
+        In case of errors, return the tuple ([], errors) where errors is
+        a list of errors. Oterwise return the tuple (psc1, errors) where psc1
+        is a list of dectected PSC1 code and errors is an empty list.
+
+    """
     subject_ids = []
     errors = []
 
     if len(ziptree.files) < 1:
         errors.append(Error(ziptree.filename, 'Sequence is empty'))
     else:
-        sample = ziptree.files.keys()[0]
-        tempdir = tempfile.mkdtemp('cveda')
-        with ZipFile(path, 'r') as z:
-            dicom_file = z.extract(ziptree.filename + sample, tempdir)
-            metadata = read_metadata(dicom_file)
-            print(metadata['SeriesDescription'])
-            # TODO: report inconsistencies in:
-            # * subject ID
-            # * sequence name
-        shutil.rmtree(tempdir)
+        error_list.extend(_check_empty_files(ziptree))
+
+        # choose a file from zip tree and check its DICOM tags
+        with TemporaryDirectory('cveda') as tempdir:
+            for f in files:
+                with ZipFile(path, 'r') as z:
+                    dicom_file = z.extract(f, tempdir)
+                    try:
+                        metadata = read_metadata(dicom_file, force=True)
+                    except:
+                        continue
+                    else:
+                        #~ metadata['SeriesDescription']
+                        # TODO: report inconsistencies in:
+                        # * subject ID
+                        # * sequence name
+                        break
 
     return (subject_ids, errors)
 
