@@ -9,6 +9,6 @@ Databank operations of the c-VEDA project
   Generate PSC1 and PSC2 subject identifiers.
 
 ``psytools``
-  Download Psytools data as CSV and JSON files from Delosis servers.
+  Download Psytools data as CSV files from Delosis servers.
 
   Anonymize by removing identifying data and converting PSC1 to PSC2.
