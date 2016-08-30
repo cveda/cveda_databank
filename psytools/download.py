@@ -71,7 +71,7 @@ QUOTED_PATTERN = re.compile(r'".*?"', re.DOTALL)
 
 
 def main():
-    for task, digest in CVEDA_PSYTOOLS_DATASETS:
+    for task, digest in PSYTOOLS_DATASETS:
         digest = digest.upper().replace(' ', '_')
         dataset = 'cVEDA-{task}-{digest}.csv'.format(task=task, digest=digest)
         logging.info('downloading: {0}'.format(dataset))
