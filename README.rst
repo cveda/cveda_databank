@@ -3,7 +3,7 @@ Databank operations of the c-VEDA project
 =========================================
 
 ``cveda_databank``
-  Module reads and performs sanity checks on raw datasets.
+  Read and perform sanity checks on raw datasets.
 
 ``psc``
   Generate PSC1 and PSC2 subject identifiers.

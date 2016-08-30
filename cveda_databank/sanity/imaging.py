@@ -244,6 +244,17 @@ def _check_empty_files(ziptree):
             yield error
 
 
+def _check_meta_data(meta_data):
+    """
+    """
+    for f, zipinfo in ziptree.files.items():
+        if zipinfo.file_size == 0:
+            yield Error(zipinfo.filename, 'File is empty')
+    for d, ziptree in ziptree.directories.items():
+        for error in _check_empty_files(ziptree):
+            yield error
+
+
 def _check_sequence_content(path, ziptree, sequence, psc1, timepoint=None):
     """Rapid sanity check of a ZIP subfolder containing an MRI sequence.
 

@@ -54,7 +54,7 @@ from io import BytesIO, TextIOWrapper
 import gzip
 import re
 
-PSYTOOLS_PSC1_DIR = '/cveda/databank/BL/raw/PSC1/psytools'
+PSYTOOLS_PSC1_DIR = '/cveda/databank/BL/RAW/PSC1/psytools'
 BASE_URL = 'https://www.delosis.com/psytools-server/dataservice/dataset/'
 
 TMT_DIGEST = 'TMT digest'
