@@ -76,9 +76,10 @@ def main():
         dataset = 'cVEDA-{task}-{digest}.csv'.format(task=task, digest=digest)
         logging.info('downloading: {0}'.format(dataset))
         url = BASE_URL + dataset + '.gz'
-        # let module Requests read ~/.netrc instead of writing identifiers here
-        #     auth = requests.auth.HTTPBasicAuth('...', '...')
+        # connect to Delosis web service
+        # let Requests module read authentication tokens from ~/.netrc
         r = requests.get(url)
+        # read stream of compressed CSV data sent by Delosis web service
         compressed_data = BytesIO(r.content)
         with gzip.GzipFile(fileobj=compressed_data) as uncompressed_data:
             uncompressed_data = TextIOWrapper(uncompressed_data, encoding='utf_8')
