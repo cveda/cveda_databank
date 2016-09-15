@@ -76,13 +76,13 @@ def main():
         dataset = 'cVEDA-{task}-{digest}.csv'.format(task=task, digest=digest)
         logging.info('downloading: {0}'.format(dataset))
         url = BASE_URL + dataset + '.gz'
-        # let Requests use ~/.netrc instead of passing an auth parameter
+        # let module Requests read ~/.netrc instead of writing identifiers here
         #     auth = requests.auth.HTTPBasicAuth('...', '...')
         r = requests.get(url)
         compressed_data = BytesIO(r.content)
         with gzip.GzipFile(fileobj=compressed_data) as uncompressed_data:
+            uncompressed_data = TextIOWrapper(uncompressed_data, encoding='utf_8')
             # unfold quoted text spanning multiple lines
-            uncompressed_data = TextIOWrapper(uncompressed_data)
             data = QUOTED_PATTERN.sub(lambda x: x.group().replace('\n', '/'),
                                       uncompressed_data.read())
             # skip files that have not changed since last update
@@ -90,8 +90,7 @@ def main():
             if os.path.isfile(psytools_path):
                 with open(psytools_path, 'r') as uncompressed_file:
                     if uncompressed_file.read() == data:
-                        logging.info('skip unchanged file: {0}'
-                                     .format(psytools_path))
+                        logging.info('skip unchanged file: {0}'.format(psytools_path))
                         continue
             # write downloaded data into file
             with open(psytools_path, 'w') as uncompressed_file:
