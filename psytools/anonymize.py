@@ -109,17 +109,23 @@ def _create_psc2_file(psc1_path, psc2_path):
                     logging.debug('skipping line with "id_check" from {0}'
                                   .format(psc1))
                     continue
-                # subject ID is PSC1 followed by '-C' or '-I'
+                # skip subjects whose identifier contains 'Demo'
+                if 'Demo' in psc1:
+                    logging.debug('skipping test subject {0}'
+                                  .format(psc1))
+                    continue
+                # subject ID is PSC1 followed by '-C1', '-C2', ...
                 if '-' in psc1:
                     psc1, suffix = psc1.rsplit('-', 1)
                 else:
                     suffix = None
                 psc2 = None
-                if psc1.startswith('TEST'):
+                # skip subjects whose identifier contains 'TEST'
+                if 'TEST' in psc1:
                     logging.debug('skipping test subject {0}'
                                   .format(psc1))
                     continue
-                elif psc1 in PSC2_FROM_PSC1:
+                if psc1 in PSC2_FROM_PSC1:
                     logging.debug('converting subject {0} from PSC1 to PSC2'
                                   .format(psc1))
                     psc2 = PSC2_FROM_PSC1[psc1]
