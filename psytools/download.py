@@ -61,10 +61,45 @@ TMT_DIGEST = 'TMT digest'
 BASIC_DIGEST = 'Basic digest'
 
 PSYTOOLS_DATASETS = (
-    ('cVEDA_TMT', TMT_DIGEST),
-    ('cVEDA_IPIP50', BASIC_DIGEST),
-    ('cVEDA_TCI', BASIC_DIGEST),
-    ('cVEDA_MINI5', BASIC_DIGEST),
+    ('cVEDA_IPIP50', BASIC_DIGEST),  # IPIP
+    ('cVEDA_TMT', TMT_DIGEST),  # Trail making task
+    ('cVEDA_TCI', BASIC_DIGEST),  # TCI
+    ('cVEDA_MINI5', BASIC_DIGEST),  # M.I.N.I
+    ('cVEDA_AAQ', BASIC_DIGEST),  # AAQ
+    ('cVEDA_SCAMP_PARENT', BASIC_DIGEST),  # SCAMP PARENT questionnaire
+    ('cVEDA_EATQr_SELF', BASIC_DIGEST),  # EATQr_SELF
+    ('cVEDA_KIRBY', BASIC_DIGEST),  # Now or later?
+    ('cVEDA_CORSI', BASIC_DIGEST),  # Corsi
+    ('cVEDA_CBQ_PARENT', BASIC_DIGEST),  # CBQ
+    ('cVEDA_SCAMP_SELF', BASIC_DIGEST),  # SCAMP SELF questionnaire
+    ('cVEDA_ASSIST', BASIC_DIGEST),  # ASSIST
+    ('cVEDA_PBI', BASIC_DIGEST),  # PBI
+    ('cVEDA_MID', BASIC_DIGEST),  # MID
+    ('cVEDA_SST', BASIC_DIGEST),  # SST
+    ('cVEDA_BART', BASIC_DIGEST),  # BART
+    ('cVEDA_EEQ', BASIC_DIGEST),  # Environmental Exposures Questionnaire
+    ('cVEDA_APQ_CHILD', BASIC_DIGEST),  # APQ Child
+    ('cVEDA_APQ_PARENT', BASIC_DIGEST),  # APQ Parent
+    ('cVEDA_DS', BASIC_DIGEST),  # Digit Span
+    ('cVEDA_SDQ_CHILD', BASIC_DIGEST),  # SDQ Child
+    ('cVEDA_MPQ', BASIC_DIGEST),  # Medical Problems
+    ('cVEDA_IFVCS', BASIC_DIGEST),  # IFVCS
+    ('cVEDA_MINI5KID', BASIC_DIGEST),  # M.I.N.I KID
+    ('cVEDA_ACEIQ', BASIC_DIGEST),  # ACEIQ
+    ('cVEDA_SDIM', BASIC_DIGEST),  # SDI Migration
+    ('cVEDA_SOCRATIS', BASIC_DIGEST),  # SOCRATIS
+    ('cVEDA_PDS', BASIC_DIGEST),  # Physical Development
+    ('cVEDA_PHIR', BASIC_DIGEST),  # PHI-R
+    ('cVEDA_ANTHROPOMETRY', BASIC_DIGEST),  # ANTHROPOMETRY
+    ('cVEDA_FHQ', BASIC_DIGEST),  # Family history
+    ('cVEDA_SCQ', BASIC_DIGEST),  # School Climate Questionnaire
+    ('cVEDA_SFQR', BASIC_DIGEST),  # Short Food Questionnaire- Revised
+    ('cVEDA_ERT', BASIC_DIGEST),  # Emotion Recognition
+    ('cVEDA_SDQ_PARENT', BASIC_DIGEST),  # SDQ Parent
+    ('cVEDA_ASRSADHD', BASIC_DIGEST),  # ASRS - ADHD
+    ('cVEDA_WCST', BASIC_DIGEST),  # Sort the cards
+    ('cVEDA_TS', BASIC_DIGEST),  # Testing Situation
+    ('cVEDA_BIG5', BASIC_DIGEST),  # BIG5
 )
 
 QUOTED_PATTERN = re.compile(r'".*?"', re.DOTALL)
