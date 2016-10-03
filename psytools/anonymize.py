@@ -109,8 +109,8 @@ def _create_psc2_file(psc1_path, psc2_path):
                     logging.debug('skipping line with "id_check" from {0}'
                                   .format(psc1))
                     continue
-                # skip subjects whose identifier contains 'Demo'
-                if 'Demo' in psc1:
+                # skip subjects whose identifier starts with 'CVEDA-Demo-'
+                if psc1.startswith('CVEDA-Demo-'):
                     logging.debug('skipping test subject {0}'
                                   .format(psc1))
                     continue
