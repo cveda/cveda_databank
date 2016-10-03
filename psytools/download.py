@@ -61,7 +61,6 @@ TMT_DIGEST = 'TMT digest'
 BASIC_DIGEST = 'Basic digest'
 
 PSYTOOLS_DATASETS = (
-    ('cVEDA_IPIP50', BASIC_DIGEST),  # IPIP
     ('cVEDA_TMT', TMT_DIGEST),  # Trail making task
     ('cVEDA_TCI', BASIC_DIGEST),  # TCI
     ('cVEDA_MINI5', BASIC_DIGEST),  # M.I.N.I
@@ -100,6 +99,9 @@ PSYTOOLS_DATASETS = (
     ('cVEDA_WCST', BASIC_DIGEST),  # Sort the cards
     ('cVEDA_TS', BASIC_DIGEST),  # Testing Situation
     ('cVEDA_BIG5', BASIC_DIGEST),  # BIG5
+    ('cVEDA_DEBRIEF1', BASIC_DIGEST),  # Debrief
+    ('cVEDA_DEBRIEF2', BASIC_DIGEST),  # Debrief
+    ('cVEDA_DEBRIEF3', BASIC_DIGEST),  # Debrief
 )
 
 QUOTED_PATTERN = re.compile(r'".*?"', re.DOTALL)
