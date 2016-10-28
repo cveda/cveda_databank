@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright (c) 2016 CEA
 #
 # This software is governed by the CeCILL license under French law and
@@ -35,13 +33,18 @@ def readme():
     with open('README.rst') as f:
         return f.read()
 
+def license():
+    with open('LICENSE') as f:
+        return f.read()
+
 setup(
     name='cveda_databank',
-#    version=,
-    description='c-VEDA project databank software',
-    license='CeCILL',
+    version='0.1.0',
     author='Dimitri Papadopoulos',
     author_email='cveda.tech@gmail.com',
+    description='c-VEDA project databank software',
+    long_description=readme(),
+    license='CeCILL',
     url='https://github.com/cveda/cveda_databank',
     packages=['cveda_databank'],
     scripts=[
@@ -51,7 +54,7 @@ setup(
         'psytools/download.py',
     ],
     classifiers=[
-        "License :: OSI Approved :: CeCILL",
+        "License :: OSI Approved",
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
         "Environment :: Console",
@@ -64,7 +67,7 @@ setup(
         "Topic :: Utilities",
     ],
     install_requires=[
-        'dicom',
+        'pydicom',
         'jellyfish',
     ],
 )
