@@ -41,7 +41,7 @@ setup(
     description='c-VEDA project databank software',
     license='CeCILL',
     author='Dimitri Papadopoulos',
-    author='cveda.tech@gmail.com',
+    author_email='cveda.tech@gmail.com',
     url='https://github.com/cveda/cveda_databank',
     packages=['cveda_databank'],
     scripts=[
