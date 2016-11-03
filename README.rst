@@ -16,4 +16,4 @@ Databank operations of the c-VEDA project
 
   Anonymize by removing identifying data and converting PSC1 to PSC2.
 
-.. documentation_: http://c-veda-databank.readthedocs.io
+.. _documentation: http://c-veda-databank.readthedocs.io
