@@ -1,5 +1,5 @@
-c-VEDA databank
-===============
+Databank operations of the c-VEDA project
+=========================================
 
 These Python libraries and scripts have been written for databank operations
 of the c-VEDA_ project.
