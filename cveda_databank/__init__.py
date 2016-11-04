@@ -28,6 +28,35 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
+'''
+Module `cveda_databank` provides shared functions and constants for databank
+operations—mainly sanity checking of data uploaded from acquisition centres.
+
+.. py:data:: PSC2_FROM_PSC1
+
+   This dictionary maps PSC1 codes to PSC2 codes.
+   At module initialization, we read keys and values as 12-digit strings
+   from file `/cveda/databank/framework/psc/psc2psc_2016-07-12.txt`.
+
+.. py:data:: PSC1_FROM_PSC2
+
+   This dictionary maps PSC2 codes to PSC1 codes.
+   At module initialization, we invert `PSC2_FROM_PSC1` to build
+   this dictionary.
+
+.. py:data:: DOB_FROM_PSC1
+
+   This dictionary maps PSC1 codes to the date of birth of the relevant subject.
+   At module initialization, we read keys as 12-digit strings and values as
+   Python `datetime` from file
+   `/cveda/databank/framework/psc/psc2psc_2016-07-12.txt`.
+
+.. autoexception:: Error
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+'''
 from . core import PSC2_FROM_PSC1, PSC1_FROM_PSC2, DOB_FROM_PSC1
 from . core import Error
 from . dicom_utils import read_metadata

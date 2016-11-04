@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# limesurvey documentation build configuration file, created by
-# sphinx-quickstart on Fri Oct 28 16:06:03 2016.
+# documentation build configuration file, created by
+# sphinx-quickstart on Thu Nov  3 09:58:50 2016.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -28,7 +28,15 @@ import os
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.doctest',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.todo',
+    'sphinx.ext.coverage',
+    'sphinx.ext.viewcode',
+    'sphinxcontrib.napoleon',
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -44,7 +52,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'c-VEDA databank'
-copyright = u'2016, CEA'
+copyright = u'2016 CEA'
+html_show_sphinx = False
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -176,7 +185,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'cveda_databank'
+htmlhelp_basename = 'cveda_databank_doc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -196,7 +205,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'cveda_databank.tex', u'c-VEDA databank Documentation',
+  ('index', 'cveda_databank.tex', u'c-VEDA databank documentation',
    u'Dimitri Papadopoulos', 'manual'),
 ]
 
@@ -226,7 +235,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'cveda_databank', u'c-VEDA databank Documentation',
+    ('index', 'cveda_databank', u'c-VEDA databank documentation',
      [u'Dimitri Papadopoulos'], 1)
 ]
 
@@ -240,7 +249,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'cveda_databank', u'c-VEDA databank Documentation',
+  ('index', 'cveda_databank', u'c-VEDA databank documentation',
    u'Dimitri Papadopoulos', 'cveda_databank', 'Source code used by the c-VEDA project.',
    'Miscellaneous'),
 ]

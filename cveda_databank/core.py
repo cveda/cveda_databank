@@ -110,18 +110,17 @@ DOB_FROM_PSC1 = _initialize_dob_from_psc1(_DOB_PATH)
 
 
 class Error:
-    """Error while parsing files.
-
-    Returned by functions that parse imaging data.
+    """The `Error` exception is raised when an error occurs while parsing
+    imaging data files.
 
     Attributes
     ----------
     path : str
-        File name.
+        File system path containing the incriminated data.
     message : str
         Message explaining the error.
     sample : str
-        Part of the file that generated the error.
+        Data extracted from the file that caused the error.
 
     """
     _SAMPLE_LEN = 30
