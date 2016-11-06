@@ -30,26 +30,38 @@
 
 '''
 Module `cveda_databank` provides shared functions and constants for databank
-operations—mainly sanity checking of data uploaded from acquisition centres.
+operations of the `c-VEDA project`_—mainly sanity checking of data uploaded
+from acquisition centres.
+
+.. _c-VEDA project: https://cveda.nimhans.ac.in
+
+Constants
+---------
 
 .. py:data:: PSC2_FROM_PSC1
 
    This dictionary maps PSC1 codes to PSC2 codes.
-   At module initialization, we read keys and values as 12-digit strings
-   from file `/cveda/databank/framework/psc/psc2psc_2016-07-12.txt`.
+   At module initialization, we read PSC1 keys and PSC2 values as 12-digit
+   strings from file */cveda/databank/framework/psc/psc2psc_2016-07-12.txt*.
 
 .. py:data:: PSC1_FROM_PSC2
 
    This dictionary maps PSC2 codes to PSC1 codes.
-   At module initialization, we invert `PSC2_FROM_PSC1` to build
+   At module initialization, we invert :py:data:`PSC2_FROM_PSC1` to build
    this dictionary.
 
 .. py:data:: DOB_FROM_PSC1
 
    This dictionary maps PSC1 codes to the date of birth of the relevant subject.
-   At module initialization, we read keys as 12-digit strings and values as
-   Python `datetime` from file
-   `/cveda/databank/framework/psc/psc2psc_2016-07-12.txt`.
+   At module initialization, we read PSC1 keys as 12-digit strings and date of
+   birth as a Python `datetime` from file
+   */cveda/databank/framework/psc/psc2psc_2016-07-12.txt*.
+
+Constants
+---------
+
+Classes
+-------
 
 .. autoexception:: Error
    :members:

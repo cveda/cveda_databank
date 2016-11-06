@@ -28,6 +28,11 @@ import os
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
+import sphinx
+if sphinx.__version__ < '1.3':
+    napoleon = 'sphinxcontrib.napoleon'
+else:
+    napoleon = 'sphinx.ext.napoleon'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
@@ -35,7 +40,7 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
     'sphinx.ext.viewcode',
-    'sphinxcontrib.napoleon',
+    napoleon,
 ]
 
 # Add any paths that contain templates here, relative to this directory.
