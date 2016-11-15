@@ -83,7 +83,7 @@ def _datetime_from_dt(dt):
 
     Returns
     -------
-    datetime
+    datetime.datetime
 
     """
     match = _REGEX_DT.match(dt)
@@ -142,7 +142,7 @@ def _date_from_da(da):
 
     Returns
     -------
-    date
+    datetime.date
 
     """
     if len(da) == 8:
@@ -171,7 +171,7 @@ def _time_from_tm(tm):
 
     Returns
     -------
-    time
+    datetime.time
 
     """
     match = _REGEX_TM.match(tm)
@@ -219,6 +219,7 @@ def read_metadata(path, force=False):
         - ManufacturerModelName
         - DeviceSerialNumber
         - SoftwareVersions
+        - PatientID
 
     Parameters
     ----------
@@ -237,7 +238,7 @@ def read_metadata(path, force=False):
     else:
         return {}
 
-    # missing compulsary tags will raise exceptions
+    # missing compulsory tags will raise exceptions
     if 'SeriesDescription' in dataset:
         description = dataset.SeriesDescription
     elif 'ProtocolName' in dataset:
@@ -263,7 +264,6 @@ def read_metadata(path, force=False):
             metadata['AcquisitionDate'] = _date_from_da(dataset.AcquisitionDate)
         if 'AcquisitionTime' in dataset:
             metadata['AcquisitionTime'] = _time_from_tm(dataset.AcquisitionTime)
-
     if 'StationName' in dataset:
         metadata['StationName'] = _decode(dataset.StationName)
     if 'Manufacturer' in dataset:
@@ -280,5 +280,7 @@ def read_metadata(path, force=False):
             metadata['SoftwareVersions'] = _decode(dataset.SoftwareVersions[-1])
         else:
             metadata['SoftwareVersions'] = _decode(dataset.SoftwareVersions)
+    if 'PatientID' in dataset:
+            metadata['PatientID'] = _decode(dataset.PatientID)
 
     return metadata

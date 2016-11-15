@@ -46,7 +46,7 @@ def _initialize_psc2_from_psc1(path):
 
     Parameters
     ----------
-    path : unicode
+    path : str
 
     Returns
     -------
@@ -77,7 +77,7 @@ def _initialize_dob_from_psc1(path):
 
     Parameters
     ----------
-    path : unicode
+    path : str
 
     Returns
     -------
