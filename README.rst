@@ -11,7 +11,7 @@ Software reference documentation_ is published on line.
   Read and perform sanity checks on raw datasets.
 
 ``doc``
-    Reference documentation_.
+    Reference documentation_ of *cveda_databank*.
 
 ``psc``
   Generate PSC1 and PSC2 subject identifiers.
