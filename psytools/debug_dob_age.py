@@ -58,8 +58,8 @@ PHIR = '/cveda/databank/BL/RAW/PSC1/psytools/cVEDA-cVEDA_PHIR-BASIC_DIGEST.csv'
 
 def age(today, birth):
     # http://stackoverflow.com/a/9754466/65387
-    return (today.year - birth.year
-            - ((today.month, today.day) < (birth.month, birth.day)))
+    return (today.year - birth.year -
+            ((today.month, today.day) < (birth.month, birth.day)))
 
 
 def read_ace_iq(path):
@@ -189,7 +189,7 @@ def main():
                     col_1 = (ace_iq_dob, DATE_ERROR_FORMAT)
                     col_4 = (phir_dob, DATE_FORMAT)
                 elif ace_iq_age and (ace_iq_age == ace_iq_age_from_dob and
-                                   ace_iq_age != phir_age_from_dob):
+                                     ace_iq_age != phir_age_from_dob):
                     col_1 = (ace_iq_dob, DATE_FORMAT)
                     col_4 = (phir_dob, DATE_ERROR_FORMAT)
                 else:

@@ -144,7 +144,6 @@ def read_sdim(path):
     return sdim
 
 
-
 def main():
     # ACE-IQ questionnaire
     ace_iq = read_ace_iq(ACE_IQ)
@@ -167,7 +166,7 @@ def main():
     worksheet.merge_range(0, 0, 1, 0, u'PSC1', HEADER_FORMAT)
     worksheet.set_column(0, 0, 14)
     # ACE-IQ
-    worksheet.write(0, 1,u'ACE-IQ', HEADER_FORMAT)
+    worksheet.write(0, 1, u'ACE-IQ', HEADER_FORMAT)
     worksheet.write(1, 1, u'sex', HEADER_FORMAT)
     worksheet.set_column(1, 1, 12)
     # PDS
