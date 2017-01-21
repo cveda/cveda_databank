@@ -221,7 +221,7 @@ def main():
 
             if error:
                 # PSC1
-                worksheet.write_string(row, 0, psc1, ERROR_FORMAT)
+                worksheet.write_string(row, 0, psc1)
                 # ACE-IQ
                 worksheet.write(row, 1, col_1[0], col_1[1])
                 worksheet.write(row, 2, col_2[0], col_2[1])
