@@ -62,7 +62,6 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 import os
-from datetime import time
 from datetime import datetime
 
 # import ../cveda_databank
@@ -70,6 +69,65 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 from cveda_databank import PSC2_FROM_PSC1
 from cveda_databank import DOB_FROM_PSC2
+
+
+def _skip_line(line):
+    """Define lines to skip in CSV files exported from Psytools.
+
+    Psytools files contain identifying data, specifically lines containing:
+    * id_check_dob, ID_check_dob
+    * id_check_gender, ID_check_gender
+
+    As the name implies, the purpose of these lines is cross-checking and
+    error detection, useful only with PSC1 codes. They should not be used
+    for scientific purposes and with PSC2 codes.
+
+    Parameters
+    ----------
+    line: str
+        Line read CSV file.
+
+    Returns
+    -------
+    bool
+        True if line shall be skipped, False otherwise.
+
+    """
+    return 'id_check_' in line or 'ID_check_' in line
+
+
+def _psc1_from_subject_id(subject_id):
+    """Extract PSC1 code from 1st column of CSV files exported from Psytools.
+
+    Skip test subjects.
+
+    Parameters
+    ----------
+    subject_id: str
+        Subject identifier.
+        Valid identifiers looke like 110001234567-C1 or 150007654321-C3.
+
+    Returns
+    -------
+    (str, str)
+        Pair of PSC1 code and suffix. None for test subjects.
+
+    """
+    if subject_id.startswith('CVEDA-Demo-'):
+        psc1, suffix = None, None
+    elif '-' in subject_id:  # subject ID is PSC1 followed by '-C1', '-C2', ...
+        psc1, suffix = subject_id.rsplit('-', 1)
+        if psc1.endswith('MOCK') or psc1.endswith('TEST'):
+            psc1, suffix = None, None
+    else:
+        psc1, suffix = subject_id, None
+    retrun psc1, suffix
+
+
+def _subject_id_from_psc2(psc2, suffix):
+    if suffix:
+        return '-'.join((psc2, suffix))
+    return psc2
 
 
 def _create_psc2_file(psc1_path, psc2_path):
@@ -93,43 +151,18 @@ def _create_psc2_file(psc1_path, psc2_path):
             for line in psytools_file:
                 line = line.strip()
                 items = line.split(',')
-                psc1 = items[0]
-                if 'id_check' in line:
-                    # Psytools files contain identifying data,
-                    # specifically lines containing items:
-                    # * id_check_dob
-                    # * id_check_gender
-                    #
-                    # As the name implies, the purpose of these items is
-                    # cross-checking and error detection. They should not
-                    # be used for scientific purposes.
-                    #
-                    # These items should therefore not be exposed to end
-                    # users.
-                    logging.debug('skipping line with "id_check" from {0}'
+                if _skip_line(line):
+                    logging.debug('skipping line with "id_check_" from {0}'
                                   .format(psc1))
                     continue
-                # skip subjects whose identifier starts with 'CVEDA-Demo-'
-                if psc1.startswith('CVEDA-Demo-'):
-                    logging.debug('skipping test subject {0}'
-                                  .format(psc1))
+                psc1, suffix = _psc1_from_subject_id(items[0])
+                if psc1 is None:
                     continue
-                # subject ID is PSC1 followed by '-C1', '-C2', ...
-                if '-' in psc1:
-                    psc1, suffix = psc1.rsplit('-', 1)
-                else:
-                    suffix = None
                 psc2 = None
-                # skip subjects whose identifier contains 'TEST'
-                if 'TEST' in psc1:
-                    logging.debug('skipping test subject {0}'
-                                  .format(psc1))
-                    continue
                 if psc1 in PSC2_FROM_PSC1:
                     logging.debug('converting subject {0} from PSC1 to PSC2'
                                   .format(psc1))
-                    psc2 = PSC2_FROM_PSC1[psc1]
-                    items[0] = '-'.join((psc2, suffix))
+                    items[0] = _subject_id_from_psc2(PSC2_FROM_PSC1[psc1], suffix)
                 else:
                     logging.error('PSC1 code missing from conversion table: {0}'
                                   .format(items[0]))
