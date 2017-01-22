@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2014-2016 CEA
+# Copyright (c) 2014-2017 CEA
 #
 # This software is governed by the CeCILL license under French law and
 # abiding by the rules of distribution of free software. You can use,
@@ -69,7 +69,9 @@ Classes
    :show-inheritance:
 
 '''
-from . core import PSC2_FROM_PSC1, PSC1_FROM_PSC2, DOB_FROM_PSC1
+from . core import PSC2_FROM_PSC1, PSC1_FROM_PSC2
+from . core import DOB_FROM_PSC1, SEX_FROM_PSC1
 from . core import Error
+from . psytools import read_psytools
 from . dicom_utils import read_metadata
 from . image_data import walk_image_data, report_image_data

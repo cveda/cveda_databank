@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2014-2016 CEA
+# Copyright (c) 2014-2017 CEA
 #
 # This software is governed by the CeCILL license under French law and
 # abiding by the rules of distribution of free software. You can use,
@@ -28,17 +28,20 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-import re
+from . import psytools
 import datetime
 
 import logging
 logger = logging.getLogger(__name__)
 
 #
-# reference file that maps birth dates, PSC1 and PSC2 codes
+# reference files
 #
-_PSC_PATH = '/dev/null'  # '/cveda/psc.csv'
-_DOB_PATH = '/dev/null'  # '/cveda/dob.csv'
+_PSC_PATH = '/cveda/databank/framework/psc/psc2psc_2016-07-12.txt'  # FIXME: NIMHANS path?
+_ACE_IQ_PATH = '/cveda/databank/BL/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
+_PHIR_PATH = '/cveda/databank/BL/RAW/PSC1/psytools/cVEDA-cVEDA_PHIR-BASIC_DIGEST.csv'
+_PDS_PATH = '/cveda/databank/BL/RAW/PSC1/psytools/cVEDA-cVEDA_PDS-BASIC_DIGEST.csv'
+_SDIM_PATH = '/cveda/databank/BL/RAW/PSC1/psytools/cVEDA-cVEDA_SDIM-BASIC_DIGEST.csv'
 
 
 def _initialize_psc2_from_psc1(path):
@@ -51,13 +54,13 @@ def _initialize_psc2_from_psc1(path):
     Returns
     -------
     dict
-        Dictionnary to map PSC1 code to PSC2.
+        Maps PSC1 code to PSC2.
 
     """
     psc2_from_psc1 = {}
     with open(_PSC_PATH, 'rU') as f:
         for line in f:
-            psc1, psc2 = line.strip('\n').split(',').strip()
+            psc1, psc2 = line.strip().split(',')
             if psc2 in psc2_from_psc1:
                 if psc2_from_psc1[psc1] != psc2:
                     logger.critical('inconsistent PSC1/PSC2 mapping: %s', path)
@@ -69,44 +72,113 @@ def _initialize_psc2_from_psc1(path):
     return psc2_from_psc1
 
 
-_REGEX_DOB = re.compile(r'(\d{1,2})[./](\d{1,2})[./](\d{2,4})')
-
-
-def _initialize_dob_from_psc1(path):
-    """Returns dictionnary to map PSC1 code to date of birth.
+def _initialize_dob_from_psc1(ace_iq_path, phir_path):
+    """Build dictionnary to map PSC1 code to date of birth of subject.
 
     Parameters
     ----------
-    path : str
+    ace_iq_path : str
+        Path to ACE-IQ CSV file exported from Psytools.
+    phir_path : str
+        Path to PHIR CSV file exported from Psytools.
 
     Returns
     -------
     dict
-        Dictionnary to map PSC1 code to date of birth.
+        Maps PSC1 code to date of birth of subject.
 
     """
     dob_from_psc1 = {}
-    with open(_DOB_PATH, 'rU') as f:
-        for line in f:
-            psc1, dob = line.strip('\n').split(',').strip()
-            match = _REGEX_DOB.match(dob)
-            if match:
-                day = int(match.group(1))
-                month = int(match.group(2))
-                year = int(match.group(3))
-                if year > 2016:  # c-VEDA started in 2016
-                    logger.error('unexpected birth date: %s: %s', dob, path)
-                    raise Exception('unexpected birth date: {0}'.format(dob))
-                dob_from_psc1[psc1] = datetime.date(year, month, day)
+
+    ace_iq_questions = {'ACEIQ_C2': 'datetime.date'}
+    ace_iq = psytools.read_psytools(ace_iq_path, ace_iq_questions)
+    phir_questions = {'PHIR_01': 'datetime.date'}
+    phir = psytools.read_psytools(phir_path, phir_questions)
+    for psc1 in ace_iq.keys() & phir.keys():
+        if psc1 in ace_iq and 'ACEIQ_C2' in ace_iq[psc1]:
+            dob_ace_iq = ace_iq[psc1]['ACEIQ_C2']
+        else:
+            dob_ace_iq = None
+        if psc1 in phir and 'PHIR_01' in phir[psc1]:
+            dob_phir = phir[psc1]['PHIR_01']
+        else:
+            dob_ace_iq = None
+        if dob_ace_iq and dob_phir:
+            if dob_ace_iq == dob_phir:
+                dob_from_psc1[psc1] = dob_ace_iq
             else:
-                logger.error('unexpected line: %s: %s', path, line)
-                raise Exception('unexpected line: {0}'.format(line))
+                logger.error('inconsistent date of birth for: %s', psc1)
+        elif dob_ace_iq:
+            dob_from_psc1[psc1] = dob_ace_iq
+        elif dob_phir:
+            dob_from_psc1[psc1] = dob_phir
+        else:
+            logger.warning('missing date of birth for: %s', psc1)
+
     return dob_from_psc1
+
+
+def _initialize_sex_from_psc1(ace_iq_path, pds_path, sdim_path):
+    """Build dictionnary to map PSC1 code to sex of subject.
+
+    Parameters
+    ----------
+    ace_iq_path : str
+        Path to ACE-IQ CSV file exported from Psytools.
+    pds_path : str
+        Path to PDS CSV file exported from Psytools.
+    sdim_path : str
+        Path to SDIM CSV file exported from Psytools.
+
+    Returns
+    -------
+    dict
+        Maps PSC1 code to sex of subject.
+
+    """
+    sex_from_psc1 = {}
+
+    ace_iq_questions = {'ACEIQ_C1': None}
+    ace_iq = psytools.read_psytools(ace_iq_path, ace_iq_questions)
+    pds_questions = {'PDS_gender': None}
+    pds = psytools.read_psytools(pds_path, pds_questions)
+    sdim_questions = {'SDI_02': None}
+    sdim = psytools.read_psytools(sdim_path, sdim_questions)
+    for psc1 in ace_iq.keys() & pds.keys() & sdim.keys():
+        merge = {}
+        if psc1 in ace_iq and 'ACEIQ_C1' in ace_iq[psc1]:
+            ace_iq_sex = ace_iq[psc1]['ACEIQ_C1']
+            merge[ace_iq_sex] = merge.setdefault(ace_iq_sex, 0) + 1
+        if psc1 in pds and 'PDS_gender' in pds[psc1]:
+            pds_sex = pds[psc1]['PDS_gender']
+            merge[pds_sex] = merge.setdefault(pds_sex, 0) + 1
+        if psc1 in sdim and 'SDI_02' in sdim[psc1]:
+            sdim_sex = sdim[psc1]['SDI_02']
+            merge[sdim_sex] = merge.setdefault(sdim_sex, 0) + 1
+        if len(merge) < 1:
+            logger.warning('missing sex for: %s', psc1)
+        elif len(merge) > 1:
+            logger.error('inconsistent sex for: %s', psc1)
+            # find the value that occurred more than any other
+            reverse = {}
+            for k, v in merge.items():
+                if v in reverse:
+                    reverse[v].append(k)
+                else:
+                    reverse[v] = [k]
+            m = max(reverse.keys())
+            if len(reverse[m]) == 1:
+                sex_from_psc1[psc1] = reverse[m][0]
+        else:
+            sex_from_psc1[psc1] = list(merge.keys())[0]
+
+    return sex_from_psc1
 
 
 PSC2_FROM_PSC1 = _initialize_psc2_from_psc1(_PSC_PATH)
 PSC1_FROM_PSC2 = {v: k for k, v in PSC2_FROM_PSC1.items()}
-DOB_FROM_PSC1 = _initialize_dob_from_psc1(_DOB_PATH)
+DOB_FROM_PSC1 = _initialize_dob_from_psc1(_ACE_IQ_PATH, _PHIR_PATH)
+SEX_FROM_PSC1 = _initialize_sex_from_psc1(_ACE_IQ_PATH, _PDS_PATH, _SDIM_PATH)
 
 
 class Error:
