@@ -50,109 +50,24 @@ SDIM : str
 
 """
 
-import csv
-import sys
-import datetime
+import cveda_databank
 import xlsxwriter
 
-ACE_IQ = '/cveda/databank/BL/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
-PDS = '/cveda/databank/BL/RAW/PSC1/psytools/cVEDA-cVEDA_PDS-BASIC_DIGEST.csv'
-SDIM = '/cveda/databank/BL/RAW/PSC1/psytools/cVEDA-cVEDA_SDIM-BASIC_DIGEST.csv'
-
-
-def read_ace_iq(path):
-    ace_iq = {}
-    with open(path, mode='r', newline='') as csvfile:
-        dialect = csv.Sniffer().sniff(csvfile.read(4096))
-        csvfile.seek(0)
-        reader = csv.DictReader(csvfile, dialect=dialect)
-        for row in reader:
-            trial = row['Trial']
-            if trial == 'ACEIQ_C1':
-                psc1 = row['User code']
-                if psc1[-3:-1] == '-C':  # user code ID of the form <PSC1>-C1, <PSC1>-C3, etc.
-                    psc1 = psc1[:-3]
-                result = row['Trial result']
-                if result != 'skip_back':
-                    psc1_value = ace_iq.setdefault(psc1, {})
-                    iteration = int(row['Iteration'])
-                    iteration_value = psc1_value.setdefault(iteration, {})
-                    result = row['Trial result']
-                    if result not in {'', 'refuse'}:
-                        if result in {'F', 'M'}:
-                            iteration_value['sex'] = result
-                        else:
-                            print('subject {} has unexpected sex "{}"'.format(psc1, result))
-    for psc1, value in ace_iq.items():
-        ace_iq[psc1] = value[max(value.keys())]  # keep last iteration only
-    return ace_iq
-
-
-def read_pds(path):
-    pds = {}
-    with open(path, mode='r', newline='') as csvfile:
-        dialect = csv.Sniffer().sniff(csvfile.read(4096))
-        csvfile.seek(0)
-        reader = csv.DictReader(csvfile, dialect=dialect)
-        for row in reader:
-            trial = row['Trial']
-            if trial == 'PDS_gender':
-                psc1 = row['User code']
-                if psc1[-3:-1] == '-C':  # user code ID of the form <PSC1>-C1, <PSC1>-C3, etc.
-                    psc1 = psc1[:-3]
-                result = row['Trial result']
-                if result != 'skip_back':
-                    psc1_value = pds.setdefault(psc1, {})
-                    iteration = int(row['Iteration'])
-                    iteration_value = psc1_value.setdefault(iteration, {})
-                    result = row['Trial result']
-                    if result not in {'', 'refuse'}:
-                        if result in {'F', 'M'}:
-                            iteration_value['sex'] = result
-                        else:
-                            print('subject {} has unexpected sex "{}"'.format(psc1, result))
-    for psc1, value in pds.items():
-        pds[psc1] = value[max(value.keys())]  # keep last iteration only
-    return pds
-
-
-def read_sdim(path):
-    sdim = {}
-    with open(path, mode='r', newline='') as csvfile:
-        dialect = csv.Sniffer().sniff(csvfile.read(4096))
-        csvfile.seek(0)
-        reader = csv.DictReader(csvfile, dialect=dialect)
-        for row in reader:
-            trial = row['Trial']
-            if trial == 'SDI_02':
-                psc1 = row['User code']
-                if psc1[-3:-1] == '-C':  # user code ID of the form <PSC1>-C1, <PSC1>-C3, etc.
-                    psc1 = psc1[:-3]
-                result = row['Trial result']
-                if result != 'skip_back':
-                    psc1_value = sdim.setdefault(psc1, {})
-                    iteration = int(row['Iteration'])
-                    iteration_value = psc1_value.setdefault(iteration, {})
-                    result = row['Trial result']
-                    if result not in {'', 'refuse'}:
-                        if result in {'F', 'M'}:
-                            iteration_value['sex'] = result
-                        else:
-                            print('subject {} has unexpected sex "{}"'.format(psc1, result))
-    for psc1, value in sdim.items():
-        sdim[psc1] = value[max(value.keys())]  # keep last iteration only
-    return sdim
+ACE_IQ_PATH = '/cveda/databank/BL/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
+PDS_PATH = '/cveda/databank/BL/RAW/PSC1/psytools/cVEDA-cVEDA_PDS-BASIC_DIGEST.csv'
+SDIM_PATH = '/cveda/databank/BL/RAW/PSC1/psytools/cVEDA-cVEDA_SDIM-BASIC_DIGEST.csv'
 
 
 def main():
     # ACE-IQ questionnaire
-    ace_iq = read_ace_iq(ACE_IQ)
-
+    ace_iq_questions = {'ACEIQ_C1': None}
+    ace_iq = cveda_databank.read_psytools(ACE_IQ_PATH, ace_iq_questions)
     # PDS questionnaire
-    pds = read_pds(PDS)
-
+    pds_questions = {'PDS_gender': None}
+    pds = cveda_databank.read_psytools(PDS_PATH, pds_questions)
     # SDIM questionnaire
-    sdim = read_sdim(SDIM)
+    sdim_questions = {'SDI_02': None}
+    sdim = cveda_databank.read_psytools(SDIM_PATH, sdim_questions)
 
     # Excel output
     options = {
@@ -166,16 +81,13 @@ def main():
     worksheet.merge_range(0, 0, 1, 0, u'PSC1', HEADER_FORMAT)
     worksheet.set_column(0, 0, 14)
     # ACE-IQ
-    worksheet.write(0, 1, u'ACE-IQ', HEADER_FORMAT)
-    worksheet.write(1, 1, u'sex', HEADER_FORMAT)
+    worksheet.merge_range(0, 1, 1, 1, u'ACE-IQ', HEADER_FORMAT)
     worksheet.set_column(1, 1, 12)
     # PDS
-    worksheet.write(0, 2, u'PDS', HEADER_FORMAT)
-    worksheet.write(1, 2, u'sex', HEADER_FORMAT)
+    worksheet.merge_range(0, 2, 1, 2, u'PDS', HEADER_FORMAT)
     worksheet.set_column(2, 2, 12)
     # SDIM
-    worksheet.write(0, 3, u'SDIM', HEADER_FORMAT)
-    worksheet.write(1, 3, u'sex', HEADER_FORMAT)
+    worksheet.merge_range(0, 3, 1, 3, u'SDIM', HEADER_FORMAT)
     worksheet.set_column(3, 3, 12)
     # more formatting and prepare for writing data
     worksheet.freeze_panes(2, 0)
@@ -184,42 +96,36 @@ def main():
     row = 2
 
     for psc1 in ace_iq.keys() & pds.keys() & sdim.keys():
-        total = {}
-        if psc1 in ace_iq and 'sex' in ace_iq[psc1]:
-            ace_iq_sex = ace_iq[psc1]['sex']
-            total[ace_iq_sex] = total.setdefault(ace_iq_sex, 0) + 1
-        else:
-            ace_iq_sex = None
-        if psc1 in pds and 'sex' in pds[psc1]:
-            pds_sex = pds[psc1]['sex']
-            total[pds_sex] = total.setdefault(pds_sex, 0) + 1
-        else:
-            pds_sex = None
-        if psc1 in sdim and 'sex' in sdim[psc1]:
-            sdim_sex = sdim[psc1]['sex']
-            total[sdim_sex] = total.setdefault(sdim_sex, 0) + 1
-        else:
-            sdim_sex = None
+        merge = {}
+        if psc1 in ace_iq and 'ACEIQ_C1' in ace_iq[psc1]:
+            ace_iq_sex = ace_iq[psc1]['ACEIQ_C1']
+            merge[ace_iq_sex] = merge.setdefault(ace_iq_sex, 0) + 1
+        if psc1 in pds and 'PDS_gender' in pds[psc1]:
+            pds_sex = pds[psc1]['PDS_gender']
+            merge[pds_sex] = merge.setdefault(pds_sex, 0) + 1
+        if psc1 in sdim and 'SDI_02' in sdim[psc1]:
+            sdim_sex = sdim[psc1]['SDI_02']
+            merge[sdim_sex] = merge.setdefault(sdim_sex, 0) + 1
 
         if psc1.startswith('1'):
-            if len(total) != 1:
+            if len(merge) > 1:
                 # PSC1
                 worksheet.write_string(row, 0, psc1)
                 # ACE-IQ
-                if ace_iq_sex and (total[ace_iq_sex] != max(total.values()) or
-                                   total[ace_iq_sex] == min(total.values())):
+                if ace_iq_sex and (merge[ace_iq_sex] != max(merge.values()) or
+                                   merge[ace_iq_sex] == min(merge.values())):
                     worksheet.write(row, 1, ace_iq_sex, ERROR_FORMAT)
                 else:
                     worksheet.write(row, 1, ace_iq_sex)
                 # PDS
-                if pds_sex and (total[pds_sex] != max(total.values()) or
-                                total[pds_sex] == min(total.values())):
+                if pds_sex and (merge[pds_sex] != max(merge.values()) or
+                                merge[pds_sex] == min(merge.values())):
                     worksheet.write(row, 2, pds_sex, ERROR_FORMAT)
                 else:
                     worksheet.write(row, 2, pds_sex)
                 # SDIM
-                if sdim_sex and (total[sdim_sex] != max(total.values()) or
-                                 total[sdim_sex] == min(total.values())):
+                if sdim_sex and (merge[sdim_sex] != max(merge.values()) or
+                                 merge[sdim_sex] == min(merge.values())):
                     worksheet.write(row, 3, sdim_sex, ERROR_FORMAT)
                 else:
                     worksheet.write(row, 3, sdim_sex)
