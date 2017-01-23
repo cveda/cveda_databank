@@ -53,9 +53,14 @@ Constants
 .. py:data:: DOB_FROM_PSC1
 
    This dictionary maps PSC1 codes to the date of birth of the relevant subject.
-   At module initialization, we read PSC1 keys as 12-digit strings and date of
-   birth as a Python `datetime` from file
-   */cveda/databank/framework/psc/psc2psc_2016-07-12.txt*.
+   At module initialization, we read date of birth from Psytools questionnaires
+   ACE-IQ and PHIR. We discard subjects with inconsistent data.
+
+.. py:data:: SEX_FROM_PSC1
+
+   This dictionary maps PSC1 codes to the sex of the relevant subject.
+   At module initialization, we read sex from Psytools questionnaires ACE-IQ,
+   PDS and SDIM. We discard subjects with inconsistent data.
 
 Constants
 ---------
@@ -69,9 +74,9 @@ Classes
    :show-inheritance:
 
 '''
-from . core import PSC2_FROM_PSC1, PSC1_FROM_PSC2
-from . core import DOB_FROM_PSC1, SEX_FROM_PSC1
-from . core import Error
-from . psytools import read_psytools
-from . dicom_utils import read_metadata
-from . image_data import walk_image_data, report_image_data
+from .core import PSC2_FROM_PSC1, PSC1_FROM_PSC2
+from .core import DOB_FROM_PSC1, SEX_FROM_PSC1
+from .core import Error
+from .psytools import read_psytools
+from .dicom_utils import read_metadata
+from .image_data import walk_image_data, report_image_data

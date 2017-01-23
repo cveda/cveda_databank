@@ -28,8 +28,7 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-from . import psytools
-import datetime
+from .psytools import read_psytools
 
 import logging
 logger = logging.getLogger(__name__)
@@ -91,9 +90,9 @@ def _initialize_dob_from_psc1(ace_iq_path, phir_path):
     dob_from_psc1 = {}
 
     ace_iq_questions = {'ACEIQ_C2': 'datetime.date'}
-    ace_iq = psytools.read_psytools(ace_iq_path, ace_iq_questions)
+    ace_iq = read_psytools(ace_iq_path, ace_iq_questions)
     phir_questions = {'PHIR_01': 'datetime.date'}
-    phir = psytools.read_psytools(phir_path, phir_questions)
+    phir = read_psytools(phir_path, phir_questions)
     for psc1 in ace_iq.keys() & phir.keys():
         if psc1 in ace_iq and 'ACEIQ_C2' in ace_iq[psc1]:
             dob_ace_iq = ace_iq[psc1]['ACEIQ_C2']
@@ -139,11 +138,11 @@ def _initialize_sex_from_psc1(ace_iq_path, pds_path, sdim_path):
     sex_from_psc1 = {}
 
     ace_iq_questions = {'ACEIQ_C1': None}
-    ace_iq = psytools.read_psytools(ace_iq_path, ace_iq_questions)
+    ace_iq = read_psytools(ace_iq_path, ace_iq_questions)
     pds_questions = {'PDS_gender': None}
-    pds = psytools.read_psytools(pds_path, pds_questions)
+    pds = read_psytools(pds_path, pds_questions)
     sdim_questions = {'SDI_02': None}
-    sdim = psytools.read_psytools(sdim_path, sdim_questions)
+    sdim = read_psytools(sdim_path, sdim_questions)
     for psc1 in ace_iq.keys() & pds.keys() & sdim.keys():
         merge = {}
         if psc1 in ace_iq and 'ACEIQ_C1' in ace_iq[psc1]:
