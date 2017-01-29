@@ -28,7 +28,6 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-from .core import PSC2_FROM_PSC1
 import csv
 import datetime
 
@@ -50,7 +49,7 @@ def read_psytools(path, questions=None):
             if psc1[-3:-1] == '-C' and psc1[-1].isdigit():
                 psc1 = psc1[:-3]
             # skip dummy test subjects
-            if psc1 not in PSC2_FROM_PSC1:
+            if not (len(psc1) == 12 and psc1.isdigit()):
                 continue
             trial_result = row['Trial result']
             if trial_result == 'skip_back':  # mail from John Rogers sent 2017-01-21
