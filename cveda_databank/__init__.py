@@ -80,3 +80,5 @@ from .core import Error
 from .psytools import read_psytools
 from .dicom_utils import read_metadata
 from .image_data import walk_image_data, report_image_data
+
+from . import sanity
