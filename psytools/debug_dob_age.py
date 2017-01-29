@@ -48,7 +48,6 @@ PHIR : str
 """
 
 import csv
-import sys
 import datetime
 import xlsxwriter
 
@@ -203,14 +202,12 @@ def main():
             if ace_iq_age:
                 if ace_iq_age_from_dob and ace_iq_age != ace_iq_age_from_dob:
                     error = True
-                    age_error = True
                     col_3 = (ace_iq_age_from_dob, ERROR_FORMAT)
                     col_2 = (ace_iq_age, ERROR_FORMAT)
                 else:
                     col_3 = (ace_iq_age_from_dob, None)
                 if phir_age_from_dob and ace_iq_age != phir_age_from_dob:
                     error = True
-                    age_error = True
                     col_5 = (phir_age_from_dob, ERROR_FORMAT)
                     col_2 = (ace_iq_age, ERROR_FORMAT)
                 else:

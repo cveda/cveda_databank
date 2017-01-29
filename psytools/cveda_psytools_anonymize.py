@@ -149,7 +149,7 @@ def _create_psc2_file(psc1_path, psc2_path):
                 items = line.split(',')
                 if _skip_line(line):
                     logging.debug('skipping line with "id_check_" from {0}'
-                                  .format(psc1))
+                                  .format(items[0]))
                     continue
                 psc1, suffix = _psc1_from_subject_id(items[0])
                 if psc1 in PSC2_FROM_PSC1:
