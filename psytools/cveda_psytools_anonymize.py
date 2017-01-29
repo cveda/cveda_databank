@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2010-2016 CEA
+# Copyright (c) 2010-2017 CEA
 #
 # This software is governed by the CeCILL license under French law and
 # abiding by the rules of distribution of free software. You can use,
@@ -68,7 +68,7 @@ from datetime import datetime
 import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 from cveda_databank import PSC2_FROM_PSC1
-from cveda_databank import DOB_FROM_PSC2
+from cveda_databank import DOB_FROM_PSC1
 
 
 def _skip_line(line):
@@ -110,18 +110,14 @@ def _psc1_from_subject_id(subject_id):
     Returns
     -------
     (str, str)
-        Pair of PSC1 code and suffix. None for test subjects.
+        Pair of PSC1 code and suffix. If subject_id cannot be split,
+        suffix is None.
 
     """
-    if subject_id.startswith('CVEDA-Demo-'):
-        psc1, suffix = None, None
-    elif '-' in subject_id:  # subject ID is PSC1 followed by '-C1', '-C2', ...
-        psc1, suffix = subject_id.rsplit('-', 1)
-        if psc1.endswith('MOCK') or psc1.endswith('TEST'):
-            psc1, suffix = None, None
-    else:
-        psc1, suffix = subject_id, None
-    retrun psc1, suffix
+    split_id = subject_id.rsplit('-', 1)
+    if len(split_id) > 1:
+        return split_id
+    return subject_id, None
 
 
 def _subject_id_from_psc2(psc2, suffix):
@@ -142,13 +138,13 @@ def _create_psc2_file(psc1_path, psc2_path):
 
     """
     with open(psc1_path, 'r') as psc1_file:
-        # identify columns to anonymize in header
+        # identify columns to anonymize - header contains 'Timestamp'
         header = psc1_file.readline().strip()
         convert = [i for i, field in enumerate(header.split(','))
                    if 'Timestamp' in field]
         with open(psc2_path, 'w') as psc2_file:
             psc2_file.write(header + '\n')
-            for line in psytools_file:
+            for line in psc1_file:
                 line = line.strip()
                 items = line.split(',')
                 if _skip_line(line):
@@ -156,24 +152,26 @@ def _create_psc2_file(psc1_path, psc2_path):
                                   .format(psc1))
                     continue
                 psc1, suffix = _psc1_from_subject_id(items[0])
-                if psc1 is None:
-                    continue
-                psc2 = None
                 if psc1 in PSC2_FROM_PSC1:
                     logging.debug('converting subject {0} from PSC1 to PSC2'
                                   .format(psc1))
                     items[0] = _subject_id_from_psc2(PSC2_FROM_PSC1[psc1], suffix)
                 else:
-                    logging.error('PSC1 code missing from conversion table: {0}'
-                                  .format(items[0]))
+                    u = psc1.upper()
+                    if 'DEMO' in u or 'MOCK' in u or 'TEST' in u or 'PILOT' in u:
+                        logging.debug('Skipping test subject: {0}'
+                                      .format(psc1))
+                    else:
+                        logging.error('PSC1 code missing from conversion table: {0}'
+                                      .format(psc1))
                     continue
                 for i in convert:
-                    if psc2 is None or psc2 not in DOB_FROM_PSC2:
+                    if psc1 not in DOB_FROM_PSC1:
                         items[i] = ''
                     else:
                         timestamp = datetime.strptime(items[i],
                                                       '%Y-%m-%d %H:%M:%S.%f').date()
-                        birth = DOB_FROM_PSC2[psc2]
+                        birth = DOB_FROM_PSC1[psc1]
                         age = timestamp - birth
                         items[i] = str(age.days)
                 psc2_file.write(','.join(items) + '\n')
