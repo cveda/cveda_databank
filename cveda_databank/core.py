@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 #
 # reference files
 #
-_PSC_PATH = '/cveda/databank/framework/psc/psc2psc_2016-07-12.txt'  # FIXME: NIMHANS path?
+_PSC_PATH = '/tmp/psc2psc_2016-07-12.txt'  # FIXME: missing workstation at NIMHANS
 _ACE_IQ_PATH = '/cveda/databank/BL/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
 _PHIR_PATH = '/cveda/databank/BL/RAW/PSC1/psytools/cVEDA-cVEDA_PHIR-BASIC_DIGEST.csv'
 _PDS_PATH = '/cveda/databank/BL/RAW/PSC1/psytools/cVEDA-cVEDA_PDS-BASIC_DIGEST.csv'
