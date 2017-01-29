@@ -32,6 +32,9 @@ from .psytools import read_psytools
 
 import logging
 logger = logging.getLogger(__name__)
+import sys
+if (2, 7) <= sys.version_info < (3, 2):
+    logger.addHandler(logging.NullHandler())
 
 #
 # reference files
