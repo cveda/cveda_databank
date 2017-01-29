@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
+    # -*- coding: utf-8 -*-
 
-# Copyright (c) 2014-2016 CEA
+# Copyright (c) 2014-2017 CEA
 #
 # This software is governed by the CeCILL license under French law and
 # abiding by the rules of distribution of free software. You can use,
@@ -254,7 +254,7 @@ def read_metadata(path, force=False):
         'ImageType': [_decode(x) for x in dataset.ImageType],
     }
 
-    # optional tags
+    # optional date/time tags
     if 'AcquisitionDateTime' in dataset:
         dt = _datetime_from_dt(dataset.AcquisitionDateTime)
         metadata['AcquisitionDate'] = dt.date()
@@ -264,6 +264,8 @@ def read_metadata(path, force=False):
             metadata['AcquisitionDate'] = _date_from_da(dataset.AcquisitionDate)
         if 'AcquisitionTime' in dataset:
             metadata['AcquisitionTime'] = _time_from_tm(dataset.AcquisitionTime)
+
+    # optional device tags
     if 'StationName' in dataset:
         metadata['StationName'] = _decode(dataset.StationName)
     if 'Manufacturer' in dataset:
@@ -280,7 +282,20 @@ def read_metadata(path, force=False):
             metadata['SoftwareVersions'] = _decode(dataset.SoftwareVersions[-1])
         else:
             metadata['SoftwareVersions'] = _decode(dataset.SoftwareVersions)
-    if 'PatientID' in dataset:
-            metadata['PatientID'] = _decode(dataset.PatientID)
+
+    # find c-VEDA subject ID
+    if 'CommentsOnThePerformedProcedureStep' in dataset:
+        # MYSURU?
+        metadata['PatientID'] = _decode(dataset.CommentsOnThePerformedProcedureStep)
+    elif 'PatientComments' in dataset:
+        # NIMHANS with RIS (starting from 2017-01-19)
+        metadata['PatientID'] = _decode(dataset.PatientComments)
+    elif 'StudyComments' in dataset:
+        # NIMHANS with RIS (single dataset on 2016-12-31)
+        metadata['PatientID'] = _decode(dataset.StudyComments)
+    elif 'PatientID' in dataset:
+        # CHANDIGARH
+        # NIMHANS before RIS (from pilots in May 2016 to 2016-12-17)
+        metadata['PatientID'] = _decode(dataset.PatientID)
 
     return metadata
