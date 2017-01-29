@@ -93,7 +93,7 @@ def _initialize_dob_from_psc1(ace_iq_path, phir_path):
     ace_iq = read_psytools(ace_iq_path, ace_iq_questions)
     phir_questions = {'PHIR_01': 'datetime.date'}
     phir = read_psytools(phir_path, phir_questions)
-    for psc1 in ace_iq.keys() & phir.keys():
+    for psc1 in list(ace_iq) + list(phir):
         if psc1 in ace_iq and 'ACEIQ_C2' in ace_iq[psc1]:
             dob_ace_iq = ace_iq[psc1]['ACEIQ_C2']
         else:
@@ -143,7 +143,7 @@ def _initialize_sex_from_psc1(ace_iq_path, pds_path, sdim_path):
     pds = read_psytools(pds_path, pds_questions)
     sdim_questions = {'SDI_02': None}
     sdim = read_psytools(sdim_path, sdim_questions)
-    for psc1 in ace_iq.keys() & pds.keys() & sdim.keys():
+    for psc1 in list(ace_iq) + list(pds) + list(sdim):
         merge = {}
         if psc1 in ace_iq and 'ACEIQ_C1' in ace_iq[psc1]:
             ace_iq_sex = ace_iq[psc1]['ACEIQ_C1']
