@@ -146,7 +146,7 @@ def report_image_data(path, force=False):
             series_dict[series_uid] = Series(metadata, {image_uid: relpath})
         else:
             series_dict[series_uid].metadata['SeriesNumber'].update([series_number])
-            series_dict[series_uid].metadata['SeriesDescription'].update([SeriesDescription])
+            series_dict[series_uid].metadata['SeriesDescription'].update([series_description])
             series_dict[series_uid].metadata['ImageType'].update(x for x in image_types)
             if timestamp < series_dict[series_uid].metadata['MinAcquisitionDateTime']:
                 series_dict[series_uid].metadata['MinAcquisitionDateTime'] = timestamp

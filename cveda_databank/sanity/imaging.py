@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2014-2016 CEA
+# Copyright (c) 2014-2017 CEA
 #
 # This software is governed by the CeCILL license under French law and
 # abiding by the rules of distribution of free software. You can use,
@@ -45,7 +45,7 @@ try:
     from ..core import PSC2_FROM_PSC1
     from ..core import Error
     from ..dicom_utils import read_metadata
-except:
+except ImportError:
     import sys
     sys.path.append(os.path.join(os.path.dirname(__file__), u'../..'))
     from cveda_databank import PSC2_FROM_PSC1
@@ -244,18 +244,62 @@ def _check_empty_files(ziptree):
             yield error
 
 
-def _check_meta_data(meta_data):
-    """
-    """
-    for f, zipinfo in ziptree.files.items():
-        if zipinfo.file_size == 0:
-            yield Error(zipinfo.filename, 'File is empty')
-    for d, ziptree in ziptree.directories.items():
-        for error in _check_empty_files(ziptree):
-            yield error
+_SERIES_DESCRIPTION = {
+    'CHANDIGARH': {
+        'T1w': ['3DT1 weighted volume'],
+        'rest': ['Resting state fMRI'],
+        'B0_map': ['B0 mapping'],
+        'dwi': ['DTI'],
+        'dwi_rev': ['DTI-reversed'],
+        'FLAIR': ['2D T2 weighted'],
+        'T2w': ['2D fast FLAIR'],
+    },
+    'MYSURU': {
+        'T1w': ['T1W_IR_TSE'],
+        'rest': ['FE_EPI 160'],
+        'B0_map': ['B0 mapping'],
+        'dwi': ['DTI_high_32'],
+        'dwi_rev': ['DTI_6'],
+        'FLAIR': ['FLAIR'],
+        'T2w': ['T2W_TSE'],
+    },
+    'NIMHANS': {
+        'T1w': ['3D T1 WEIGHTED VOLUME'],
+        'rest': ['act_RESTING STATE fMRI'],
+        'B0_map': ['B0 MAPPING', 'B 0  MAPPING'],
+        'dwi': ['DTI_DFC', 'DTI_DFC_MIX'],
+        'dwi_rev': ['DTI REVERSED_DFC', 'DTI REVERSED_DFC_MIX'],
+        'FLAIR': ['2D FAST FLAIR'],
+        'T2w': ['2D T2 WEIGHTED'],
+    },
+    'NIMHANS_pilot': {
+        'T1w': ['t1_mprage_sag'],
+        'rest': ['bas_Resting STATE fMRI'],
+        'B0_map': ['B 0 _mapping_2mm'],
+        'dwi': ['DTI _30_DFC'],
+        'dwi_rev': ['DTI _6_DFC'],
+        'FLAIR': ['2D FLAIR'],
+        'T2w': ['2D T2 TSE'],
+    },
+}
 
 
-def _check_sequence_content(path, ziptree, sequence, psc1, timepoint=None):
+def _match_series_description(sequence, series_description, center=None):
+    _SHORT_SERIES_DESCRIPTION = {}
+
+    if center:
+        if center in _SHORT_SERIES_DESCRIPTION:
+            series = _SHORT_SERIES_DESCRIPTION[center]
+            if sequence in series and series_description in series[sequence]:
+                return True
+    else:
+        for centre, series in _SERIES_DESCRIPTION.items():
+            if sequence in series and series_description in series[sequence]:
+                return True
+    return False
+
+
+def _check_sequence_content(path, ziptree, sequence, psc1, date):
     """Rapid sanity check of a ZIP subfolder containing an MRI sequence.
 
     Parameters
@@ -264,12 +308,12 @@ def _check_sequence_content(path, ziptree, sequence, psc1, timepoint=None):
         Path name of the ZIP file.
     ziptree : ZipTree
         Tree under the specific sequence folder.
-    sequence : dict
-        Which sequence to expect.
+    sequence : str
+        Expected sequence.
     psc1 : str
         Expected 12-digit PSC1 code.
-    timepoint : str, optional
-        Time point identifier, found as a suffix in subject identifiers.
+    date : datetime.date
+        Expected date of acquisition.
 
     Returns
     -------
@@ -285,7 +329,7 @@ def _check_sequence_content(path, ziptree, sequence, psc1, timepoint=None):
     # check zip tree is not empty and does not contain empty files
     files = list(_files(ziptree))
     if len(files) < 1:
-        errors.append(Error(ziptree.filename, 'Sequence is empty'))
+        errors.append(Error(ziptree.filename, 'Folder is empty'))
     else:
         errors.extend(_check_empty_files(ziptree))
 
@@ -299,35 +343,64 @@ def _check_sequence_content(path, ziptree, sequence, psc1, timepoint=None):
                     except:
                         continue
                     else:
-                        #~ metadata['SeriesDescription']
-                        # TODO: report inconsistencies in:
-                        # * subject ID
-                        # * sequence name
+                        series_description = metadata['SeriesDescription']
+                        if not _match_series_description(sequence, series_description):
+                            errors.append(Error(f, 'Unexpected Series Description: {0}'
+                                                   .format(series_description)))
+                        if 'PatientID' in metadata:
+                            patient_id = metadata['PatientID']
+                            if not patient_id:
+                                errors.append(Error(f, 'Empty PSC1 code'))
+                            elif patient_id != psc1:
+                                errors.append(Error(f, 'Inconsistent PSC1 code: {0}'
+                                                       .format(patient_id)))
+                        else:
+                            errors.append(Error(f, 'Missing PSC1 code'))
+                        if 'AcquisitionDate' in metadata:
+                            acquisition_date = metadata['AcquisitionDate']
+                            if acquisition_date != date:
+                                errors.append(Error(f, 'Inconsistent acquisition date: {0}'
+                                                       .format(acquisition_date)))
+                        else:
+                            errors.append(Error(f, 'Missing acquisition date'))
                         break
 
     return (subject_ids, errors)
 
 
-def check_zip_content(path, psc1, sequences, timepoint=None):
+def check_zip_content(path, psc1=None, date=None, expected=None):
     """Rapid sanity check of a ZIP file containing imaging data for a subject.
+
+    Expected sequences and tests are described as a dict:
+
+    {
+        'T1w': 'Good',
+        'rest': 'Good',
+        'B0_map': 'Good',
+        'dwi': 'Doubtful',
+        'dwi_rev': 'Bad',
+        'FLAIR': 'Missing',
+        'T2w', 'Good',
+    }
 
     Parameters
     ----------
     path : str
-        Path name of the ZIP file.
-    psc1 : str
+        Path to the ZIP file.
+    psc1 : str, optional
         Expected 12-digit PSC1 code.
-    sequences : dict
-        Which sequences to expect.
-    timepoint : str, optional
-        Time point identifier, found as a suffix in subject identifiers.
+    date : datetime.date, optional
+        Date of acquisition.
+    expected : dict, optional
+        Which MRI sequences and tests to expect.
 
     Returns
     -------
     result: tuple
-        In case of errors, return the tuple ([], errors) where errors is
-        a list of errors. Oterwise return the tuple (psc1, errors) where psc1
-        is a list of dectected PSC1 code and errors is an empty list.
+        In case of errors, return the tuple (psc1, errors) where psc1 is
+        a collection of PSC1 codes found in the ZIP file and errors is an
+        empty list if the ZIP file passes the check and a list of errors
+        otherwise.
 
     Raises
     ------
@@ -339,22 +412,6 @@ def check_zip_content(path, psc1, sequences, timepoint=None):
     errors = []
 
     basename = os.path.basename(path)
-
-    # internal check on sequences given as argument
-    EXPECTED_SEQUENCES = {
-        'T1w',
-        'dwi',
-        'dwi_rev',
-        'rest',
-        'FLAIR',
-        'T2w',
-    }
-    for sequence in sequences:
-        if sequence not in EXPECTED_SEQUENCES:
-            logger.error('Unexpected sequence "{0}"'.format(sequence))
-            errors.append(Error(__file__,
-                                'INTERNAL ERROR: Unexpected sequence "{0}"'
-                                .format(sequence)))
 
     # is the file empty?
     if os.path.getsize(path) == 0:
@@ -370,31 +427,26 @@ def check_zip_content(path, psc1, sequences, timepoint=None):
 
     # check tree structure
     for f, z in ziptree.files.items():
-        errors.append(Error(f, 'Unexpected file at the root of the ZIP file'))
+        errors.append(Error(f, 'Unexpected file at the root of the ZIP file: {0}'
+                               .format(f)))
 
-    for sequence, status in sequences.items():
+    for sequence, status in expected.items():
         if sequence not in ziptree.directories:
             errors.append(Error(basename,
-                                'Sequence "{0}" is missing'
+                                'Missing folder at the root of the ZIP file: {0}'
                                 .format(sequence)))
 
     for d, z in ziptree.directories.items():
-        if d not in EXPECTED_SEQUENCES:
+        if d not in expected:
             errors.append(Error(basename,
-                                'Unexpected top-level folder "{0}"'
+                                'Unexpected folder, unrelated to expected sequences: {0}'
                                 .format(d)))
-        elif d not in sequences:
+        elif expected[d] == 'Missing':
             errors.append(Error(basename,
-                                'Sequence "{0}" has not been declared, '
-                                'but ZIP file contains folder "{0}"'
-                                .format(d)))
-        elif sequences[d] == 'Missing':
-            errors.append(Error(basename,
-                                'Sequence "{0}" has been declared Missing, '
-                                'but ZIP file contains folder "{0}"'
+                                'Unexpected folder, associated to a "Missing" sequence: {0}'
                                 .format(d)))
         else:
-            s, e = _check_sequence_content(path, z, d, psc1, timepoint)
+            s, e = _check_sequence_content(path, z, d, psc1, date)
             subject_ids.extend(s)
             errors.extend(e)
         errors.extend(_check_empty_files(z))
