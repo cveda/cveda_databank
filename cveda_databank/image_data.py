@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2014-2016 CEA
+# Copyright (c) 2014-2017 CEA
 #
 # This software is governed by the CeCILL license under French law and
 # abiding by the rules of distribution of free software. You can use,
@@ -37,7 +37,7 @@ import datetime
 from collections import namedtuple
 from collections import Counter
 
-from . dicom_utils import read_metadata
+from .dicom_utils import read_metadata
 
 
 def walk_image_data(path, force=False):
@@ -89,9 +89,9 @@ def walk_image_data(path, force=False):
 
 
 def report_image_data(path, force=False):
-    """Find DICOM files loosely organized according to the Imagen FU2 SOPs.
+    """Find DICOM files loosely organized according to the c-VEDA SOPs.
 
-    The Imagen FU2 SOPs define a precise file organization for Image Data. In
+    The c-VEDA FU2 SOPs define a precise file organization for Image Data. In
     practice we have found the SOPs are only loosely followed. A method to find
     DICOM files while adapting to local variations is to read all DICOM files,
     then filter and break them down into series based on their contents.
@@ -109,7 +109,7 @@ def report_image_data(path, force=False):
     Returns
     -------
     dict
-        The key identifies a series while the value is Series namedtuple.
+        The key identifies a series while the value is a Series named tuple.
 
     """
     Series = namedtuple('Series', ['metadata', 'images'])

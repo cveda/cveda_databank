@@ -42,9 +42,9 @@ logger = logging.getLogger(__name__)
 
 # import ../../databank
 try:
-    from .. core import PSC2_FROM_PSC1
-    from .. core import Error
-    from .. dicom_utils import read_metadata
+    from ..core import PSC2_FROM_PSC1
+    from ..core import Error
+    from ..dicom_utils import read_metadata
 except:
     import sys
     sys.path.append(os.path.join(os.path.dirname(__file__), u'../..'))
