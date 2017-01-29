@@ -1,4 +1,4 @@
-    # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (c) 2014-2017 CEA
 #
@@ -284,13 +284,13 @@ def read_metadata(path, force=False):
             metadata['SoftwareVersions'] = _decode(dataset.SoftwareVersions)
 
     # find c-VEDA subject ID
-    if 'CommentsOnThePerformedProcedureStep' in dataset:
+    if 'CommentsOnThePerformedProcedureStep' in dataset and dataset.CommentsOnThePerformedProcedureStep:
         # MYSURU?
         metadata['PatientID'] = _decode(dataset.CommentsOnThePerformedProcedureStep)
-    elif 'PatientComments' in dataset:
+    elif 'PatientComments' in dataset and dataset.PatientComments:
         # NIMHANS with RIS (starting from 2017-01-19)
         metadata['PatientID'] = _decode(dataset.PatientComments)
-    elif 'StudyComments' in dataset:
+    elif 'StudyComments' in dataset and dataset.StudyComments:
         # NIMHANS with RIS (single dataset on 2016-12-31)
         metadata['PatientID'] = _decode(dataset.StudyComments)
     elif 'PatientID' in dataset:
