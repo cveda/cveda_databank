@@ -186,7 +186,7 @@ class ZipTree:
         else:
             print(indent + '├── ' + name)
             indent += '│   '
-        self._print_children(indent, last)
+        self._print_children(indent)
 
 
 class TemporaryDirectory(object):
