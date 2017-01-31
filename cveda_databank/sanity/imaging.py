@@ -133,7 +133,7 @@ class ZipTree:
         ziptree = ZipTree()
         with ZipFile(path, 'r') as z:
             for zipinfo in z.infolist():
-                ziptree._add(zipinfo)  # pylint: disable-msg=W0212
+                ziptree._add(zipinfo)  # pylint: disable=W0212
         return ziptree
 
     def _add(self, zipinfo):
@@ -162,14 +162,14 @@ class ZipTree:
         if directories:
             last_directory = directories.pop()
             for d, ziptree in directories:
-                ziptree._print(d, indent, False)   # pylint: disable-msg=W0212
+                ziptree._print(d, indent, False)  # pylint: disable=W0212
         else:
             last_directory = None
         files = list(self.files.items())
         if files:
             if last_directory:
                 d, ziptree = last_directory
-                ziptree._print(d, indent, False)  # pylint: disable-msg=W0212
+                ziptree._print(d, indent, False)  # pylint: disable=W0212
             last_file = files.pop()
             for f, zipinfo in files:
                 print(indent + '├── ' + f)
@@ -177,7 +177,7 @@ class ZipTree:
             print(indent + '└── ' + f)
         elif last_directory:
             d, ziptree = last_directory
-            ziptree._print(d, indent, True)  # pylint: disable-msg=W0212
+            ziptree._print(d, indent, True)  # pylint: disable=W0212
 
     def _print(self, name, indent='', last=True):
         if last:

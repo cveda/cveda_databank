@@ -41,7 +41,7 @@ except ImportError:
     InvalidDicomError = None
 else:
     HAS_DICOM = True
-    from dicom.filereader import InvalidDicomError
+    from dicom.filereader import InvalidDicomError  # pylint: disable=unused-import
 
 
 def _decode(attribute):
