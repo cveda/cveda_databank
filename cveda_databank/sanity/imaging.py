@@ -133,7 +133,7 @@ class ZipTree:
         ziptree = ZipTree()
         with ZipFile(path, 'r') as z:
             for zipinfo in z.infolist():
-                ziptree._add(zipinfo)
+                ziptree._add(zipinfo)  # pylint: disable-msg=W0212
         return ziptree
 
     def _add(self, zipinfo):
@@ -162,14 +162,14 @@ class ZipTree:
         if directories:
             last_directory = directories.pop()
             for d, ziptree in directories:
-                ziptree._print(d, indent, False)
+                ziptree._print(d, indent, False)   # pylint: disable-msg=W0212
         else:
             last_directory = None
         files = list(self.files.items())
         if files:
             if last_directory:
                 d, ziptree = last_directory
-                ziptree._print(d, indent, False)
+                ziptree._print(d, indent, False)  # pylint: disable-msg=W0212
             last_file = files.pop()
             for f, zipinfo in files:
                 print(indent + '├── ' + f)
@@ -177,7 +177,7 @@ class ZipTree:
             print(indent + '└── ' + f)
         elif last_directory:
             d, ziptree = last_directory
-            ziptree._print(d, indent, True)
+            ziptree._print(d, indent, True)  # pylint: disable-msg=W0212
 
     def _print(self, name, indent='', last=True):
         if last:
@@ -217,9 +217,9 @@ def _files(ziptree):
     f: str
 
     """
-    for f, zipinfo in ziptree.files.items():
+    for f in ziptree.files:
         yield ziptree.filename + f
-    for d, ziptree in ziptree.directories.items():
+    for ziptree in ziptree.directories.values():
         for f in _files(ziptree):
             yield f
 
@@ -239,7 +239,7 @@ def _check_empty_files(ziptree):
     for f, zipinfo in ziptree.files.items():
         if zipinfo.file_size == 0:
             yield Error(zipinfo.filename, 'File is empty')
-    for d, ziptree in ziptree.directories.items():
+    for ziptree in ziptree.directories.values():
         for error in _check_empty_files(ziptree):
             yield error
 
@@ -293,7 +293,7 @@ def _match_series_description(sequence, series_description, center=None):
             if sequence in series and series_description in series[sequence]:
                 return True
     else:
-        for centre, series in _SERIES_DESCRIPTION.items():
+        for series in _SERIES_DESCRIPTION.values():
             if sequence in series and series_description in series[sequence]:
                 return True
     return False

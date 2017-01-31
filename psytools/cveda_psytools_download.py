@@ -111,7 +111,7 @@ def main():
     for task, digest in PSYTOOLS_DATASETS:
         digest = digest.upper().replace(' ', '_')
         dataset = 'cVEDA-{task}-{digest}.csv'.format(task=task, digest=digest)
-        logging.info('downloading: {0}'.format(dataset))
+        logging.info('downloading: %s', dataset)
         url = BASE_URL + dataset + '.gz'
         # connect to Delosis web service
         # let Requests module read authentication tokens from ~/.netrc
@@ -128,11 +128,11 @@ def main():
             if os.path.isfile(psytools_path):
                 with open(psytools_path, 'r') as uncompressed_file:
                     if uncompressed_file.read() == data:
-                        logging.info('skip unchanged file: {0}'.format(psytools_path))
+                        logging.info('skip unchanged file: %s', psytools_path)
                         continue
             # write downloaded data into file
             with open(psytools_path, 'w') as uncompressed_file:
-                logging.info('write file: {0}'.format(psytools_path))
+                logging.info('write file: %s', psytools_path)
                 uncompressed_file.write(data)
 
 

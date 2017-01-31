@@ -148,22 +148,22 @@ def _create_psc2_file(psc1_path, psc2_path):
                 line = line.strip()
                 items = line.split(',')
                 if _skip_line(line):
-                    logging.debug('skipping line with "id_check_" from {0}'
-                                  .format(items[0]))
+                    logging.debug('skipping line with "id_check_" from %s',
+                                  items[0])
                     continue
                 psc1, suffix = _psc1_from_subject_id(items[0])
                 if psc1 in PSC2_FROM_PSC1:
-                    logging.debug('converting subject {0} from PSC1 to PSC2'
-                                  .format(psc1))
+                    logging.debug('converting subject %s from PSC1 to PSC2',
+                                  psc1)
                     items[0] = _subject_id_from_psc2(PSC2_FROM_PSC1[psc1], suffix)
                 else:
                     u = psc1.upper()
                     if 'DEMO' in u or 'MOCK' in u or 'TEST' in u or 'PILOT' in u:
-                        logging.debug('Skipping test subject: {0}'
-                                      .format(psc1))
+                        logging.debug('Skipping test subject: %s',
+                                      psc1)
                     else:
-                        logging.error('PSC1 code missing from conversion table: {0}'
-                                      .format(psc1))
+                        logging.error('PSC1 code missing from conversion table: %s',
+                                      psc1)
                     continue
                 for i in convert:
                     if psc1 not in DOB_FROM_PSC1:
