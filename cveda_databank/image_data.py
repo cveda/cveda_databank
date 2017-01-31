@@ -38,6 +38,7 @@ from collections import namedtuple
 from collections import Counter
 
 from .dicom_utils import read_metadata
+from .dicom_utils import InvalidDicomError
 
 
 def walk_image_data(path, force=False):
@@ -77,7 +78,7 @@ def walk_image_data(path, force=False):
                 metadata = read_metadata(abspath, force=force)
             except IOError as e:
                 logger.error('cannot read file (%s): %s', str(e), relpath)
-            except dicom.filereader.InvalidDicomError as e:
+            except InvalidDicomError as e:
                 logger.error('cannot read nonstandard DICOM file: %s: %s', str(e), relpath)
             except AttributeError as e:
                 logger.error('missing attribute: %s: %s', str(e), relpath)

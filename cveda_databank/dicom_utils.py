@@ -38,8 +38,10 @@ try:
     import dicom
 except ImportError:
     HAS_DICOM = False
+    InvalidDicomError = None
 else:
     HAS_DICOM = True
+    from dicom.filereader import InvalidDicomError
 
 
 def _decode(attribute):
@@ -236,15 +238,23 @@ def read_metadata(path, force=False):
     if HAS_DICOM:
         dataset = dicom.read_file(path, force=force)
     else:
-        return {}
+        return {
+            'SOPInstanceUID': None,
+            'SeriesInstanceUID': None,
+            'SeriesNumber': None,
+            'SeriesDescription': None,
+            'ImageType': None,
+            'AcquisitionDate': None,
+            'AcquisitionTime': None,
+        }
 
-    # missing compulsory tags will raise exceptions
+    # compulsory tags - missing tags will raise exceptions
     if 'SeriesDescription' in dataset:
         description = dataset.SeriesDescription
     elif 'ProtocolName' in dataset:
         description = dataset.ProtocolName
     else:
-        description = dataset.SeriesDescription  # raises an exception!
+        description = dataset.SeriesDescription  # will raise an exception!
 
     metadata = {
         'SOPInstanceUID': dataset.SOPInstanceUID,

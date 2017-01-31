@@ -104,7 +104,7 @@ def _initialize_dob_from_psc1(ace_iq_path, phir_path):
         if psc1 in phir and 'PHIR_01' in phir[psc1]:
             dob_phir = phir[psc1]['PHIR_01']
         else:
-            dob_ace_iq = None
+            dob_phir = None
         if dob_ace_iq and dob_phir:
             if dob_ace_iq == dob_phir:
                 dob_from_psc1[psc1] = dob_ace_iq
