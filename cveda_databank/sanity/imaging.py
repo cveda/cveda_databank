@@ -251,8 +251,8 @@ _SERIES_DESCRIPTION = {
         'B0_map': ['B0 mapping'],
         'dwi': ['DTI'],
         'dwi_rev': ['DTI-reversed'],
-        'FLAIR': ['2D T2 weighted'],
-        'T2w': ['2D fast FLAIR'],
+        'FLAIR': ['2D fast FLAIR'],
+        'T2w': ['2D T2 weighted'],
     },
     'MYSURU': {
         'T1w': ['T1W_IR_TSE'],
