@@ -117,7 +117,7 @@ def report_image_data(path, force=False):
 
     series_dict = {}
 
-    for (metadata, relpath) in walk_image_data(path, force=True):
+    for (metadata, relpath) in walk_image_data(path, force=force):
         # compulsory metadata
         series_uid = metadata['SeriesInstanceUID']
         image_uid = metadata['SOPInstanceUID']

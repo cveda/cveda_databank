@@ -155,9 +155,9 @@ class ZipTree:
                 raise BadZipFile('duplicate file entry in zipfile')
 
     def pprint(self, indent=''):
-        self._print_children(indent, True)
+        self._print_children(indent)
 
-    def _print_children(self, indent='', last=True):
+    def _print_children(self, indent=''):
         directories = list(self.directories.items())
         if directories:
             last_directory = directories.pop()
@@ -171,13 +171,13 @@ class ZipTree:
                 d, ziptree = last_directory
                 ziptree._print(d, indent, False)  # pylint: disable=W0212
             last_file = files.pop()
-            for f, zipinfo in files:
+            for f, zipinfo in files:  # pylint: disable=unused-variable
                 print(indent + '├── ' + f)
             f, zipinfo = last_file
             print(indent + '└── ' + f)
         elif last_directory:
             d, ziptree = last_directory
-            ziptree._print(d, indent, True)  # pylint: disable=W0212
+            ziptree._print(d, indent)  # pylint: disable=W0212
 
     def _print(self, name, indent='', last=True):
         if last:
