@@ -265,10 +265,10 @@ _SERIES_DESCRIPTION = {
     },
     'NIMHANS': {
         'T1w': ['3D T1 WEIGHTED VOLUME'],
-        'rest': ['act_RESTING STATE fMRI'],
+        'rest': ['act_RESTING STATE fMRI', 'act_Resting state fMRI'],
         'B0_map': ['B0 MAPPING', 'B 0  MAPPING'],
-        'dwi': ['DTI_DFC', 'DTI_DFC_MIX'],
-        'dwi_rev': ['DTI REVERSED_DFC', 'DTI REVERSED_DFC_MIX'],
+        'dwi': ['DTI_DFC', 'DTI_DFC_MIX', 'DTI _30_DFC_MIX'],
+        'dwi_rev': ['DTI REVERSED_DFC', 'DTI REVERSED_DFC_MIX', 'DTI _6_DFC_MIX'],
         'FLAIR': ['2D FAST FLAIR'],
         'T2w': ['2D T2 WEIGHTED'],
     },
@@ -345,6 +345,7 @@ def _check_sequence_content(path, ziptree, sequence, psc1, date):
                     else:
                         series_description = metadata['SeriesDescription']
                         if not _match_series_description(sequence, series_description):
+                            print('{0} - {0}'.format(sequence, series_description))
                             errors.append(Error(f, 'Unexpected Series Description: {0}'
                                                    .format(series_description)))
                         if 'PatientID' in metadata:
@@ -431,7 +432,7 @@ def check_zip_content(path, psc1=None, date=None, expected=None):
                                .format(f)))
 
     for sequence, status in expected.items():
-        if sequence not in ziptree.directories:
+        if status != 'Missing' and sequence not in ziptree.directories:
             errors.append(Error(basename,
                                 'Missing folder at the root of the ZIP file: {0}'
                                 .format(sequence)))
