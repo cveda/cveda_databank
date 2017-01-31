@@ -136,7 +136,7 @@ def _create_psc2_file(psc1_path, psc2_path):
                     if psc1 in DOB_FROM_PSC1:
                         birth = DOB_FROM_PSC1[psc1]
                         timestamp = datetime.strptime(row[fieldname],
-                                                      ANONYMIZED_COLUMNS[trial]).date()
+                                                      ANONYMIZED_COLUMNS[fieldname]).date()
                         age = timestamp - birth
                         row[fieldname] = str(age.days)
                     else:
