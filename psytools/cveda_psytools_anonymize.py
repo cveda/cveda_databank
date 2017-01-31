@@ -64,8 +64,6 @@ logging.basicConfig(level=logging.INFO)
 import os
 from csv import DictReader
 from csv import DictWriter
-from collections import OrderedDict
-from itertools import zip_longest
 from datetime import datetime
 
 # import ../cveda_databank
@@ -73,46 +71,6 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 from cveda_databank import PSC2_FROM_PSC1
 from cveda_databank import DOB_FROM_PSC1
-
-
-#~ class OrderedDictReader:
-    #~ def __init__(self, csvfile, fieldnames=None, dialect='excel'):
-        #~ self._fieldnames = fieldnames
-        #~ self._reader = reader(csvfile, dialect)
-
-    #~ def __iter__(self):
-        #~ return self
-
-    #~ def _read_fieldnames(self):
-        #~ if self._fieldnames is None:
-            #~ try:
-                #~ self._fieldnames = next(self._reader)
-            #~ except StopIteration:
-                #~ pass
-
-    #~ @property
-    #~ def line_num(self):
-        #~ return self._reader.line_num
-        
-    #~ @property
-    #~ def fieldnames(self):
-        #~ self._read_fieldnames()
-        #~ return self._fieldnames
-
-    #~ @fieldnames.setter
-    #~ def fieldnames(self, value):
-        #~ self._fieldnames = value
-
-    #~ def __next__(self):
-        #~ if self.line_num == 0:
-            #~ self._read_fieldnames()
-
-        #~ row = next(self._reader)
-
-        #~ if len(self.fieldnames) > len(row):
-            #~ return OrderedDict(zip_longest(self.fieldnames, row))
-        #~ else:
-            #~ return OrderedDict(zip(self.fieldnames, row))
 
 
 def _create_psc2_file(psc1_path, psc2_path):
