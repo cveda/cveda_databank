@@ -345,7 +345,6 @@ def _check_sequence_content(path, ziptree, sequence, psc1, date):
                     else:
                         series_description = metadata['SeriesDescription']
                         if not _match_series_description(sequence, series_description):
-                            print('{0} - {0}'.format(sequence, series_description))
                             errors.append(Error(f, 'Unexpected Series Description: {0}'
                                                    .format(series_description)))
                         if 'PatientID' in metadata:
@@ -453,56 +452,3 @@ def check_zip_content(path, psc1=None, date=None, expected=None):
         errors.extend(_check_empty_files(z))
 
     return (subject_ids, errors)
-
-
-def main():
-    # wrong names
-    ZIPFILE = '/volatile/SANITY/080000188813.zip'
-    (psc1, errors) = check_zip_name(ZIPFILE, '010000123456')
-    print('✘ ' + ZIPFILE)
-    if errors:
-        for e in errors:
-            print('  ▷ ' + str(e))
-
-    ZIPFILE = '/volatile/SANITY/080000188813FU1.zip'
-    (psc1, errors) = check_zip_name(ZIPFILE, '010000123456')
-    print('✘ ' + ZIPFILE)
-    if errors:
-        for e in errors:
-            print('  ▷ ' + str(e))
-
-    # correct content
-    ZIPFILE = '/volatile/SANITY/cveda_good.zip'
-    SEQUENCES = {
-        'T1w': 'Good',
-        'dwi': 'Bad',
-        'dwi_rev': 'Dubious',
-        'rest': 'Good',
-        'FLAIR': 'Good',
-        'T2w': 'Good',
-    }
-    (psc1, errors) = check_zip_content(ZIPFILE, '080000191816', SEQUENCES)
-    print('✔ ' + ZIPFILE)
-    if errors:
-        for e in errors:
-            print('▸ ' + str(e))
-
-    # wrong content
-    ZIPFILE = '/volatile/SANITY/cveda_bad.zip'
-    SEQUENCES = {
-        'T1w': 'Good',
-        'dwi': 'Bad',
-        'dwi_rev': 'Dubious',
-        'rest': 'Good',
-        'T2w': 'Missing',
-        'BOGUS': 'Missing',
-    }
-    (psc1, errors) = check_zip_content(ZIPFILE, '080000191816', SEQUENCES)
-    print('✘ ' + ZIPFILE)
-    if errors:
-        for e in errors:
-            print('▸ ' + str(e))
-
-
-if __name__ == '__main__':
-    main()
