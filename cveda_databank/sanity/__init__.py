@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
+# noqa
 
-# Copyright (c) 2014-2016 CEA
+# Copyright (c) 2014-2017 CEA
 #
 # This software is governed by the CeCILL license under French law and
 # abiding by the rules of distribution of free software. You can use,
