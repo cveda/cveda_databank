@@ -56,12 +56,16 @@ PSYTOOLS_PSC2_DIR : str
 """
 
 PSYTOOLS_PSC1_DIR = '/cveda/databank/BL/RAW/PSC1/psytools'
-PSYTOOLS_PSC2_DIR = '/cveda/databank/BL/RAW/PSC2/psytools'
+PSYTOOLS_PSC2_DIR = '/volatile/cveda/databank/BL/RAW/PSC2/psytools'
 
 import logging
 logging.basicConfig(level=logging.INFO)
 
 import os
+from csv import DictReader
+from csv import DictWriter
+from collections import OrderedDict
+from itertools import zip_longest
 from datetime import datetime
 
 # import ../cveda_databank
@@ -71,59 +75,44 @@ from cveda_databank import PSC2_FROM_PSC1
 from cveda_databank import DOB_FROM_PSC1
 
 
-def _skip_line(line):
-    """Define lines to skip in CSV files exported from Psytools.
+#~ class OrderedDictReader:
+    #~ def __init__(self, csvfile, fieldnames=None, dialect='excel'):
+        #~ self._fieldnames = fieldnames
+        #~ self._reader = reader(csvfile, dialect)
 
-    Psytools files contain identifying data, specifically lines containing:
-    * id_check_dob, ID_check_dob
-    * id_check_gender, ID_check_gender
+    #~ def __iter__(self):
+        #~ return self
 
-    As the name implies, the purpose of these lines is cross-checking and
-    error detection, useful only with PSC1 codes. They should not be used
-    for scientific purposes and with PSC2 codes.
+    #~ def _read_fieldnames(self):
+        #~ if self._fieldnames is None:
+            #~ try:
+                #~ self._fieldnames = next(self._reader)
+            #~ except StopIteration:
+                #~ pass
 
-    Parameters
-    ----------
-    line: str
-        Line read CSV file.
+    #~ @property
+    #~ def line_num(self):
+        #~ return self._reader.line_num
+        
+    #~ @property
+    #~ def fieldnames(self):
+        #~ self._read_fieldnames()
+        #~ return self._fieldnames
 
-    Returns
-    -------
-    bool
-        True if line shall be skipped, False otherwise.
+    #~ @fieldnames.setter
+    #~ def fieldnames(self, value):
+        #~ self._fieldnames = value
 
-    """
-    return 'id_check_' in line or 'ID_check_' in line
+    #~ def __next__(self):
+        #~ if self.line_num == 0:
+            #~ self._read_fieldnames()
 
+        #~ row = next(self._reader)
 
-def _psc1_from_subject_id(subject_id):
-    """Extract PSC1 code from 1st column of CSV files exported from Psytools.
-
-    Skip test subjects.
-
-    Parameters
-    ----------
-    subject_id: str
-        Subject identifier.
-        Valid identifiers looke like 110001234567-C1 or 150007654321-C3.
-
-    Returns
-    -------
-    (str, str)
-        Pair of PSC1 code and suffix. If subject_id cannot be split,
-        suffix is None.
-
-    """
-    split_id = subject_id.rsplit('-', 1)
-    if len(split_id) > 1:
-        return split_id
-    return subject_id, None
-
-
-def _subject_id_from_psc2(psc2, suffix):
-    if suffix:
-        return '-'.join((psc2, suffix))
-    return psc2
+        #~ if len(self.fieldnames) > len(row):
+            #~ return OrderedDict(zip_longest(self.fieldnames, row))
+        #~ else:
+            #~ return OrderedDict(zip(self.fieldnames, row))
 
 
 def _create_psc2_file(psc1_path, psc2_path):
@@ -138,43 +127,80 @@ def _create_psc2_file(psc1_path, psc2_path):
 
     """
     with open(psc1_path, 'r') as psc1_file:
-        # identify columns to anonymize - header contains 'Timestamp'
-        header = psc1_file.readline().strip()
-        convert = [i for i, field in enumerate(header.split(','))
-                   if 'Timestamp' in field]
+        psc1_reader = DictReader(psc1_file, dialect='excel')
+
+        # anonymize columns with dates
+        ANONYMIZED_COLUMNS = {
+            'Completed Timestamp': '%Y-%m-%d %H:%M:%S.%f',
+            'Processed Timestamp': '%Y-%m-%d %H:%M:%S.%f',
+        }
+        convert = [fieldname for fieldname in psc1_reader.fieldnames
+                   if fieldname in ANONYMIZED_COLUMNS]
+
+        # anonymize rows with dates
+        ANONYMIZED_ROWS = {
+            'ACEIQ_C2':'%d-%m-%Y',
+            'PDS_07a': '%m-%Y',
+            'PHIR_01': '%d-%m-%Y',
+            'PHIR_02': '%d-%m-%Y',
+        }
+
         with open(psc2_path, 'w') as psc2_file:
-            psc2_file.write(header + '\n')
-            for line in psc1_file:
-                line = line.strip()
-                items = line.split(',')
-                if _skip_line(line):
-                    logging.debug('skipping line with "id_check_" from %s',
-                                  items[0])
+            psc2_writer = DictWriter(psc2_file, psc1_reader.fieldnames, dialect='excel')
+            psc2_writer.writeheader()
+            for row in psc1_reader:
+                trial = row['Trial']
+                if trial.upper().startswith('ID_CHECK_'):
+                    logging.debug('skipping line with "id_check_" for %s',
+                                  row['User code'])
                     continue
-                psc1, suffix = _psc1_from_subject_id(items[0])
+                psc1_suffix = row['User code'].rsplit('-', 1)
+                psc1 = psc1_suffix[0]
                 if psc1 in PSC2_FROM_PSC1:
-                    logging.debug('converting subject %s from PSC1 to PSC2',
-                                  psc1)
-                    items[0] = _subject_id_from_psc2(PSC2_FROM_PSC1[psc1], suffix)
+                    psc2 = PSC2_FROM_PSC1[psc1]
+                    if len(psc1_suffix) > 1:
+                        psc2_suffix = '-'.join((psc2, psc1_suffix[1]))
+                    else:
+                        psc2_suffix = psc2
+                    logging.debug('converting from %s to %s',
+                                  row['User code'], psc2_suffix)
+                    row['User code'] = psc2_suffix
                 else:
                     u = psc1.upper()
                     if 'DEMO' in u or 'MOCK' in u or 'TEST' in u or 'PILOT' in u:
-                        logging.debug('Skipping test subject: %s',
-                                      psc1)
+                        logging.debug('skipping test subject %s',
+                                      row['User code'])
                     else:
-                        logging.error('PSC1 code missing from conversion table: %s',
-                                      psc1)
+                        logging.error('unknown PSC1 code %s in user code %s',
+                                      psc1, row['User code'])
                     continue
-                for i in convert:
-                    if psc1 not in DOB_FROM_PSC1:
-                        items[i] = ''
-                    else:
-                        timestamp = datetime.strptime(items[i],
-                                                      '%Y-%m-%d %H:%M:%S.%f').date()
+                for fieldname in convert:
+                    if psc1 in DOB_FROM_PSC1:
                         birth = DOB_FROM_PSC1[psc1]
+                        timestamp = datetime.strptime(row[fieldname],
+                                                      ANONYMIZED_COLUMNS[trial]).date()
                         age = timestamp - birth
-                        items[i] = str(age.days)
-                psc2_file.write(','.join(items) + '\n')
+                        row[fieldname] = str(age.days)
+                    else:
+                        row[fieldname] = None
+
+                if trial in ANONYMIZED_ROWS:
+                    fieldname = 'Trial result'
+                    if psc1 in DOB_FROM_PSC1:
+                        birth = DOB_FROM_PSC1[psc1]
+                        try:
+                            timestamp = datetime.strptime(row[fieldname],
+                                                          ANONYMIZED_ROWS[trial]).date()
+                        except ValueError:  # blank or skip_back
+                            pass
+                        else:
+                            age = timestamp - birth
+                            row[fieldname] = str(age.days)
+
+                    else:
+                        row[fieldname] = None
+
+                psc2_writer.writerow(row)
 
 
 def create_psc2_files(psc1_dir, psc2_dir):
