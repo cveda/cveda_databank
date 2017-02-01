@@ -45,14 +45,23 @@ ACEIQ : str
 PHIR : str
     PHIR questionnaire as exported from the Delosis server as a CSV file.
 
+EXCEL : str
+    Excel file supposed to contain the correct date of birth
+
 """
 
-import csv
-import datetime
-import xlsxwriter
+from csv import (Sniffer, DictReader)
+from datetime import datetime
+from openpyxl import load_workbook
+
+import logging
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger()
+
 
 ACE_IQ = '/cveda/databank/BL/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
 PHIR = '/cveda/databank/BL/RAW/PSC1/psytools/cVEDA-cVEDA_PHIR-BASIC_DIGEST.csv'
+EXCEL = '/tmp/PSC1_DOB_2017-02-01.xlsx'
 
 
 def age(today, birth):
@@ -64,15 +73,18 @@ def age(today, birth):
 def read_ace_iq(path):
     ace_iq = {}
     with open(path, mode='r', newline='') as csvfile:
-        dialect = csv.Sniffer().sniff(csvfile.read(4096))
+        dialect = Sniffer().sniff(csvfile.read(4096))
         csvfile.seek(0)
-        reader = csv.DictReader(csvfile, dialect=dialect)
+        reader = DictReader(csvfile, dialect=dialect)
         for row in reader:
             trial = row['Trial']
             if trial in {'ACEIQ_C2', 'ACEIQ_C3'}:
                 psc1 = row['User code']
                 if psc1[-3:-1] == '-C':  # user code ID of the form <PSC1>-C1, <PSC1>-C3, etc.
                     psc1 = psc1[:-3]
+                if len(psc1) != 12 or not psc1.isdigit():
+                    logger.warn('bogus PSC1: %s', psc1)
+                    continue
                 result = row['Trial result']
                 if result != 'skip_back':
                     psc1_value = ace_iq.setdefault(psc1, {})
@@ -81,9 +93,9 @@ def read_ace_iq(path):
                     result = row['Trial result']
                     if result != '':
                         if trial == 'ACEIQ_C2':
-                            dob = datetime.datetime.strptime(result, '%d-%m-%Y')
+                            dob = datetime.strptime(result, '%d-%m-%Y')
                             iteration_value['dob'] = dob.date()  # overwrite previous results
-                            completed = datetime.datetime.strptime(row['Completed Timestamp'], '%Y-%m-%d %H:%M:%S.%f')
+                            completed = datetime.strptime(row['Completed Timestamp'], '%Y-%m-%d %H:%M:%S.%f')
                             iteration_value['age_from_dob'] = age(completed, dob)
                         elif trial == 'ACEIQ_C3':
                             iteration_value['age'] = int(result)  # overwrite previous results
@@ -95,15 +107,18 @@ def read_ace_iq(path):
 def read_phir(path):
     phir = {}
     with open(path, mode='r', newline='') as csvfile:
-        dialect = csv.Sniffer().sniff(csvfile.read(4096))
+        dialect = Sniffer().sniff(csvfile.read(4096))
         csvfile.seek(0)
-        reader = csv.DictReader(csvfile, dialect=dialect)
+        reader = DictReader(csvfile, dialect=dialect)
         for row in reader:
             trial = row['Trial']
             if trial in {'PHIR_01'}:
                 psc1 = row['User code']
                 if psc1[-3:-1] == '-C':  # user code ID of the form <PSC1>-C1, <PSC1>-C3, etc.
                     psc1 = psc1[:-3]
+                if len(psc1) != 12 or not psc1.isdigit():
+                    logger.warn('bogus PSC1: %s', psc1)
+                    continue
                 result = row['Trial result']
                 if result != 'skip_back':
                     psc1_value = phir.setdefault(psc1, {})
@@ -111,13 +126,56 @@ def read_phir(path):
                     iteration_value = psc1_value.setdefault(iteration, {})
                     if result != '':
                         if trial == 'PHIR_01':
-                            dob = datetime.datetime.strptime(result, '%d-%m-%Y')
+                            dob = datetime.strptime(result, '%d-%m-%Y')
                             iteration_value['dob'] = dob.date()
-                            completed = datetime.datetime.strptime(row['Completed Timestamp'], '%Y-%m-%d %H:%M:%S.%f')
+                            completed = datetime.strptime(row['Completed Timestamp'], '%Y-%m-%d %H:%M:%S.%f')
                             iteration_value['age_from_dob'] = age(completed, dob)
     for psc1, value in phir.items():
         phir[psc1] = value[max(value.keys())]  # keep last iteration only
     return phir
+
+
+def read_excel(path):
+    excel = {}
+    workbook = load_workbook(path)
+    for worksheet in workbook:
+        for row in worksheet:
+            psc1 = row[1].value
+            dob = row[2].value
+            if not psc1:
+                continue
+            if isinstance(psc1, int):
+                psc1 = str(psc1)
+            psc1 = psc1.strip()
+            if psc1.isdigit():
+                if len(psc1) != 12:
+                    logger.error('bogus PSC1: %s', psc1)
+                    continue
+            else:
+                logger.warn('bogus PSC1: %s', psc1)
+                continue
+            if not dob:
+                continue
+            if isinstance(dob, str):
+                if dob.startswith('…'):  # blank cells...
+                    continue
+                dob = dob.strip()
+                try:
+                    dob = datetime.strptime(dob, '%d/%m/%Y').date()
+                except ValueError:
+                    try:
+                        dob = datetime.strptime(dob, '%d.%m.%Y').date()
+                    except ValueError:
+                        try:
+                            dob = datetime.strptime(dob, '%d/%m%Y').date()  # ouch! single occurrence
+                        except ValueError:
+                            logger.error('bogus DOB: %s', dob)
+            elif isinstance(dob, datetime):
+                dob = dob.date()
+            else:
+                logger.error('bogus DOB: %s', str(dob))
+            excel[psc1] = dob
+    return excel
 
 
 def main():
@@ -127,108 +185,57 @@ def main():
     # PHIR questionnaire
     phir = read_phir(PHIR)
 
-    # Excel output
-    options = {
-        'strings_to_numbers': False,
-    }
-    workbook = xlsxwriter.Workbook('cVEDA_Psytools.xlsx', options)
-    HEADER_FORMAT = workbook.add_format({'bold': True,
-                                         'align': 'center', 'valign': 'vcenter'})
-    worksheet = workbook.add_worksheet('date of birth - age')
-    # PSC1
-    worksheet.merge_range(0, 0, 1, 0, u'PSC1', HEADER_FORMAT)
-    worksheet.set_column(0, 0, 14)
-    # ACE-IQ
-    worksheet.merge_range(0, 1, 0, 3, u'ACE-IQ', HEADER_FORMAT)
-    worksheet.write(1, 1, u'date of birth', HEADER_FORMAT)
-    worksheet.write(1, 2, u'age', HEADER_FORMAT)
-    worksheet.write(1, 3, u'computed age', HEADER_FORMAT)
-    worksheet.set_column(1, 3, 16)
-    # PHIR
-    worksheet.merge_range(0, 4, 0, 5, u'PHIR', HEADER_FORMAT)
-    worksheet.write(1, 4, u'date of birth', HEADER_FORMAT)
-    worksheet.write(1, 5, u'computed age', HEADER_FORMAT)
-    worksheet.set_column(4, 5, 16)
-    # more formatting and prepare for writing data
-    worksheet.freeze_panes(2, 0)
-    error_format = {'bg_color': '#FF6A6A'}
-    ERROR_FORMAT = workbook.add_format(error_format)
-    date_format = {'num_format': 'yyyy-mm-dd'}
-    DATE_FORMAT = workbook.add_format(date_format)
-    date_format.update(error_format)
-    DATE_ERROR_FORMAT = workbook.add_format(date_format)
-    row = 2
+    # Excel additional file
+    excel = read_excel(EXCEL)
 
-    for psc1 in ace_iq.keys() & phir.keys():
-        ace_iq_dob = None
-        ace_iq_age = None
-        ace_iq_age_from_dob = None
-        phir_dob = None
-        phir_age_from_dob = None
-        if psc1 in ace_iq:
-            if 'dob' in ace_iq[psc1]:
-                ace_iq_dob = ace_iq[psc1]['dob']
-            if 'age' in ace_iq[psc1]:
-                ace_iq_age = ace_iq[psc1]['age']
-            if 'age_from_dob' in ace_iq[psc1]:
-                ace_iq_age_from_dob = ace_iq[psc1]['age_from_dob']
-        if psc1 in phir:
-            if 'dob' in phir[psc1]:
-                phir_dob = phir[psc1]['dob']
-            if 'age_from_dob' in phir[psc1]:
-                phir_age_from_dob = phir[psc1]['age_from_dob']
+    for psc1 in set(ace_iq) & set(phir) & set(excel):
+        dob_ace_iq = None
+        if psc1 in ace_iq and 'dob' in ace_iq[psc1]:
+            dob_ace_iq = ace_iq[psc1]['dob']
+        dob_phir = None
+        if psc1 in phir and 'dob' in phir[psc1]:
+            dob_phir = phir[psc1]['dob']
+        dob_excel = None
+        if psc1 in excel:
+            dob_excel = excel[psc1]
 
-        if psc1.startswith('1'):
-            error = False
-            # date of birth
-            if ace_iq_dob and phir_dob and ace_iq_dob != phir_dob:
-                error = True
-                if ace_iq_age and (ace_iq_age == phir_age_from_dob and
-                                   ace_iq_age != ace_iq_age_from_dob):
-                    col_1 = (ace_iq_dob, DATE_ERROR_FORMAT)
-                    col_4 = (phir_dob, DATE_FORMAT)
-                elif ace_iq_age and (ace_iq_age == ace_iq_age_from_dob and
-                                     ace_iq_age != phir_age_from_dob):
-                    col_1 = (ace_iq_dob, DATE_FORMAT)
-                    col_4 = (phir_dob, DATE_ERROR_FORMAT)
+        if dob_ace_iq and dob_phir:
+            if dob_ace_iq != dob_phir:
+                if dob_excel:
+                    if dob_excel == dob_ace_iq:
+                        print('{}: PHIR date of birth is different from ACE-IQ and Excel dates of birth: {} / {}'
+                              .format(psc1, dob_excel, dob_phir))
+                    elif dob_excel == dob_phir:
+                        print('{}: ACE-IQ date of birth is different from PHIR and Excel dates of birth: {} / {}'
+                              .format(psc1, dob_excel, dob_ace_iq))
+                    else:
+                        print('{}: All dates of birth are different: {} / {} / {}'
+                              .format(psc1, dob_excel, dob_ace_iq, dob_phir))
                 else:
-                    col_1 = (ace_iq_dob, DATE_ERROR_FORMAT)
-                    col_4 = (phir_dob, DATE_ERROR_FORMAT)
+                    print('{}: Missing Excel date of birth, different ACE-IQ and PHIR dates of birth: {} / {}'
+                          .format(psc1, dob_ace_iq, dob_phir))
+        elif dob_ace_iq:
+            if dob_excel:
+                if dob_excel != dob_ace_iq:
+                    print('{}: ACE-IQ date of birth is different from Excel date of birth: {} / {}'
+                          .format(psc1, dob_excel, dob_ace_iq))
             else:
-                col_1 = (ace_iq_dob, DATE_FORMAT)
-                col_4 = (phir_dob, DATE_FORMAT)
-            # age
-            col_2 = (ace_iq_age, None)
-            if ace_iq_age:
-                if ace_iq_age_from_dob and ace_iq_age != ace_iq_age_from_dob:
-                    error = True
-                    col_3 = (ace_iq_age_from_dob, ERROR_FORMAT)
-                    col_2 = (ace_iq_age, ERROR_FORMAT)
-                else:
-                    col_3 = (ace_iq_age_from_dob, None)
-                if phir_age_from_dob and ace_iq_age != phir_age_from_dob:
-                    error = True
-                    col_5 = (phir_age_from_dob, ERROR_FORMAT)
-                    col_2 = (ace_iq_age, ERROR_FORMAT)
-                else:
-                    col_5 = (phir_age_from_dob, None)
+                print('{}: Missing Excel date of birth, only ACE-IQ date of birth: {} / {}'
+                      .format(psc1, dob_ace_iq))
+        elif dob_phir:
+            if dob_excel:
+                if dob_excel != dob_phir:
+                    print('{}: PHIR date of birth is different from Excel date of birth: {} / {}'
+                          .format(psc1, dob_excel, dob_phir))
             else:
-                col_3 = (ace_iq_age_from_dob, None)
-                col_5 = (phir_age_from_dob, None)
-
-            if error:
-                # PSC1
-                worksheet.write_string(row, 0, psc1)
-                # ACE-IQ
-                worksheet.write(row, 1, col_1[0], col_1[1])
-                worksheet.write(row, 2, col_2[0], col_2[1])
-                worksheet.write(row, 3, col_3[0], col_3[1])
-                # PHIR
-                worksheet.write(row, 4, col_4[0], col_4[1])
-                worksheet.write(row, 5, col_5[0], col_5[1])
-                row += 1
-
-    workbook.close()
+                print('{}: Missing Excel date of birth, only PHIR date of birth: {} / {}'
+                      .format(psc1, dob_phir))
+        elif dob_excel:
+            print('{}: Orphan Excel entry'
+                  .format(psc1))
+        else:
+            print('{}: Uh???'
+                  .format(psc1))
 
 
 if __name__ == "__main__":
