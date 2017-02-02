@@ -31,7 +31,7 @@ def check_zip(path):
                                        date=None, expected=expected)
         errors.extend(errors2)
     else:
-        errors.append(Error(entry, 'Unknown PSC1 code in file name: {0}'
+        errors.append(Error(path, 'Unknown PSC1 code in file name: {0}'
                                    .format(psc1)))
     return psc1, errors
 
