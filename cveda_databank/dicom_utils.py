@@ -260,7 +260,7 @@ def read_metadata(path, force=False):
         'SOPInstanceUID': dataset.SOPInstanceUID,
         'SeriesInstanceUID': dataset.SeriesInstanceUID,
         'SeriesNumber': dataset.SeriesNumber,
-        'SeriesDescription': _decode(description),
+        'SeriesDescription': description,
         'ImageType': [_decode(x) for x in dataset.ImageType],
     }
 
