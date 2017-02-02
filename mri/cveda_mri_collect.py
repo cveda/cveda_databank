@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import os
+import os-from __future__ import print_function
 import sys
 from datetime import date
 from cveda_databank.sanity import check_zip_name
