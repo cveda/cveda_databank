@@ -61,7 +61,7 @@ logger = logging.getLogger()
 
 ACE_IQ = '/cveda/databank/BL/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
 PHIR = '/cveda/databank/BL/RAW/PSC1/psytools/cVEDA-cVEDA_PHIR-BASIC_DIGEST.csv'
-EXCEL = '/tmp/PSC1_DOB_2017-02-01.xlsx'
+EXCEL = '/tmp/PSC1_DOB_2017-01-21.xlsx'
 
 
 def age(today, birth):
@@ -140,8 +140,8 @@ def read_excel(path):
     workbook = load_workbook(path)
     for worksheet in workbook:
         for row in worksheet:
-            psc1 = row[1].value
-            dob = row[2].value
+            psc1 = row[0].value
+            dob = row[1].value
             if not psc1:
                 continue
             if isinstance(psc1, int):
