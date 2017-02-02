@@ -32,6 +32,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 import re
+import sys
 import datetime
 import dateutil.tz
 try:
@@ -65,6 +66,8 @@ def _decode(attribute):
         The decoded string.
 
     """
+    if isinstance(attribute, str):
+        return attribute
     return attribute.decode('latin_1')
 
 
@@ -260,7 +263,7 @@ def read_metadata(path, force=False):
         'SOPInstanceUID': dataset.SOPInstanceUID,
         'SeriesInstanceUID': dataset.SeriesInstanceUID,
         'SeriesNumber': dataset.SeriesNumber,
-        'SeriesDescription': description,
+        'SeriesDescription': _decode(description),
         'ImageType': [_decode(x) for x in dataset.ImageType],
     }
 
