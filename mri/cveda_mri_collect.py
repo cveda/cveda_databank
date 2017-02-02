@@ -51,7 +51,8 @@ def trash(path):
         while os.path.lexists(target_path):
             index += 1
             suffix = '.' + str(index)
-            target_path = os.path.join(today_path, entry + '.' + str(index))
+            target_path = os.path.join(today_path,
+                                       os.path.basename(path) + '.' + str(index))
         # move file to trash
         os.rename(path, target_path)
 
