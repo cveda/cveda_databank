@@ -15,6 +15,7 @@ QUARANTINE_PATH = '/cveda/chroot/quarantine'
 TRASH_NAME = '.trash'
 ERROR_SUFFIX = '.error.txt'
 
+
 def check_zip(path):
     psc1, errors = check_zip_name(path)
     if psc1 in PSC2_FROM_PSC1:
