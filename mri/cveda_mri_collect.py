@@ -13,7 +13,7 @@ from cveda_databank import Error
 UPLOAD_PATH = '/cveda/chroot/upload'
 QUARANTINE_PATH = '/cveda/chroot/quarantine'
 TRASH_NAME = '.trash'
-
+ERROR_SUFFIX = '.error.txt'
 
 def check_zip(path):
     psc1, errors = check_zip_name(path)
@@ -70,14 +70,14 @@ def process_upload(path):
         if os.path.isdir(center_path):
             # iterate over ZIP files in each center
             for entry in os.listdir(center_path):
-                if entry == TRASH_NAME:
+                if entry == TRASH_NAME or entry.endswith(ERROR_SUFFIX):
                     continue
                 entry_path = os.path.join(center_path, entry)
                 if os.path.isfile(entry_path) and not os.path.islink(entry_path):
                     # check each ZIP file
                     psc1, errors = check_zip(entry_path)
                     # reset log
-                    log_path = entry_path + '.error.txt'
+                    log_path = entry_path + ERROR_SUFFIX
                     trash(log_path)
                     if errors:
                         # log error

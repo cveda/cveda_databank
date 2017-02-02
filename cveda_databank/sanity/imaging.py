@@ -357,10 +357,11 @@ def _check_sequence_content(path, ziptree, sequence, psc1, date):
                         else:
                             errors.append(Error(f, 'Missing PSC1 code'))
                         if 'AcquisitionDate' in metadata:
-                            acquisition_date = metadata['AcquisitionDate']
-                            if acquisition_date != date:
-                                errors.append(Error(f, 'Inconsistent acquisition date: {0}'
-                                                       .format(acquisition_date)))
+                            if date:
+                                acquisition_date = metadata['AcquisitionDate']
+                                if acquisition_date != date:
+                                    errors.append(Error(f, 'Inconsistent acquisition date: {0}'
+                                                           .format(acquisition_date)))
                         else:
                             errors.append(Error(f, 'Missing acquisition date'))
                         break
