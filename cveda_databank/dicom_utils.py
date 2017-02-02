@@ -32,7 +32,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 import re
-import sys
 import datetime
 import dateutil.tz
 try:
@@ -43,32 +42,6 @@ except ImportError:
 else:
     HAS_DICOM = True
     from dicom.filereader import InvalidDicomError  # noqa # pylint: disable=unused-import
-
-
-def _decode(attribute):
-    """Decode DICOM data elements from ISO_IR 100.
-
-    DICOM strings are routinely encoded with ISO_IR 100 which is
-    equivalent to IS0 8859-1.
-
-    We currently expect DICOM strings to be encoded using ISO_IR 100.
-    In this context DICOM strings returned by pydicom are 8-bit strings
-    encoded with ISO_IR 100.
-
-    Parameters
-    ----------
-    attribute  : str
-        The 8-bit string to decode from ISO_IR 100.
-
-    Returns
-    -------
-    unicode
-        The decoded string.
-
-    """
-    if isinstance(attribute, str):
-        return attribute
-    return attribute.decode('latin_1')
 
 
 #
@@ -263,8 +236,8 @@ def read_metadata(path, force=False):
         'SOPInstanceUID': dataset.SOPInstanceUID,
         'SeriesInstanceUID': dataset.SeriesInstanceUID,
         'SeriesNumber': dataset.SeriesNumber,
-        'SeriesDescription': _decode(description),
-        'ImageType': [_decode(x) for x in dataset.ImageType],
+        'SeriesDescription': description,
+        'ImageType': dataset.ImageType,
     }
 
     # optional date/time tags
@@ -280,35 +253,35 @@ def read_metadata(path, force=False):
 
     # optional device tags
     if 'StationName' in dataset:
-        metadata['StationName'] = _decode(dataset.StationName)
+        metadata['StationName'] = dataset.StationName
     if 'Manufacturer' in dataset:
-        metadata['Manufacturer'] = _decode(dataset.Manufacturer)
+        metadata['Manufacturer'] = dataset.Manufacturer
     if 'ManufacturerModelName' in dataset:
-        metadata['ManufacturerModelName'] = _decode(dataset.ManufacturerModelName)
+        metadata['ManufacturerModelName'] = dataset.ManufacturerModelName
     if 'DeviceSerialNumber' in dataset:
-        metadata['DeviceSerialNumber'] = _decode(dataset.DeviceSerialNumber)
+        metadata['DeviceSerialNumber'] = dataset.DeviceSerialNumber
     if 'SoftwareVersions' in dataset:
         if dicom.dataelem.isMultiValue(dataset.SoftwareVersions):
             # usually the last part is the more informative
             # for example on Philips scanners:
             # ['3.2.1', '3.2.1.1'] → '3.2.1.1'
-            metadata['SoftwareVersions'] = _decode(dataset.SoftwareVersions[-1])
+            metadata['SoftwareVersions'] = dataset.SoftwareVersions[-1]
         else:
-            metadata['SoftwareVersions'] = _decode(dataset.SoftwareVersions)
+            metadata['SoftwareVersions'] = dataset.SoftwareVersions
 
     # find c-VEDA subject ID
     if 'CommentsOnThePerformedProcedureStep' in dataset and dataset.CommentsOnThePerformedProcedureStep:
         # MYSURU?
-        metadata['PatientID'] = _decode(dataset.CommentsOnThePerformedProcedureStep)
+        metadata['PatientID'] = dataset.CommentsOnThePerformedProcedureStep
     elif 'PatientComments' in dataset and dataset.PatientComments:
         # NIMHANS with RIS (starting from 2017-01-19)
-        metadata['PatientID'] = _decode(dataset.PatientComments)
+        metadata['PatientID'] = dataset.PatientComments
     elif 'StudyComments' in dataset and dataset.StudyComments:
         # NIMHANS with RIS (single dataset on 2016-12-31)
-        metadata['PatientID'] = _decode(dataset.StudyComments)
+        metadata['PatientID'] = dataset.StudyComments
     elif 'PatientID' in dataset:
         # CHANDIGARH
         # NIMHANS before RIS (from pilots in May 2016 to 2016-12-17)
-        metadata['PatientID'] = _decode(dataset.PatientID)
+        metadata['PatientID'] = dataset.PatientID
 
     return metadata
