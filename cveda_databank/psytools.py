@@ -64,10 +64,16 @@ def read_psytools(path, questions=None):
                     trial_type = questions[trial]
                     if trial_type == 'datetime.date':
                         date_format = '%d-%m-%Y'
-                        trial_value[iteration] = datetime.datetime.strptime(trial_result,
-                                                                            date_format).date()
+                        try:
+                            trial_value[iteration] = datetime.datetime.strptime(trial_result,
+                                                                                date_format).date()
+                        except ValueError:
+                            pass
                     elif trial_type == 'int':
-                        trial_value[iteration] = int(trial_result)
+                        try:
+                            trial_value[iteration] = int(trial_result)
+                        except ValueError:
+                            pass
                     else:
                         trial_value[iteration] = trial_result
             else:
