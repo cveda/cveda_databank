@@ -59,8 +59,8 @@ logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger()
 
 
-ACE_IQ = '/cveda/databank/BL/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
-PHIR = '/cveda/databank/BL/RAW/PSC1/psytools/cVEDA-cVEDA_PHIR-BASIC_DIGEST.csv'
+ACE_IQ = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
+PHIR = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_PHIR-BASIC_DIGEST.csv'
 EXCEL = '/tmp/PSC1_DOB_2017-01-21.xlsx'
 
 
