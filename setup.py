@@ -38,6 +38,7 @@ def license():
     with open('LICENSE') as f:
         return f.read()
 
+
 setup(
     name='cveda_databank',
     version='0.1.0',
