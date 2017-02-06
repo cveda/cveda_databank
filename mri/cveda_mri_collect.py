@@ -29,8 +29,8 @@ def check_zip(path):
             'FLAIR': 'Good',
             'T2w': 'Good',
         }
-        x, errors2 = check_zip_content(path, psc1,
-                                       date=None, expected=expected)
+        dummy_psc1, errors2 = check_zip_content(path, psc1,
+                                                date=None, expected=expected)
         errors.extend(errors2)
     else:
         errors.append(Error(path, 'Unknown PSC1 code in file name: {0}'
@@ -50,7 +50,6 @@ def trash(path):
         index = 0
         while os.path.lexists(target_path):
             index += 1
-            suffix = '.' + str(index)
             target_path = os.path.join(today_path,
                                        os.path.basename(path) + '.' + str(index))
         # move file to trash
@@ -78,7 +77,7 @@ def process_upload(path):
                 entry_path = os.path.join(center_path, entry)
                 if os.path.isfile(entry_path) and not os.path.islink(entry_path):
                     # check each ZIP file
-                    psc1, errors = check_zip(entry_path)
+                    dummy_psc1, errors = check_zip(entry_path)
                     # reset log
                     log_path = entry_path + ERROR_SUFFIX
                     trash(log_path)

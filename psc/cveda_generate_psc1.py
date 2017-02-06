@@ -80,7 +80,7 @@ def largest_int_with_less_digits(n):
     length = len(str(n))
     if length > 1:
         n = 0
-        for i in range(1, length):
+        for dummy_i in range(1, length):
             n = n * 10 + 9
         return n
     else:

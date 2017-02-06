@@ -171,9 +171,9 @@ class ZipTree:
                 d, ziptree = last_directory
                 ziptree._print(d, indent, False)  # pylint: disable=W0212
             last_file = files.pop()
-            for f, zipinfo in files:  # pylint: disable=unused-variable
+            for f, dummy_zipinfo in files:
                 print(indent + '├── ' + f)
-            f, zipinfo = last_file
+            f, dummy_zipinfo = last_file
             print(indent + '└── ' + f)
         elif last_directory:
             d, ziptree = last_directory
@@ -236,7 +236,7 @@ def _check_empty_files(ziptree):
     error: Error
 
     """
-    for f, zipinfo in ziptree.files.items():
+    for zipinfo in ziptree.files.values():
         if zipinfo.file_size == 0:
             yield Error(zipinfo.filename, 'File is empty')
     for ziptree in ziptree.directories.values():
@@ -340,7 +340,7 @@ def _check_sequence_content(path, ziptree, sequence, psc1, date):
                     dicom_file = z.extract(f, tempdir)
                     try:
                         metadata = read_metadata(dicom_file, force=True)
-                    except:
+                    except IOError:
                         continue
                     else:
                         series_description = metadata['SeriesDescription']
