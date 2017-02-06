@@ -220,7 +220,7 @@ def main():
                     print('{}: ACE-IQ date of birth is different from Excel date of birth: {} / {}'
                           .format(psc1, dob_excel, dob_ace_iq))
             else:
-                print('{}: Missing Excel date of birth, only ACE-IQ date of birth: {} / {}'
+                print('{}: Missing Excel date of birth, only ACE-IQ date of birth: {}'
                       .format(psc1, dob_ace_iq))
         elif dob_phir:
             if dob_excel:
@@ -228,7 +228,7 @@ def main():
                     print('{}: PHIR date of birth is different from Excel date of birth: {} / {}'
                           .format(psc1, dob_excel, dob_phir))
             else:
-                print('{}: Missing Excel date of birth, only PHIR date of birth: {} / {}'
+                print('{}: Missing Excel date of birth, only PHIR date of birth: {}'
                       .format(psc1, dob_phir))
         elif dob_excel:
             print('{}: Orphan Excel entry'
