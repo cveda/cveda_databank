@@ -1,4 +1,4 @@
-# Copyright (c) 2016 CEA
+# Copyright (c) 2016-2017 CEA
 #
 # This software is governed by the CeCILL license under French law and
 # abiding by the rules of distribution of free software. You can use,
@@ -28,6 +28,7 @@
 
 from setuptools import setup
 from cveda_databank import __version__
+from imagen_databank import __author__
 from cveda_databank import __email__
 from cveda_databank import __license__
 
@@ -45,7 +46,7 @@ def license():
 setup(
     name='cveda_databank',
     version=__version__,
-    author='Dimitri Papadopoulos',
+    author=__author__,
     author_email=__email__,
     description='c-VEDA project databank software',
     long_description=readme(),
