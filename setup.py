@@ -27,6 +27,9 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 from setuptools import setup
+from cveda_databank import __version__
+from cveda_databank import __email__
+from cveda_databank import __license__
 
 
 def readme():
@@ -41,12 +44,12 @@ def license():
 
 setup(
     name='cveda_databank',
-    version='0.1.0',
+    version=__version__,
     author='Dimitri Papadopoulos',
-    author_email='cveda.tech@gmail.com',
+    author_email=__email__,
     description='c-VEDA project databank software',
     long_description=readme(),
-    license='CeCILL',
+    license=__license__,
     url='https://github.com/cveda/cveda_databank',
     packages=['cveda_databank'],
     scripts=[

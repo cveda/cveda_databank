@@ -83,3 +83,10 @@ from .dicom_utils import read_metadata
 from .image_data import walk_image_data, report_image_data
 
 from . import sanity
+
+__author__ = 'Dimitri Papadopoulos'
+__copyright__ = 'Copyright (c) 2014-2017 CEA'
+__license__ = 'CeCILL'
+__version__ = '0.1.0'
+__email__ = 'cveda.tech@gmail.com'
+__status__ = 'Development'
