@@ -10,7 +10,7 @@ Software reference documentation_ is published on line.
 ``cveda_databank``
   Read and perform sanity checks on raw datasets.
 
-``doc``
+``docs``
     Reference documentation_ of *cveda_databank*.
 
 ``psc``
