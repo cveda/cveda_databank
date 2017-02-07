@@ -19,5 +19,8 @@ Software reference documentation_ is published on line.
 ``psytools``
   Download Psytools data as CSV files from Delosis servers, anonymize by removing identifying data and converting PSC1 to PSC2.
 
+``mri``
+  Experimental imaging dataset marshalling script.
+
 .. _`project wiki`: https://github.com/cveda/cveda_databank/wiki
 .. _documentation: http://c-veda-databank.readthedocs.io
