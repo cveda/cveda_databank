@@ -29,7 +29,6 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-from __future__ import print_function
 import os
 import sys
 from datetime import date
