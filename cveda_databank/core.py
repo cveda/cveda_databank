@@ -185,12 +185,12 @@ SEX_FROM_PSC1 = _initialize_sex_from_psc1(_ACE_IQ_PATH, _PDS_PATH, _SDIM_PATH)
 
 class Error:
     """The `Error` exception is raised when an error occurs while parsing
-    imaging data files.
+    c-VEDA data files.
 
     Attributes
     ----------
     path : str
-        File system path containing the incriminated data.
+        Path to the file containing erroneous data.
     message : str
         Message explaining the error.
     sample : str
