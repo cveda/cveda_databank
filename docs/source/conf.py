@@ -57,7 +57,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'c-VEDA databank'
-copyright = u'2016 CEA'
+copyright = u'2016-2017 CEA'
 html_show_sphinx = False
 
 # The version info for the project you're documenting, acts as replacement for
