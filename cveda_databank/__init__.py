@@ -31,8 +31,8 @@
 
 '''
 Module `cveda_databank` provides shared functions and constants for databank
-operations of the `c-VEDA project`_—mainly sanity checking of data uploaded
-from acquisition centres.
+operations of the `c-VEDA project`_—mainly sanity checking  and anonymization
+of data uploaded from acquisition centres.
 
 .. _c-VEDA project: https://cveda.nimhans.ac.in
 
