@@ -75,5 +75,6 @@ setup(
     install_requires=[
         'pydicom',
         'jellyfish',
+        'openpyxl',
     ],
 )

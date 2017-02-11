@@ -28,6 +28,7 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
+from openpyxl import load_workbook
 from .psytools import read_psytools
 
 import logging
@@ -40,6 +41,7 @@ if (2, 7) <= sys.version_info < (3, 2):
 # reference files
 #
 _PSC_PATH = '/tmp/psc2psc_2016-07-12.txt'  # FIXME: missing workstation at NIMHANS
+_EXCEL_PATH = '/tmp/PSC1_DOB_2017-01-21.xlsx'  # FIXME: missing workstation at NIMHANS
 _ACE_IQ_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
 _PHIR_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_PHIR-BASIC_DIGEST.csv'
 _PDS_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_PDS-BASIC_DIGEST.csv'
@@ -74,11 +76,56 @@ def _initialize_psc2_from_psc1(path):
     return psc2_from_psc1
 
 
-def _initialize_dob_from_psc1(ace_iq_path, phir_path):
+def _read_excel(path):
+    excel = {}
+    workbook = load_workbook(path)
+    for worksheet in workbook:
+        for row in worksheet:
+            psc1 = row[0].value
+            if psc1:
+                # clean up and detect invalid PSC1 codes
+                if isinstance(psc1, int):
+                    psc1 = str(psc1)
+                psc1 = psc1.strip()
+                if psc1.isdigit():
+                    if len(psc1) != 12:
+                        logger.error('invalid PSC1: %s', psc1)
+                        psc1 = None
+                else:
+                    logger.warn('invalid PSC1: %s', psc1)
+                    psc1 = None
+            dob = row[1].value
+            if dob:
+                # clean up and detect invalid dates of birth
+                if isinstance(dob, str):
+                    if dob.startswith('…'):  # blank cells...
+                        continue
+                    dob = dob.strip()
+                    try:
+                        dob = datetime.strptime(dob, '%d/%m/%Y').date()
+                    except ValueError:
+                        try:
+                            dob = datetime.strptime(dob, '%d.%m.%Y').date()
+                        except ValueError:
+                            logger.error('invalid date of birth: %s', dob)
+                            dob = None
+                elif isinstance(dob, datetime):
+                    dob = dob.date()
+                else:
+                    logger.error('invalid date of birth: %s', str(dob))
+                    dob = None
+            if psc1 and dob:
+                excel[psc1] = dob
+    return excel
+
+
+def _initialize_dob_from_psc1(excel_path, ace_iq_path, phir_path):
     """Build dictionnary to map PSC1 code to date of birth of subject.
 
     Parameters
     ----------
+    excel_path : str
+        Path to Excel file with authoritative dates of birth.
     ace_iq_path : str
         Path to ACE-IQ CSV file exported from Psytools.
     phir_path : str
@@ -92,11 +139,16 @@ def _initialize_dob_from_psc1(ace_iq_path, phir_path):
     """
     dob_from_psc1 = {}
 
+    excel = _read_excel(excel_path)
     ace_iq_questions = {'ACEIQ_C2': 'datetime.date'}
     ace_iq = read_psytools(ace_iq_path, ace_iq_questions)
     phir_questions = {'PHIR_01': 'datetime.date'}
     phir = read_psytools(phir_path, phir_questions)
-    for psc1 in list(ace_iq) + list(phir):
+    for psc1 in set(excel) + set(ace_iq) + set(phir):
+        if psc1 in excel:
+            dob_excel = excel[psc1]
+        else:
+            dob_excel = None
         if psc1 in ace_iq and 'ACEIQ_C2' in ace_iq[psc1]:
             dob_ace_iq = ace_iq[psc1]['ACEIQ_C2']
         else:
@@ -105,17 +157,28 @@ def _initialize_dob_from_psc1(ace_iq_path, phir_path):
             dob_phir = phir[psc1]['PHIR_01']
         else:
             dob_phir = None
-        if dob_ace_iq and dob_phir:
-            if dob_ace_iq == dob_phir:
-                dob_from_psc1[psc1] = dob_ace_iq
-            else:
-                logger.error('inconsistent date of birth for: %s', psc1)
-        elif dob_ace_iq:
-            dob_from_psc1[psc1] = dob_ace_iq
-        elif dob_phir:
-            dob_from_psc1[psc1] = dob_phir
+        if dob_excel:
+            dob_from_psc1[psc1] = dob_excel
+            if dob_ace_iq and dob_ace_iq != dob_excel:
+                logger.info('ACE-IQ date of birth %s different from reference %s: %s',
+                            dob_ace_iq, excel_iq, psc1)
+            if dob_phir and dob_phir != dob_excel:
+                logger.info('PHIR date of birth %s different from reference %s: %s',
+                            dob_phir, excel_iq, psc1)
         else:
-            logger.warning('missing date of birth for: %s', psc1)
+            logger.warn('missing reference date of birth for: %s', psc1)
+            if dob_ace_iq and dob_phir:
+                if dob_ace_iq == dob_phir:
+                    dob_from_psc1[psc1] = dob_ace_iq
+                else:
+                    logger.error('inconsistent dates in ACE-IQ (%s) and PHIR (%s): %s',
+                                 dob_ace_iq, dob_phir, psc1)
+            elif dob_ace_iq:
+                dob_from_psc1[psc1] = dob_ace_iq
+            elif dob_phir:
+                dob_from_psc1[psc1] = dob_phir
+            else:  # huh? shouldn't be here if PSC1 found in a source at least
+                logger.error('missing any date of birth for: %s', psc1)
 
     return dob_from_psc1
 
@@ -164,10 +227,7 @@ def _initialize_sex_from_psc1(ace_iq_path, pds_path, sdim_path):
             # find the value that occurred more than any other
             reverse = {}
             for k, v in merge.items():
-                if v in reverse:
-                    reverse[v].append(k)
-                else:
-                    reverse[v] = [k]
+                reverse.setdefault(v, []).append(k)
             m = max(reverse.keys())
             if len(reverse[m]) == 1:
                 sex_from_psc1[psc1] = reverse[m][0]
