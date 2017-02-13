@@ -93,7 +93,12 @@ def read_ace_iq(path):
                     result = row['Trial result']
                     if result != '':
                         if trial == 'ACEIQ_C2':
-                            dob = datetime.strptime(result, '%d-%m-%Y')
+                            try:
+                                dob = datetime.strptime(result, '%d-%m-%Y')
+                            except ValueError:
+                                logger.warn('%s: ill-formatted date: %s',
+                                            psc1, result)
+                                continue
                             iteration_value['dob'] = dob.date()  # overwrite previous results
                             completed = datetime.strptime(row['Completed Timestamp'], '%Y-%m-%d %H:%M:%S.%f')
                             iteration_value['age_from_dob'] = age(completed, dob)
@@ -126,7 +131,12 @@ def read_phir(path):
                     iteration_value = psc1_value.setdefault(iteration, {})
                     if result != '':
                         if trial == 'PHIR_01':
-                            dob = datetime.strptime(result, '%d-%m-%Y')
+                            try:
+                                dob = datetime.strptime(result, '%d-%m-%Y')
+                            except ValueError:
+                                logger.warn('%s: ill-formatted date: %s',
+                                            psc1, result)
+                                continue
                             iteration_value['dob'] = dob.date()
                             completed = datetime.strptime(row['Completed Timestamp'], '%Y-%m-%d %H:%M:%S.%f')
                             iteration_value['age_from_dob'] = age(completed, dob)
@@ -139,9 +149,11 @@ def read_excel(path):
     excel = {}
     workbook = load_workbook(path)
     for worksheet in workbook:
-        for row in worksheet:
-            psc1 = row[0].value
-            dob = row[1].value
+        index = {cell.value: i for i, cell in enumerate(worksheet.rows[0])
+                 if cell.value}
+        for row in worksheet.rows[1:]:
+            psc1 = row[index['PSC1 CODE']].value
+            dob = row[index['Date of Birth']].value
             if not psc1:
                 continue
             if isinstance(psc1, int):
@@ -166,10 +178,7 @@ def read_excel(path):
                     try:
                         dob = datetime.strptime(dob, '%d.%m.%Y').date()
                     except ValueError:
-                        try:
-                            dob = datetime.strptime(dob, '%d/%m%Y').date()  # ouch! single occurrence
-                        except ValueError:
-                            logger.error('bogus DOB: %s', dob)
+                        logger.error('bogus DOB: %s', dob)
             elif isinstance(dob, datetime):
                 dob = dob.date()
             else:
