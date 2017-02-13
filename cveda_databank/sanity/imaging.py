@@ -31,6 +31,7 @@
 import os
 import tempfile
 import shutil
+import unicodedata
 from zipfile import ZipFile
 try:
     from zipfile import BadZipFile
@@ -299,6 +300,32 @@ def _match_series_description(sequence, series_description, center=None):
     return False
 
 
+def _filter_non_printable(s):
+    non_printable = {
+        'Cc',  # Other, control
+        'Cf',  # Other, format
+        'Cs',  # Other, surrogate
+        'Co',  # Other, private use
+        'Cn',  # Other, not assigned
+    }
+
+    def translate(c):
+        if c == '\r':
+            return '\\r'
+        elif c == '\n':
+            return '\\n'
+        elif unicodedata.category(c) in non_printable:
+            n = ord(c)
+            if n <= 0xff:
+                return '\\x{0:02x}'.format(n)
+            else:
+                return '\\u{0:04x}'.format(n)
+        else:
+            return c
+
+    return ''.join(translate(c) for c in unicode(s))
+
+
 def _check_sequence_content(path, ziptree, sequence, psc1, date):
     """Rapid sanity check of a ZIP subfolder containing an MRI sequence.
 
@@ -352,10 +379,9 @@ def _check_sequence_content(path, ziptree, sequence, psc1, date):
                             if not patient_id:
                                 errors.append(Error(f, 'Empty PSC1 code'))
                             elif patient_id != psc1:
+                                patient_id = _filter_non_printable(patient_id)
                                 errors.append(Error(f, 'Inconsistent PSC1 code: {0}'
-                                                       .format(patient_id
-                                                               .replace('\r', '\\r')
-                                                               .replace('\n', '\\n'))))
+                                                       .format(patient_id)))
                         else:
                             errors.append(Error(f, 'Missing PSC1 code'))
                         if 'AcquisitionDate' in metadata:
