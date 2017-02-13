@@ -81,8 +81,10 @@ def _read_excel(path):
     excel = {}
     workbook = load_workbook(path)
     for worksheet in workbook:
-        for row in worksheet:
-            psc1 = row[0].value
+        index = {cell.value: i for i, cell in enumerate(worksheet.rows[0])
+                 if cell.value}
+        for row in worksheet.rows[1:]:
+            psc1 = row[index['PSC1 CODE']].value
             if psc1:
                 # clean up and detect invalid PSC1 codes
                 if isinstance(psc1, int):
@@ -95,7 +97,7 @@ def _read_excel(path):
                 else:
                     logger.warn('invalid PSC1: %s', psc1)
                     psc1 = None
-            dob = row[1].value
+            dob = row[index['Date of Birth']].value
             if dob:
                 # clean up and detect invalid dates of birth
                 if isinstance(dob, str):
