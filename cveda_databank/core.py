@@ -28,6 +28,7 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
+from datetime import datetime
 from openpyxl import load_workbook
 from .psytools import read_psytools
 
@@ -144,7 +145,7 @@ def _initialize_dob_from_psc1(excel_path, ace_iq_path, phir_path):
     ace_iq = read_psytools(ace_iq_path, ace_iq_questions)
     phir_questions = {'PHIR_01': 'datetime.date'}
     phir = read_psytools(phir_path, phir_questions)
-    for psc1 in set(excel) + set(ace_iq) + set(phir):
+    for psc1 in set(excel) | set(ace_iq) | set(phir):
         if psc1 in excel:
             dob_excel = excel[psc1]
         else:
@@ -161,10 +162,10 @@ def _initialize_dob_from_psc1(excel_path, ace_iq_path, phir_path):
             dob_from_psc1[psc1] = dob_excel
             if dob_ace_iq and dob_ace_iq != dob_excel:
                 logger.info('ACE-IQ date of birth %s different from reference %s: %s',
-                            dob_ace_iq, excel_iq, psc1)
+                            dob_ace_iq, dob_excel, psc1)
             if dob_phir and dob_phir != dob_excel:
                 logger.info('PHIR date of birth %s different from reference %s: %s',
-                            dob_phir, excel_iq, psc1)
+                            dob_phir, dob_excel, psc1)
         else:
             logger.warn('missing reference date of birth for: %s', psc1)
             if dob_ace_iq and dob_phir:
@@ -239,7 +240,7 @@ def _initialize_sex_from_psc1(ace_iq_path, pds_path, sdim_path):
 
 PSC2_FROM_PSC1 = _initialize_psc2_from_psc1(_PSC_PATH)
 PSC1_FROM_PSC2 = {v: k for k, v in PSC2_FROM_PSC1.items()}
-DOB_FROM_PSC1 = _initialize_dob_from_psc1(_ACE_IQ_PATH, _PHIR_PATH)
+DOB_FROM_PSC1 = _initialize_dob_from_psc1(_EXCEL_PATH, _ACE_IQ_PATH, _PHIR_PATH)
 SEX_FROM_PSC1 = _initialize_sex_from_psc1(_ACE_IQ_PATH, _PDS_PATH, _SDIM_PATH)
 
 
