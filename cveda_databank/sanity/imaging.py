@@ -353,7 +353,9 @@ def _check_sequence_content(path, ziptree, sequence, psc1, date):
                                 errors.append(Error(f, 'Empty PSC1 code'))
                             elif patient_id != psc1:
                                 errors.append(Error(f, 'Inconsistent PSC1 code: {0}'
-                                                       .format(patient_id)))
+                                                       .format(patient_id
+                                                               .replace('\r', '\\r')
+                                                               .replace('\n', '\\n'))))
                         else:
                             errors.append(Error(f, 'Missing PSC1 code'))
                         if 'AcquisitionDate' in metadata:
