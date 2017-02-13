@@ -323,7 +323,10 @@ def _filter_non_printable(s):
         else:
             return c
 
-    return ''.join(translate(c) for c in unicode(s))
+    try:
+        return ''.join(translate(c) for c in unicode(s))  # Python 2
+    except NameError:
+        return ''.join(translate(c) for c in s)
 
 
 def _check_sequence_content(path, ziptree, sequence, psc1, date):
