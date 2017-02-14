@@ -41,12 +41,12 @@ if (2, 7) <= sys.version_info < (3, 2):
 #
 # reference files
 #
-_PSC_PATH = '/neurospin/cveda/databank/framework/psc/psc2psc_2016-07-12.txt'
-_EXCEL_PATH = '/neurospin/cveda/databank/framework/psc/PSC1_DOB_2017-02-14.xlsx'
-_ACE_IQ_PATH = '/neurospin/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
-_PHIR_PATH = '/neurospin/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_PHIR-BASIC_DIGEST.csv'
-_PDS_PATH = '/neurospin/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_PDS-BASIC_DIGEST.csv'
-_SDIM_PATH = '/neurospin/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_SDIM-BASIC_DIGEST.csv'
+_PSC_PATH = '/cveda/databank/framework/psc/psc2psc_2016-07-12.txt'
+_EXCEL_PATH = '/cveda/databank/framework/psc/PSC1_DOB_2017-02-14.xlsx'
+_ACE_IQ_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
+_PHIR_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_PHIR-BASIC_DIGEST.csv'
+_PDS_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_PDS-BASIC_DIGEST.csv'
+_SDIM_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_SDIM-BASIC_DIGEST.csv'
 
 
 def _initialize_psc2_from_psc1(path):
