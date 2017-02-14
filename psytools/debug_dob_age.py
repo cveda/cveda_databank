@@ -61,7 +61,7 @@ logger = logging.getLogger()
 
 ACE_IQ = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
 PHIR = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_PHIR-BASIC_DIGEST.csv'
-EXCEL = '/tmp/PSC1_DOB_2017-01-21.xlsx'
+EXCEL = '/cveda/databank/framework/psc/PSC1_DOB_2017-02-14.xlsx'
 
 
 def age(today, birth):
