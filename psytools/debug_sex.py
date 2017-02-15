@@ -50,8 +50,12 @@ SDIM : str
 
 """
 
-import cveda_databank
 import xlsxwriter
+# import ../cveda_databank
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
+from cveda_databank import read_psytools
 
 ACE_IQ_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
 PDS_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_PDS-BASIC_DIGEST.csv'
@@ -61,13 +65,13 @@ SDIM_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_SDIM-BASIC_DIGEST.csv
 def main():
     # ACE-IQ questionnaire
     ace_iq_questions = {'ACEIQ_C1': None}
-    ace_iq = cveda_databank.read_psytools(ACE_IQ_PATH, ace_iq_questions)
+    ace_iq = read_psytools(ACE_IQ_PATH, ace_iq_questions)
     # PDS questionnaire
     pds_questions = {'PDS_gender': None}
-    pds = cveda_databank.read_psytools(PDS_PATH, pds_questions)
+    pds = read_psytools(PDS_PATH, pds_questions)
     # SDIM questionnaire
     sdim_questions = {'SDI_02': None}
-    sdim = cveda_databank.read_psytools(SDIM_PATH, sdim_questions)
+    sdim = read_psytools(SDIM_PATH, sdim_questions)
 
     # Excel output
     options = {
