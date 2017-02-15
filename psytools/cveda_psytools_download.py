@@ -46,7 +46,7 @@ PSYTOOLS_PSC1_DIR : str
 """
 
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.ERROR)
 
 import os
 import requests

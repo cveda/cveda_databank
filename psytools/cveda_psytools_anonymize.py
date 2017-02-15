@@ -59,7 +59,7 @@ PSYTOOLS_PSC1_DIR = '/cveda/databank/RAW/PSC1/psytools'
 PSYTOOLS_PSC2_DIR = '/cveda/databank/RAW/PSC2/psytools'
 
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.ERROR)
 
 import os
 from csv import DictReader
