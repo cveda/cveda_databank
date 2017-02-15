@@ -50,8 +50,8 @@ EXCEL : str
 
 """
 
-from csv import (Sniffer, DictReader)
-from datetime import datetime
+from csv import Sniffer, DictReader
+from datetime import datetime, date
 from openpyxl import load_workbook
 
 import logging
@@ -208,40 +208,47 @@ def main():
         if psc1 in excel:
             dob_excel = excel[psc1]
 
-        if dob_ace_iq and dob_phir:
-            if dob_ace_iq != dob_phir:
-                if dob_excel:
-                    if dob_excel == dob_ace_iq:
+        if dob_excel:
+            project_start = date(2016, 6, 1)  # approximation...
+            age_at_project_start = (project_start - dob_excel).days
+            if age_at_project_start < 365.25 * 5 or age_at_project_start > 365.25 * 25:
+                print('{}: Excel date of birth looks incorrect: {}'
+                      .format(psc1, dob_excel))
+            if dob_ace_iq and dob_phir:
+                if dob_ace_iq != dob_phir:
+                    if dob_ace_iq == dob_excel:
                         print('{}: PHIR date of birth is different from ACE-IQ and Excel dates of birth: {} / {}'
                               .format(psc1, dob_excel, dob_phir))
-                    elif dob_excel == dob_phir:
+                    elif dob_phir == dob_excel:
                         print('{}: ACE-IQ date of birth is different from PHIR and Excel dates of birth: {} / {}'
                               .format(psc1, dob_excel, dob_ace_iq))
                     else:
                         print('{}: All dates of birth are different: {} / {} / {}'
                               .format(psc1, dob_excel, dob_ace_iq, dob_phir))
-                else:
-                    print('{}: Missing Excel date of birth, different ACE-IQ and PHIR dates of birth: {} / {}'
-                          .format(psc1, dob_ace_iq, dob_phir))
-        elif dob_ace_iq:
-            if dob_excel:
-                if dob_excel != dob_ace_iq:
+                elif dob_ace_iq != dob_excel:
+                    print('{}: Excel date of birth is different from ACE-IQ and PHIR dates of birth: {} / {}'
+                          .format(psc1, dob_excel, dob_ace_iq))
+            elif dob_ace_iq:
+                if dob_ace_iq != dob_excel:
                     print('{}: ACE-IQ date of birth is different from Excel date of birth: {} / {}'
                           .format(psc1, dob_excel, dob_ace_iq))
-            else:
-                print('{}: Missing Excel date of birth, only ACE-IQ date of birth: {}'
-                      .format(psc1, dob_ace_iq))
-        elif dob_phir:
-            if dob_excel:
-                if dob_excel != dob_phir:
+            elif dob_phir:
+                if dob_phir != dob_excel:
                     print('{}: PHIR date of birth is different from Excel date of birth: {} / {}'
                           .format(psc1, dob_excel, dob_phir))
             else:
-                print('{}: Missing Excel date of birth, only PHIR date of birth: {}'
-                      .format(psc1, dob_phir))
-        elif dob_excel:
-            print('{}: Orphan Excel entry'
-                  .format(psc1))
+                print('{}: Orphan Excel entry'
+                      .format(psc1))
+        elif dob_ace_iq and dob_phir:
+            if dob_ace_iq != dob_phir:
+                print('{}: Missing Excel date of birth, different ACE-IQ and PHIR dates of birth: {} / {}'
+                      .format(psc1, dob_ace_iq, dob_phir))
+        elif dob_ace_iq:
+            print('{}: Missing Excel date of birth, only ACE-IQ date of birth: {}'
+                  .format(psc1, dob_ace_iq))
+        elif dob_phir:
+            print('{}: Missing Excel date of birth, only PHIR date of birth: {}'
+                  .format(psc1, dob_phir))
         else:
             print('{}: Uh???'
                   .format(psc1))
