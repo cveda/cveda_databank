@@ -256,7 +256,7 @@ _SERIES_DESCRIPTION = {
         'T2w': ['2D T2 weighted'],
     },
     'MYSURU': {
-        'T1w': ['T1W_IR_TSE'],
+        'T1w': ['sT1W_3D_TFE'],
         'rest': ['FE_EPI 160'],
         'B0_map': ['B0 mapping'],
         'dwi': ['DTI_high_32'],
