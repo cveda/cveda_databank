@@ -61,7 +61,7 @@ logger = logging.getLogger()
 
 ACE_IQ = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
 PHIR = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_PHIR-BASIC_DIGEST.csv'
-EXCEL = '/cveda/databank/framework/psc/PSC1_DOB_2017-02-14.xlsx'
+EXCEL = '/cveda/databank/framework/psc/PSC1_DOB_2017-02-19.xlsx'
 
 
 def age(today, birth):
@@ -153,7 +153,6 @@ def read_excel(path):
                  if cell.value}
         for row in worksheet.rows[1:]:
             psc1 = row[index['PSC1 CODE']].value
-            dob = row[index['Date of Birth']].value
             if not psc1:
                 continue
             if isinstance(psc1, int):
@@ -166,8 +165,13 @@ def read_excel(path):
             else:
                 logger.warn('bogus PSC1: %s', psc1)
                 continue
+            dob = row[index['Date of Birth']].value
             if not dob:
                 continue
+            if 'Comments' in index and row[index['Comments']].value:
+                double_checked = True
+            else:
+                double_checked = False
             if isinstance(dob, str):
                 if dob.startswith('…'):  # blank cells...
                     continue
@@ -183,7 +187,7 @@ def read_excel(path):
                 dob = dob.date()
             else:
                 logger.error('bogus DOB: %s', str(dob))
-            excel[psc1] = dob
+            excel[psc1] = (dob, double_checked)
     return excel
 
 
@@ -204,9 +208,9 @@ def main():
         dob_phir = None
         if psc1 in phir and 'dob' in phir[psc1]:
             dob_phir = phir[psc1]['dob']
-        dob_excel = None
+        dob_excel, double_checked = None, False
         if psc1 in excel:
-            dob_excel = excel[psc1]
+            dob_excel, double_checked = excel[psc1]
 
         if dob_excel:
             project_start = date(2016, 6, 1)  # approximation...
@@ -222,20 +226,31 @@ def main():
                     elif dob_phir == dob_excel:
                         print('{}: ACE-IQ date of birth is different from PHIR and Excel dates of birth: {} / {}'
                               .format(psc1, dob_excel, dob_ace_iq))
+                    elif double_checked:
+                        pass
                     else:
                         print('{}: All dates of birth are different: {} / {} / {}'
                               .format(psc1, dob_excel, dob_ace_iq, dob_phir))
                 elif dob_ace_iq != dob_excel:
-                    print('{}: Excel date of birth is different from ACE-IQ and PHIR dates of birth: {} / {}'
-                          .format(psc1, dob_excel, dob_ace_iq))
+                    if double_checked:
+                        pass
+                    else:
+                        print('{}: Excel date of birth is different from ACE-IQ and PHIR dates of birth: {} / {}'
+                              .format(psc1, dob_excel, dob_ace_iq))
             elif dob_ace_iq:
                 if dob_ace_iq != dob_excel:
-                    print('{}: ACE-IQ date of birth is different from Excel date of birth: {} / {}'
-                          .format(psc1, dob_excel, dob_ace_iq))
+                    if double_checked:
+                        pass
+                    else:
+                        print('{}: ACE-IQ date of birth is different from Excel date of birth: {} / {}'
+                              .format(psc1, dob_excel, dob_ace_iq))
             elif dob_phir:
                 if dob_phir != dob_excel:
-                    print('{}: PHIR date of birth is different from Excel date of birth: {} / {}'
-                          .format(psc1, dob_excel, dob_phir))
+                    if double_checked:
+                        pass
+                    else:
+                        print('{}: PHIR date of birth is different from Excel date of birth: {} / {}'
+                              .format(psc1, dob_excel, dob_phir))
             else:
                 print('{}: Orphan Excel entry'
                       .format(psc1))
