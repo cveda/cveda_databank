@@ -265,7 +265,7 @@ _SERIES_DESCRIPTION = {
         'T2w': ['T2W_TSE'],
     },
     'NIMHANS': {
-        'T1w': ['3D T1 WEIGHTED VOLUME'],
+        'T1w': ['3D T1 WEIGHTED VOLUME', '3D T1 WEIGHTED VOLUME_2'],
         'rest': ['act_RESTING STATE fMRI', 'act_Resting state fMRI'],
         'B0_map': ['B0 MAPPING', 'B 0  MAPPING'],
         'dwi': ['DTI_DFC', 'DTI_DFC_MIX', 'DTI _30_DFC_MIX'],
