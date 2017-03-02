@@ -81,10 +81,10 @@ def _read_excel(path):
     excel = {}
     workbook = load_workbook(path)
     for worksheet in workbook:
-        rows = worksheet.rows
-        index = {cell.value: i for i, cell in enumerate(worksheet.rows.next())
+        rows = list(worksheet.rows)
+        index = {cell.value: i for i, cell in enumerate(rows[0])
                  if cell.value}
-        for row in rows:
+        for row in rows[1:]:
             psc1 = row[index['PSC1 CODE']].value
             if psc1:
                 # clean up and detect invalid PSC1 codes
