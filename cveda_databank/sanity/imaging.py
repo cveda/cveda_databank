@@ -256,6 +256,15 @@ _SERIES_DESCRIPTION = {
         'T2w': ['2D T2 weighted'],
     },
     'MYSURU': {
+        'T1w': ['3D T1W'],
+        'rest': ['RESTING STATE'],
+        'B0_map': ['B0 mapping'],
+        'dwi': ['DTI_high_32'],
+        'dwi_rev': ['DTI_high_6'],
+        'FLAIR': ['FLAIR'],
+        'T2w': ['T2W'],
+    },
+    'MYSURU_pilot': {
         'T1w': ['sT1W_3D_TFE'],
         'rest': ['FE_EPI 160'],
         'B0_map': ['B0 mapping'],
