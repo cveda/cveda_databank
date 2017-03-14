@@ -462,25 +462,25 @@ def check_zip_content(path, psc1=None, date=None, expected=None):
         errors.append(Error(f, 'Unexpected file at the root of the ZIP file: {0}'
                                .format(f)))
 
-    for sequence, status in expected.items():
-        if status != 'Missing' and sequence not in ziptree.directories:
-            errors.append(Error(basename,
-                                'Missing folder at the root of the ZIP file: {0}'
-                                .format(sequence)))
-
-    for d, z in ziptree.directories.items():
-        if d not in expected:
-            errors.append(Error(basename,
-                                'Unexpected folder, unrelated to expected sequences: {0}'
-                                .format(d)))
-        elif expected[d] == 'Missing':
-            errors.append(Error(basename,
-                                'Unexpected folder, associated to a "Missing" sequence: {0}'
-                                .format(d)))
-        else:
-            s, e = _check_sequence_content(path, z, d, psc1, date)
-            subject_ids.extend(s)
-            errors.extend(e)
-        errors.extend(_check_empty_files(z))
+    if expected:
+        for sequence, status in expected.items():
+            if status != 'Missing' and sequence not in ziptree.directories:
+                errors.append(Error(basename,
+                                    'Missing folder at the root of the ZIP file: {0}'
+                                    .format(sequence)))
+        for d, z in ziptree.directories.items():
+            if d not in expected:
+                errors.append(Error(basename,
+                                    'Unexpected folder, unrelated to expected sequences: {0}'
+                                    .format(d)))
+            elif expected[d] == 'Missing':
+                errors.append(Error(basename,
+                                    'Unexpected folder, associated to a "Missing" sequence: {0}'
+                                    .format(d)))
+            else:
+                s, e = _check_sequence_content(path, z, d, psc1, date)
+                subject_ids.extend(s)
+                errors.extend(e)
+            errors.extend(_check_empty_files(z))
 
     return (subject_ids, errors)
