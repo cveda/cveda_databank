@@ -38,6 +38,10 @@ try:
 except ImportError:
     from zipfile import BadZipfile as BadZipFile  # Python 2
 
+from ..core import PSC2_FROM_PSC1
+from ..core import Error
+from ..dicom_utils import read_metadata
+
 import logging
 logger = logging.getLogger(__name__)
 
