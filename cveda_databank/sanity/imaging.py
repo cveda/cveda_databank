@@ -399,7 +399,7 @@ def _check_sequence_content(path, ziptree, sequence, psc1, date):
                                 error_list.append(Error(f, 'Inconsistent PSC1 code: {0}'
                                                        .format(patient_id)))
                         else:
-                            errors.append(Error(f, 'Missing PSC1 code'))
+                            error_list.append(Error(f, 'Missing PSC1 code'))
                         if 'AcquisitionDate' in metadata:
                             if date:
                                 acquisition_date = metadata['AcquisitionDate']
@@ -461,14 +461,14 @@ def check_zip_content(path, psc1=None, date=None, expected=None):
     # is the file empty?
     if os.path.getsize(path) == 0:
         error_list.append(Error(basename, 'File is empty'))
-        return (subject_ids, errors)
+        return (subject_ids, error_list)
 
     # read the ZIP file into a tree structure
     try:
         ziptree = ZipTree.create(path)
     except BadZipFile as e:
         error_list.append(Error(basename, 'Cannot unzip: "{0}"'.format(e)))
-        return (subject_ids, errors)
+        return (subject_ids, error_list)
 
     # check tree structure
     for f, z in ziptree.files.items():
