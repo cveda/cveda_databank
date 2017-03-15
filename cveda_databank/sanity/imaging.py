@@ -44,14 +44,6 @@ logger = logging.getLogger(__name__)
 __all__ = ['check_zip_name', 'check_zip_content', 'ZipTree']
 
 
-_BEHAVIORAL_PREFIX_EXTENSION = {
-    MID_CSV: ('mid_', '.csv'),
-    FT_CSV: ('ft_', '.csv'),
-    SS_CSV: ('ss_', '.csv'),
-    RECOG_CSV: ('recog_', '.csv'),
-}
-
-
 def _check_psc1(subject_id, suffix=None, psc1=None):
     """
     """
