@@ -255,7 +255,16 @@ _SERIES_DESCRIPTION = {
         'FLAIR': ['2D fast FLAIR'],
         'T2w': ['2D T2 weighted'],
     },
-    'MYSURU': {
+    'MYSURU_pilot5': {
+        'T1w': ['sT1W_3D_TFE'],
+        'rest': ['FE_EPI 160'],
+        'B0_map': ['B0 mapping'],
+        'dwi': ['DTI_high_32'],
+        'dwi_rev': ['DTI (reversed)'],
+        'FLAIR': ['FLAIR'],
+        'T2w': ['T2W_TSE'],
+    },
+    'MYSURU_pilot4': {
         'T1w': ['3D T1W'],
         'rest': ['RESTING STATE'],
         'B0_map': ['B0 mapping'],
@@ -264,7 +273,7 @@ _SERIES_DESCRIPTION = {
         'FLAIR': ['FLAIR'],
         'T2w': ['T2W'],
     },
-    'MYSURU_pilot': {
+    'MYSURU_pilot3': {
         'T1w': ['sT1W_3D_TFE'],
         'rest': ['FE_EPI 160'],
         'B0_map': ['B0 mapping'],
