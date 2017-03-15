@@ -41,20 +41,18 @@ except ImportError:
 import logging
 logger = logging.getLogger(__name__)
 
-# import ../../databank
-try:
-    from ..core import PSC2_FROM_PSC1
-    from ..core import Error
-    from ..dicom_utils import read_metadata
-except ImportError:
-    import sys
-    sys.path.append(os.path.join(os.path.dirname(__file__), u'../..'))
-    from cveda_databank import PSC2_FROM_PSC1
-    from cveda_databank import Error
-    from cveda_databank import read_metadata
+__all__ = ['check_zip_name', 'check_zip_content', 'ZipTree']
 
 
-def _check_psc1(subject_id, psc1=None, suffix=None):
+_BEHAVIORAL_PREFIX_EXTENSION = {
+    MID_CSV: ('mid_', '.csv'),
+    FT_CSV: ('ft_', '.csv'),
+    SS_CSV: ('ss_', '.csv'),
+    RECOG_CSV: ('recog_', '.csv'),
+}
+
+
+def _check_psc1(subject_id, suffix=None, psc1=None):
     """
     """
     if suffix:
@@ -81,7 +79,7 @@ def _check_psc1(subject_id, psc1=None, suffix=None):
             yield 'PSC1 code "{0}" was expected to be "{1}"'.format(subject_id, psc1)
 
 
-def check_zip_name(path, psc1=None, timepoint=None):
+def check_zip_name(path, psc1=None):
     """Check correctness of a ZIP filename.
 
     Parameters
@@ -90,8 +88,6 @@ def check_zip_name(path, psc1=None, timepoint=None):
         Pathname or filename of the ZIP file.
     psc1 : str, optional
         Expected 12-digit PSC1 code.
-    timepoint : str, optional
-        Time point identifier, found as a suffix in subject identifiers.
 
     Returns
     -------
@@ -105,9 +101,9 @@ def check_zip_name(path, psc1=None, timepoint=None):
     basename = os.path.basename(path)
     if basename.endswith('.zip'):
         subject_id = basename[:-len('.zip')]
-        errors = [Error(basename, 'Incorrect ZIP file name: ' + message)
-                  for message in _check_psc1(subject_id, psc1, timepoint)]
-        return subject_id, errors
+        error_list = [Error(basename, 'Incorrect ZIP file name: ' + message)
+                      for message in _check_psc1(subject_id, None, psc1)]
+        return subject_id, error_list
     else:
         return None, [Error(basename, 'Not a valid ZIP file name')]
 
@@ -371,15 +367,15 @@ def _check_sequence_content(path, ziptree, sequence, psc1, date):
         is a list of dectected PSC1 code and errors is an empty list.
 
     """
-    subject_ids = []
-    errors = []
+    subject_ids = set()
+    error_list = []
 
     # check zip tree is not empty and does not contain empty files
     files = list(_files(ziptree))
     if len(files) < 1:
-        errors.append(Error(ziptree.filename, 'Folder is empty'))
+        error_list.append(Error(ziptree.filename, 'Folder is empty'))
     else:
-        errors.extend(_check_empty_files(ziptree))
+        error_list.extend(_check_empty_files(ziptree))
 
         # choose a file from zip tree and check its DICOM tags
         with TemporaryDirectory('cveda') as tempdir:
@@ -390,18 +386,21 @@ def _check_sequence_content(path, ziptree, sequence, psc1, date):
                         metadata = read_metadata(dicom_file, force=True)
                     except IOError:
                         continue
+                    except AttributeError as e:
+                        error_list.append(Error(f, 'This is not a valid DICOM file'))
+                        break
                     else:
                         series_description = metadata['SeriesDescription']
                         if not _match_series_description(sequence, series_description):
-                            errors.append(Error(f, 'Unexpected Series Description: {0}'
+                            error_list.append(Error(f, 'Unexpected Series Description: {0}'
                                                    .format(series_description)))
                         if 'PatientID' in metadata:
                             patient_id = metadata['PatientID']
                             if not patient_id:
-                                errors.append(Error(f, 'Empty PSC1 code'))
+                                error_list.append(Error(f, 'Empty PSC1 code'))
                             elif patient_id != psc1:
                                 patient_id = _filter_non_printable(patient_id)
-                                errors.append(Error(f, 'Inconsistent PSC1 code: {0}'
+                                error_list.append(Error(f, 'Inconsistent PSC1 code: {0}'
                                                        .format(patient_id)))
                         else:
                             errors.append(Error(f, 'Missing PSC1 code'))
@@ -409,13 +408,13 @@ def _check_sequence_content(path, ziptree, sequence, psc1, date):
                             if date:
                                 acquisition_date = metadata['AcquisitionDate']
                                 if acquisition_date != date:
-                                    errors.append(Error(f, 'Inconsistent acquisition date: {0}'
+                                    error_list.append(Error(f, 'Inconsistent acquisition date: {0}'
                                                            .format(acquisition_date)))
                         else:
-                            errors.append(Error(f, 'Missing acquisition date'))
+                            error_list.append(Error(f, 'Missing acquisition date'))
                         break
 
-    return (subject_ids, errors)
+    return subject_ids, error_list
 
 
 def check_zip_content(path, psc1=None, date=None, expected=None):
@@ -459,46 +458,46 @@ def check_zip_content(path, psc1=None, date=None, expected=None):
 
     """
     subject_ids = []
-    errors = []
+    error_list = []
 
     basename = os.path.basename(path)
 
     # is the file empty?
     if os.path.getsize(path) == 0:
-        errors.append(Error(basename, 'File is empty'))
+        error_list.append(Error(basename, 'File is empty'))
         return (subject_ids, errors)
 
     # read the ZIP file into a tree structure
     try:
         ziptree = ZipTree.create(path)
     except BadZipFile as e:
-        errors.append(Error(basename, 'Cannot unzip: "{0}"'.format(e)))
+        error_list.append(Error(basename, 'Cannot unzip: "{0}"'.format(e)))
         return (subject_ids, errors)
 
     # check tree structure
     for f, z in ziptree.files.items():
-        errors.append(Error(f, 'Unexpected file at the root of the ZIP file: {0}'
+        error_list.append(Error(f, 'Unexpected file at the root of the ZIP file: {0}'
                                .format(f)))
 
     if expected:
         for sequence, status in expected.items():
             if status != 'Missing' and sequence not in ziptree.directories:
-                errors.append(Error(basename,
+                error_list.append(Error(basename,
                                     'Missing folder at the root of the ZIP file: {0}'
                                     .format(sequence)))
         for d, z in ziptree.directories.items():
             if d not in expected:
-                errors.append(Error(basename,
+                error_list.append(Error(basename,
                                     'Unexpected folder, unrelated to expected sequences: {0}'
                                     .format(d)))
             elif expected[d] == 'Missing':
-                errors.append(Error(basename,
+                error_list.append(Error(basename,
                                     'Unexpected folder, associated to a "Missing" sequence: {0}'
                                     .format(d)))
             else:
                 s, e = _check_sequence_content(path, z, d, psc1, date)
                 subject_ids.extend(s)
-                errors.extend(e)
-            errors.extend(_check_empty_files(z))
+                error_list.extend(e)
+            error_list.extend(_check_empty_files(z))
 
-    return (subject_ids, errors)
+    return subject_ids, error_list
