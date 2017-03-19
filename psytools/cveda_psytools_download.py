@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2010-2016 CEA
+# Copyright (c) 2010-2017 CEA
 #
 # This software is governed by the CeCILL license under French law and
 # abiding by the rules of distribution of free software. You can use,
@@ -116,24 +116,33 @@ def main():
         # connect to Delosis web service
         # let Requests module read authentication tokens from ~/.netrc
         r = requests.get(url)
-        # read stream of compressed CSV data sent by Delosis web service
-        compressed_data = BytesIO(r.content)
-        with gzip.GzipFile(fileobj=compressed_data) as uncompressed_data:
-            uncompressed_data = TextIOWrapper(uncompressed_data, encoding='utf_8')
-            # unfold quoted text spanning multiple lines
-            data = QUOTED_PATTERN.sub(lambda x: x.group().replace('\n', '/'),
-                                      uncompressed_data.read())
-            # skip files that have not changed since last update
-            psytools_path = os.path.join(PSYTOOLS_PSC1_DIR, dataset)
-            if os.path.isfile(psytools_path):
-                with open(psytools_path, 'r') as uncompressed_file:
-                    if uncompressed_file.read() == data:
-                        logging.info('skip unchanged file: %s', psytools_path)
-                        continue
-            # write downloaded data into file
-            with open(psytools_path, 'w') as uncompressed_file:
-                logging.info('write file: %s', psytools_path)
-                uncompressed_file.write(data)
+        # read stream of CSV data sent by Delosis web service
+        delosis_stream = BytesIO(r.content)
+        # Delosis web service stopped compressing CSV data around 24 February 2017
+        try:
+            compressed_stream = gzip.GzipFile(fileobj=delosis_stream)
+            uncompressed_stream = TextIOWrapper(compressed_stream,
+                                                encoding='utf_8')
+            uncompressed_data = uncompressed_stream.read()
+            delosis_stream.close()
+        except OSError:
+            uncompressed_stream = TextIOWrapper(delosis_stream,
+                                                encoding='utf_8')
+            uncompressed_data = uncompressed_stream.read()
+        # unfold quoted text spanning multiple lines
+        data = QUOTED_PATTERN.sub(lambda x: x.group().replace('\n', '/'),
+                                  uncompressed_data)
+        # skip files that have not changed since last update
+        psytools_path = os.path.join(PSYTOOLS_PSC1_DIR, dataset)
+        if os.path.isfile(psytools_path):
+            with open(psytools_path, 'r') as uncompressed_file:
+                if uncompressed_file.read() == data:
+                    logging.info('skip unchanged file: %s', psytools_path)
+                    continue
+        # write downloaded data into file
+        with open(psytools_path, 'w') as uncompressed_file:
+            logging.info('write file: %s', psytools_path)
+            uncompressed_file.write(data)
 
 
 if __name__ == "__main__":
