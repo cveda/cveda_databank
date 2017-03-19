@@ -77,29 +77,29 @@ def main():
         m = []
         if psc1 in ace_iq and 'ACEIQ_C1' in ace_iq[psc1]:
             ace_iq_sex = ace_iq[psc1]['ACEIQ_C1']
-            if ace_iq_sex.upper() is "F":
+            if ace_iq_sex == "F":
                 f.append('ACEIQ_C1')
             else:
                 m.append('ACEIQ_C1')
         if psc1 in pds and 'PDS_gender' in pds[psc1]:
             pds_sex = pds[psc1]['PDS_gender']
-            if pds_sex.upper() is "F":
+            if pds_sex == "F":
                 f.append('PDS_gender')
             else:
                 m.append('PDS_gender')
         if psc1 in sdim and 'SDI_02' in sdim[psc1]:
             sdim_sex = sdim[psc1]['SDI_02']
-            if sdim_sex.upper() is "F":
+            if sdim_sex == "F":
                 f.append('SDI_02')
             else:
                 m.append('SDI_02')
 
         if psc1.startswith('1'):
             if len(m) and len(m) < len(f):
-                print('{}: the value "M" of {} differs from the value "F" of {}'
+                print('{}: the value "M" in {} differs from the value "F" in {}'
                       .format(psc1, m, f))
             if len(f) and len(f) < len(m):
-                print('{}: the value "F" of {} differs from the value "M" of {}'
+                print('{}: the value "F" in {} differs from the value "M" in {}'
                       .format(psc1, f, m))
             if len(f) == len(m):
                 print('{}: cannot decide between "F" ({}) and "M" ({})'
