@@ -169,20 +169,20 @@ def _initialize_dob_from_psc1(excel_path, ace_iq_path, phir_path):
             if dob_phir and dob_phir != dob_excel:
                 logger.info('PHIR date of birth %s different from reference %s: %s',
                             dob_phir, dob_excel, psc1)
-        else:
-            logger.warn('missing reference date of birth for: %s', psc1)
-            if dob_ace_iq and dob_phir:
-                if dob_ace_iq == dob_phir:
-                    dob_from_psc1[psc1] = dob_ace_iq
-                else:
-                    logger.error('inconsistent dates in ACE-IQ (%s) and PHIR (%s): %s',
-                                 dob_ace_iq, dob_phir, psc1)
-            elif dob_ace_iq:
+        elif dob_ace_iq and dob_phir:
+            if dob_ace_iq == dob_phir:
                 dob_from_psc1[psc1] = dob_ace_iq
-            elif dob_phir:
-                dob_from_psc1[psc1] = dob_phir
-            else:  # huh? shouldn't be here if PSC1 found in a source at least
-                logger.error('missing any date of birth for: %s', psc1)
+            else:
+                logger.error('inconsistent dates in ACE-IQ (%s) and PHIR (%s): %s',
+                             dob_ace_iq, dob_phir, psc1)
+        elif dob_ace_iq:
+            logger.warn('missing PHIR and reference date of birth for: %s', psc1)
+            dob_from_psc1[psc1] = dob_ace_iq
+        elif dob_phir:
+            logger.warn('missing ACE-IQ and reference date of birth for: %s', psc1)
+            dob_from_psc1[psc1] = dob_phir
+        else:  # huh? shouldn't be here if PSC1 found in a source at least
+            logger.error('missing any date of birth for: %s', psc1)
 
     return dob_from_psc1
 
@@ -227,7 +227,7 @@ def _initialize_sex_from_psc1(ace_iq_path, pds_path, sdim_path):
         if len(merge) < 1:
             logger.warning('missing sex for: %s', psc1)
         elif len(merge) > 1:
-            logger.error('inconsistent sex for: %s', psc1)
+            logger.info('inconsistent sex for: %s', psc1)
             # find the value that occurred more than any other
             reverse = {}
             for k, v in merge.items():
