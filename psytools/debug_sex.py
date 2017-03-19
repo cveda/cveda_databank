@@ -50,7 +50,6 @@ SDIM : str
 
 """
 
-import xlsxwriter
 # import ../cveda_databank
 import os
 import sys
@@ -73,69 +72,38 @@ def main():
     sdim_questions = {'SDI_02': None}
     sdim = read_psytools(SDIM_PATH, sdim_questions)
 
-    # Excel output
-    options = {
-        'strings_to_numbers': False,
-    }
-    workbook = xlsxwriter.Workbook('cVEDA_Psytools.xlsx', options)
-    HEADER_FORMAT = workbook.add_format({'bold': True,
-                                         'align': 'center', 'valign': 'vcenter'})
-    worksheet = workbook.add_worksheet('sex')
-    # PSC1
-    worksheet.merge_range(0, 0, 1, 0, u'PSC1', HEADER_FORMAT)
-    worksheet.set_column(0, 0, 14)
-    # ACE-IQ
-    worksheet.merge_range(0, 1, 1, 1, u'ACE-IQ', HEADER_FORMAT)
-    worksheet.set_column(1, 1, 12)
-    # PDS
-    worksheet.merge_range(0, 2, 1, 2, u'PDS', HEADER_FORMAT)
-    worksheet.set_column(2, 2, 12)
-    # SDIM
-    worksheet.merge_range(0, 3, 1, 3, u'SDIM', HEADER_FORMAT)
-    worksheet.set_column(3, 3, 12)
-    # more formatting and prepare for writing data
-    worksheet.freeze_panes(2, 0)
-    error_format = {'bg_color': '#FF6A6A'}
-    ERROR_FORMAT = workbook.add_format(error_format)
-    row = 2
-
     for psc1 in ace_iq.keys() & pds.keys() & sdim.keys():
-        merge = {}
+        f = []
+        m = []
         if psc1 in ace_iq and 'ACEIQ_C1' in ace_iq[psc1]:
             ace_iq_sex = ace_iq[psc1]['ACEIQ_C1']
-            merge[ace_iq_sex] = merge.setdefault(ace_iq_sex, 0) + 1
+            if ace_iq_sex.upper() is "F":
+                f.append('ACEIQ_C1')
+            else:
+                m.append('ACEIQ_C1')
         if psc1 in pds and 'PDS_gender' in pds[psc1]:
             pds_sex = pds[psc1]['PDS_gender']
-            merge[pds_sex] = merge.setdefault(pds_sex, 0) + 1
+            if pds_sex.upper() is "F":
+                f.append('PDS_gender')
+            else:
+                m.append('PDS_gender')
         if psc1 in sdim and 'SDI_02' in sdim[psc1]:
             sdim_sex = sdim[psc1]['SDI_02']
-            merge[sdim_sex] = merge.setdefault(sdim_sex, 0) + 1
+            if sdim_sex.upper() is "F":
+                f.append('SDI_02')
+            else:
+                m.append('SDI_02')
 
         if psc1.startswith('1'):
-            if len(merge) > 1:
-                # PSC1
-                worksheet.write_string(row, 0, psc1)
-                # ACE-IQ
-                if ace_iq_sex and (merge[ace_iq_sex] != max(merge.values()) or
-                                   merge[ace_iq_sex] == min(merge.values())):
-                    worksheet.write(row, 1, ace_iq_sex, ERROR_FORMAT)
-                else:
-                    worksheet.write(row, 1, ace_iq_sex)
-                # PDS
-                if pds_sex and (merge[pds_sex] != max(merge.values()) or
-                                merge[pds_sex] == min(merge.values())):
-                    worksheet.write(row, 2, pds_sex, ERROR_FORMAT)
-                else:
-                    worksheet.write(row, 2, pds_sex)
-                # SDIM
-                if sdim_sex and (merge[sdim_sex] != max(merge.values()) or
-                                 merge[sdim_sex] == min(merge.values())):
-                    worksheet.write(row, 3, sdim_sex, ERROR_FORMAT)
-                else:
-                    worksheet.write(row, 3, sdim_sex)
-                row += 1
-
-    workbook.close()
+            if len(m) and len(m) < len(f):
+                print('{}: the value "M" of {} differs from the value "F" of {}'
+                      .format(psc1, m, f))
+            if len(f) and len(f) < len(m):
+                print('{}: the value "F" of {} differs from the value "M" of {}'
+                      .format(psc1, f, m))
+            if len(f) == len(m):
+                print('{}: cannot decide between "F" ({}) and "M" ({})'
+                      .format(psc1, f, m))
 
 
 if __name__ == "__main__":
