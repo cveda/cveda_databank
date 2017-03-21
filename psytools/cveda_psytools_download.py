@@ -118,18 +118,10 @@ def main():
         r = requests.get(url)
         # read stream of CSV data sent by Delosis web service
         delosis_stream = BytesIO(r.content)
-        # Delosis web service stopped compressing CSV data around 24 February 2017
-        try:
-            compressed_stream = gzip.GzipFile(fileobj=delosis_stream)
-            uncompressed_stream = TextIOWrapper(compressed_stream,
+        with gzip.GzipFile(fileobj=delosis_stream) as uncompressed_stream:
+            uncompressed_stream = TextIOWrapper(uncompressed_stream,
                                                 encoding='utf_8')
             uncompressed_data = uncompressed_stream.read()
-        except OSError:
-            uncompressed_stream = TextIOWrapper(delosis_stream,
-                                                encoding='utf_8')
-            uncompressed_data = uncompressed_stream.read()
-        else:
-            compressed_stream.close()
         # unfold quoted text spanning multiple lines
         data = QUOTED_PATTERN.sub(lambda x: x.group().replace('\n', '/'),
                                   uncompressed_data)
