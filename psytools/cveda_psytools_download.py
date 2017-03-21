@@ -62,7 +62,6 @@ BASIC_DIGEST = 'Basic digest'
 
 PSYTOOLS_DATASETS = (
     ('cVEDA_TMT', TMT_DIGEST),  # Trail making task
-    ('cVEDA_TCI', BASIC_DIGEST),  # TCI
     ('cVEDA_MINI5', BASIC_DIGEST),  # M.I.N.I
     ('cVEDA_AAQ', BASIC_DIGEST),  # AAQ
     ('cVEDA_SCAMP_PARENT', BASIC_DIGEST),  # SCAMP PARENT questionnaire
@@ -95,7 +94,6 @@ PSYTOOLS_DATASETS = (
     ('cVEDA_SFQR', BASIC_DIGEST),  # Short Food Questionnaire- Revised
     ('cVEDA_ERT', BASIC_DIGEST),  # Emotion Recognition
     ('cVEDA_SDQ_PARENT', BASIC_DIGEST),  # SDQ Parent
-    ('cVEDA_ASRSADHD', BASIC_DIGEST),  # ASRS - ADHD
     ('cVEDA_WCST', BASIC_DIGEST),  # Sort the cards
     ('cVEDA_TS', BASIC_DIGEST),  # Testing Situation
     ('cVEDA_BIG5', BASIC_DIGEST),  # BIG5
@@ -112,16 +110,15 @@ def main():
         digest = digest.upper().replace(' ', '_')
         dataset = 'cVEDA-{task}-{digest}.csv'.format(task=task, digest=digest)
         logging.info('downloading: %s', dataset)
-        url = BASE_URL + dataset + '.gz'
+        url = BASE_URL + dataset
         # connect to Delosis web service
         # let Requests module read authentication tokens from ~/.netrc
         r = requests.get(url)
         # read stream of CSV data sent by Delosis web service
         delosis_stream = BytesIO(r.content)
         with gzip.GzipFile(fileobj=delosis_stream) as uncompressed_stream:
-            uncompressed_stream = TextIOWrapper(uncompressed_stream,
-                                                encoding='utf_8')
-            uncompressed_data = uncompressed_stream.read()
+            uncompressed_data = TextIOWrapper(uncompressed_stream,
+                                              encoding='utf_8').read()
         # unfold quoted text spanning multiple lines
         data = QUOTED_PATTERN.sub(lambda x: x.group().replace('\n', '/'),
                                   uncompressed_data)
