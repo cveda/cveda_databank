@@ -222,48 +222,50 @@ def main():
             if dob_ace_iq and dob_phir:
                 if dob_ace_iq != dob_phir:
                     if dob_ace_iq == dob_excel:
-                        print('{}: PHIR date of birth is different from ACE-IQ and Excel dates of birth: {} / {}'
-                              .format(psc1, dob_excel, dob_phir))
+                        print('{}: PHIR date of birth ({}) is different from ACE-IQ and Excel dates of birth ({})'
+                              .format(psc1, dob_phir, dob_excel))
                     elif dob_phir == dob_excel:
-                        print('{}: ACE-IQ date of birth is different from PHIR and Excel dates of birth: {} / {}'
-                              .format(psc1, dob_excel, dob_ace_iq))
+                        print('{}: ACE-IQ date of birth ({}) is different from PHIR and Excel dates of birth ({})'
+                              .format(psc1, dob_ace_iq, dob_excel))
                     elif double_checked:
-                        pass
+                        print('{}: ACE-IQ ({}) and PHIR ({}) dates of birth are different from double-checked Excel date of birth ({})'
+                              .format(psc1, dob_ace_iq, dob_phir, dob_excel))
                     else:
-                        print('{}: All dates of birth are different: {} / {} / {}'
-                              .format(psc1, dob_excel, dob_ace_iq, dob_phir))
+                        print('{}: ACE-IQ ({}) and PHIR ({}) dates of birth are different from Excel date of birth ({})'
+                              .format(psc1, dob_ace_iq, dob_phir, dob_excel))
                 elif dob_ace_iq != dob_excel:
                     if double_checked:
-                        pass
+                        print('{}: ACE-IQ and PHIR dates of birth ({}) are different from double-checked Excel date of birth ({})'
+                              .format(psc1, dob_ace_iq, dob_excel))
                     else:
-                        print('{}: Excel date of birth is different from ACE-IQ and PHIR dates of birth: {} / {}'
-                              .format(psc1, dob_excel, dob_ace_iq))
+                        print('{}: ACE-IQ and PHIR dates of birth ({}) are different from Excel date of birth ({})'
+                              .format(psc1, dob_ace_iq, dob_excel))
             elif dob_ace_iq:
                 if dob_ace_iq != dob_excel:
                     if double_checked:
                         pass
                     else:
-                        print('{}: ACE-IQ date of birth is different from Excel date of birth: {} / {}'
-                              .format(psc1, dob_excel, dob_ace_iq))
+                        print('{}: ACE-IQ date of birth ({}) is different from Excel date of birth ({})'
+                              .format(psc1, dob_ace_iq, dob_excel))
             elif dob_phir:
                 if dob_phir != dob_excel:
                     if double_checked:
                         pass
                     else:
-                        print('{}: PHIR date of birth is different from Excel date of birth: {} / {}'
-                              .format(psc1, dob_excel, dob_phir))
+                        print('{}: PHIR date of birth ({}) is different from Excel date of birth ({})'
+                              .format(psc1, dob_phir, dob_excel))
             else:
                 print('{}: Excel entry without ACE-IQ or PHIR entry'
                       .format(psc1))
         elif dob_ace_iq and dob_phir:
             if dob_ace_iq != dob_phir:
-                print('{}: Missing Excel date of birth, different ACE-IQ and PHIR dates of birth: {} / {}'
+                print('{}: ACE-IQ ({}) and PHIR ({}) date of birth are different, Excel date of birth is missing'
                       .format(psc1, dob_ace_iq, dob_phir))
         elif dob_ace_iq:
-            print('{}: Missing Excel date of birth, only ACE-IQ date of birth: {}'
+            print('{}: only ACE-IQ date of birth ({}), Excel date of birth is missing'
                   .format(psc1, dob_ace_iq))
         elif dob_phir:
-            print('{}: Missing Excel date of birth, only PHIR date of birth: {}'
+            print('{}: only PHIR date of birth ({}), Excel date of birth is missing'
                   .format(psc1, dob_phir))
         else:
             print('{}: Uh???: {} / {} / {}'
