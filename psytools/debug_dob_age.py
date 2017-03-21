@@ -79,10 +79,14 @@ def read_ace_iq(path):
         for row in reader:
             trial = row['Trial']
             if trial in {'ACEIQ_C2', 'ACEIQ_C3'}:
-                psc1 = row['User code']
-                if psc1[-3:-1] == '-C':  # user code ID of the form <PSC1>-C1, <PSC1>-C3, etc.
-                    psc1 = psc1[:-3]
+                code = row['User code']
+                # user code is of the form <PSC1>-C1, <PSC1>-C2, <PSC1>-C3
+                # where C1, C2, C3 represent one of the 3 age bands
+                psc1, age_band = code.rsplit('-', 1)
                 if len(psc1) != 12 or not psc1.isdigit():
+                    logger.warn('bogus PSC1: %s', psc1)
+                    continue
+                if age_band not in {'C1', 'C2', 'C3'}:
                     logger.warn('bogus PSC1: %s', psc1)
                     continue
                 result = row['Trial result']
@@ -159,11 +163,7 @@ def read_excel(path):
             if isinstance(psc1, int):
                 psc1 = str(psc1)
             psc1 = psc1.strip()
-            if psc1.isdigit():
-                if len(psc1) != 12:
-                    logger.error('bogus PSC1: %s', psc1)
-                    continue
-            else:
+            if len(psc1) != 12 or not psc1.isdigit():
                 logger.warn('bogus PSC1: %s', psc1)
                 continue
             dob = row[index['Date of Birth']].value
@@ -202,7 +202,7 @@ def main():
     # Excel additional file
     excel = read_excel(EXCEL)
 
-    for psc1 in set(ace_iq) & set(phir) & set(excel):
+    for psc1 in set(ace_iq) | set(phir) | set(excel):
         dob_ace_iq = None
         if psc1 in ace_iq and 'dob' in ace_iq[psc1]:
             dob_ace_iq = ace_iq[psc1]['dob']
@@ -253,7 +253,7 @@ def main():
                         print('{}: PHIR date of birth is different from Excel date of birth: {} / {}'
                               .format(psc1, dob_excel, dob_phir))
             else:
-                print('{}: Orphan Excel entry'
+                print('{}: Excel entry without ACE-IQ or PHIR entry'
                       .format(psc1))
         elif dob_ace_iq and dob_phir:
             if dob_ace_iq != dob_phir:
@@ -266,8 +266,8 @@ def main():
             print('{}: Missing Excel date of birth, only PHIR date of birth: {}'
                   .format(psc1, dob_phir))
         else:
-            print('{}: Uh???'
-                  .format(psc1))
+            print('{}: Uh???: {} / {} / {}'
+                  .format(psc1, dob_excel, dob_ace_iq, dob_phir))
 
 
 if __name__ == "__main__":
