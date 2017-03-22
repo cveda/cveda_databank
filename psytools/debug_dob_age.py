@@ -61,7 +61,7 @@ logger = logging.getLogger()
 
 ACE_IQ = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
 PHIR = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_PHIR-BASIC_DIGEST.csv'
-EXCEL = '/cveda/databank/framework/meta_data/PSC1_DOB_2017-03-15.xlsx'
+EXCEL = '/cveda/databank/framework/meta_data/PSC1_DOB_2017-03-22.xlsx'
 
 
 def age(today, birth):
@@ -166,7 +166,7 @@ def read_excel(path):
             if len(psc1) != 12 or not psc1.isdigit():
                 logger.warn('bogus PSC1: %s', psc1)
                 continue
-            dob = row[index['Date of Birth']].value
+            dob = row[index['DOB']].value
             if not dob:
                 continue
             if 'Comments' in index and row[index['Comments']].value:
