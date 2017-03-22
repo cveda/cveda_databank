@@ -157,7 +157,7 @@ def read_excel(path):
         index = {cell.value: i for i, cell in enumerate(rows[0])
                  if cell.value}
         for row in rows[1:]:
-            psc1 = row[index['PSC1 CODE']].value
+            psc1 = row[index['PSC1 Code']].value
             if not psc1:
                 continue
             if isinstance(psc1, int):
@@ -166,7 +166,7 @@ def read_excel(path):
             if len(psc1) != 12 or not psc1.isdigit():
                 logger.warn('bogus PSC1: %s', psc1)
                 continue
-            dob = row[index['Date of Birth']].value
+            dob = row[index['DOB']].value
             if not dob:
                 continue
             if 'Comments' in index and row[index['Comments']].value:
