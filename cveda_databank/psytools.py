@@ -29,61 +29,129 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 import csv
-import datetime
+from datetime import datetime
+
+import logging
+logger = logging.getLogger(__name__)
 
 
-def _init_trial_value(result, psc1, trial):
+def _parse_trial(trial, trial_result, questions=None):
+    if questions:
+        if trial in questions:
+            trial_type = questions[trial]
+            if trial_type == 'datetime.date':
+                date_format = '%d-%m-%Y'
+                try:
+                    return datetime.strptime(trial_result, date_format).date()
+                except ValueError:
+                    logger.error('cannot parse trial result as a date: %s',
+                                trial_result)
+            elif trial_type == 'int':
+                try:
+                    return int(trial_result)
+                except ValueError:
+                    logger.error('cannot parse trial result as an integer: %s',
+                                trial_result)
+            else:  # fall back to plain string
+                return trial_result
+        return None
+    return trial_result
+
+
+def _add_trial_result(result, psc1, age_band, iteration, trial, trial_result):
     psc1_value = result.setdefault(psc1, {})
-    trial_value = psc1_value.setdefault(trial, {})
-    return trial_value
+    age_band_value = psc1_value.setdefault(age_band, {})
+    trial_value = age_band_value.setdefault(trial, {})
+    trial_value[iteration] = trial_result  # overwrite previous occurrences
+    return result
+
+
+def _add_age_band_timestamp(timestamps, psc1, age_band, timestamp):
+    psc1_value = timestamps.setdefault(psc1, {})
+    timestamp_range = psc1_value.setdefault(age_band, [datetime.max, datetime.min])
+    if timestamp < timestamp_range[0]:
+        timestamp_range[0] = timestamp
+    if timestamp > timestamp_range[1]:
+        timestamp_range[1] = timestamp
+    return timestamp_range
 
 
 def read_psytools(path, questions=None):
+    """
+    Read a Psytools questionnaire exported in CSV format
+
+    The 'User code' columns combines the PSC1 subject identifier and
+    the administered version of the questionnaire, one version for each
+    age band C1, C2 and C3. A 'User code' looks like 110001234567-C2.
+
+    A participant may be erroneously administered the same questionnaire for
+    each possible age band, for example as 110001234567-C1, 110001234567-C2
+    and  110001234567-C3. The disambiguation policy suggested by Delosis is
+    to keep the most recent.
+
+    We record the 'Completed timestamp' precisely to help find the most recent
+    version of the questionnaire, if needed.
+
+    Since users may skip back before moving forward again, we follow the
+    algorithm suggested by Delosis: discard trials for which column
+    'Response' is 'skip_back'. Also keep only the latest iteration as
+    identified by column 'Iteration'.
+
+    The expected outcome for each question is usually found in column 'Trial'.
+    """
     result = {}
+    timestamps = {}
 
     with open(path, mode='r') as psytools:
         reader = csv.DictReader(psytools, dialect='excel')
         for row in reader:
-            # extract PSC1 from user codes of the form <PSC1>-C3
-            psc1 = row['User code']
-            if psc1[-3:-1] == '-C' and psc1[-1].isdigit():
-                psc1 = psc1[:-3]
+            # user code ends with -C1, -C2 or-C3
+            # where C1, C2, C3 represent one of the 3 age bands
+            code = row['User code']
+            if not (len(code) > 3 and code[-3] == '-'):
+                logger.info('ill-formed user code: %s', code)
+                continue
+            psc1 = code[:-3]
+            age_band = code [-2:]
+            if age_band not in {'C1', 'C2', 'C3'}:
+                logger.info('unknown age band: %s', age_band)
+                continue
             # skip dummy test subjects
-            if not (len(psc1) == 12 and psc1.isdigit()):
+            if len(psc1) != 12 or not psc1.isdigit():
                 continue
-            trial_result = row['Trial result']
-            if trial_result == 'skip_back':  # mail from John Rogers sent 2017-01-21
-                continue
-            if trial_result == '':  # empty fields are discarded
-                continue
-            trial = row['Trial']
-            if questions:
-                if trial in questions:
-                    trial_value = _init_trial_value(result, psc1, trial)
-                    iteration = int(row['Iteration'])
-                    trial_type = questions[trial]
-                    if trial_type == 'datetime.date':
-                        date_format = '%d-%m-%Y'
-                        try:
-                            trial_value[iteration] = datetime.datetime.strptime(trial_result,
-                                                                                date_format).date()
-                        except ValueError:
-                            pass
-                    elif trial_type == 'int':
-                        try:
-                            trial_value[iteration] = int(trial_result)
-                        except ValueError:
-                            pass
-                    else:
-                        trial_value[iteration] = trial_result
-            else:
-                trial_value = _init_trial_value(result, psc1, trial)
-                iteration = int(row['Iteration'])
-                trial_value[iteration] = trial_result
 
-    # clean up: keep last iteration only
+            # record timestamp range for each age band
+            completed = datetime.strptime(row['Completed Timestamp'],
+                                          '%Y-%m-%d %H:%M:%S.%f')
+            _add_age_band_timestamp(timestamps, psc1, age_band, completed)
+
+            # discard trials that have been skipped back
+            response = row['Response']
+            if response == 'skip_back':  # mail from John on 2017-01-21
+                continue
+
+            # discard empty 'Trial results'
+            trial_result = row['Trial result']
+            if trial_result == '':
+                continue
+
+            trial = row['Trial']
+            iteration = int(row['Iteration'])
+            trial_result = _parse_trial(trial, trial_result, questions)
+            if trial_result:
+                _add_trial_result(result, psc1, age_band, iteration, trial, trial_result)
+
+    # clean up multiple age bands and iterations
     for psc1, psc1_value in result.items():
+        if len(psc1_value) > 1:
+            logger.info('multiple age bands: %s', psc1)
+        # keep only the most recent age band - mail from John on 2017-03-14
+        psc1_value = psc1_value[max(psc1_value.keys(),
+                                    key=lambda x: timestamps[psc1][x][1])]
+        result[psc1] = psc1_value
         for trial, trial_value in psc1_value.items():
-            psc1_value[trial] = trial_value[max(trial_value.keys())]
+            # keep only the latest iteration - mail from John on 2017-01-21
+            trial_value = trial_value[max(trial_value.keys())]
+            psc1_value[trial] = trial_value
 
     return result
