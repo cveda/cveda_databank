@@ -61,7 +61,7 @@ logger = logging.getLogger()
 
 ACE_IQ = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
 PHIR = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_PHIR-BASIC_DIGEST.csv'
-EXCEL = '/cveda/databank/framework/meta_data/PSC1_DOB_2017-03-22.xlsx'
+EXCEL = '/cveda/databank/framework/meta_data/PSC1_DOB_2017-03-23.xlsx'
 
 
 def age(today, birth):
@@ -94,6 +94,7 @@ def read_ace_iq(path):
                     psc1_value = ace_iq.setdefault(psc1, {})
                     iteration = int(row['Iteration'])
                     iteration_value = psc1_value.setdefault(iteration, {})
+                    iteration_value['age_band'] = age_band
                     result = row['Trial result']
                     if result != '':
                         if trial == 'ACEIQ_C2':
@@ -103,10 +104,13 @@ def read_ace_iq(path):
                                 logger.warn('%s: ill-formatted date: %s',
                                             psc1, result)
                                 continue
-                            iteration_value['dob'] = dob.date()  # overwrite previous results
                             completed = datetime.strptime(row['Completed Timestamp'], '%Y-%m-%d %H:%M:%S.%f')
+                            iteration_value['date'] = completed
+                            iteration_value['dob'] = dob.date()  # overwrite previous results
                             iteration_value['age_from_dob'] = age(completed, dob)
                         elif trial == 'ACEIQ_C3':
+                            completed = datetime.strptime(row['Completed Timestamp'], '%Y-%m-%d %H:%M:%S.%f')
+                            iteration_value['date'] = completed
                             iteration_value['age'] = int(result)  # overwrite previous results
     for psc1, value in ace_iq.items():
         ace_iq[psc1] = value[max(value.keys())]  # keep last iteration only
@@ -122,10 +126,14 @@ def read_phir(path):
         for row in reader:
             trial = row['Trial']
             if trial in {'PHIR_01'}:
-                psc1 = row['User code']
-                if psc1[-3:-1] == '-C':  # user code ID of the form <PSC1>-C1, <PSC1>-C3, etc.
-                    psc1 = psc1[:-3]
+                code = row['User code']
+                # user code is of the form <PSC1>-C1, <PSC1>-C2, <PSC1>-C3
+                # where C1, C2, C3 represent one of the 3 age bands
+                psc1, age_band = code.rsplit('-', 1)
                 if len(psc1) != 12 or not psc1.isdigit():
+                    logger.warn('bogus PSC1: %s', psc1)
+                    continue
+                if age_band not in {'C1', 'C2', 'C3'}:
                     logger.warn('bogus PSC1: %s', psc1)
                     continue
                 result = row['Trial result']
@@ -133,8 +141,11 @@ def read_phir(path):
                     psc1_value = phir.setdefault(psc1, {})
                     iteration = int(row['Iteration'])
                     iteration_value = psc1_value.setdefault(iteration, {})
+                    iteration_value['age_band'] = age_band
                     if result != '':
                         if trial == 'PHIR_01':
+                            completed = datetime.strptime(row['Completed Timestamp'], '%Y-%m-%d %H:%M:%S.%f')
+                            iteration_value['date'] = completed
                             try:
                                 dob = datetime.strptime(result, '%d-%m-%Y')
                             except ValueError:
@@ -142,7 +153,6 @@ def read_phir(path):
                                             psc1, result)
                                 continue
                             iteration_value['dob'] = dob.date()
-                            completed = datetime.strptime(row['Completed Timestamp'], '%Y-%m-%d %H:%M:%S.%f')
                             iteration_value['age_from_dob'] = age(completed, dob)
     for psc1, value in phir.items():
         phir[psc1] = value[max(value.keys())]  # keep last iteration only
@@ -203,6 +213,13 @@ def main():
     excel = read_excel(EXCEL)
 
     for psc1 in set(ace_iq) | set(phir) | set(excel):
+        date_ace_iq = None
+        if psc1 in ace_iq and 'date' in ace_iq[psc1]:
+            date_ace_iq = ace_iq[psc1]['date']
+        date_phir = None
+        if psc1 in phir and 'date' in phir[psc1]:
+            date_phir = phir[psc1]['date']
+
         dob_ace_iq = None
         if psc1 in ace_iq and 'dob' in ace_iq[psc1]:
             dob_ace_iq = ace_iq[psc1]['dob']
@@ -213,12 +230,31 @@ def main():
         if psc1 in excel:
             dob_excel, double_checked = excel[psc1]
 
+        age_ace_iq = None
+        if psc1 in ace_iq and 'age' in ace_iq[psc1]:
+            age_ace_iq = ace_iq[psc1]['age']
+            if age_ace_iq < 6 or age_ace_iq > 23:
+                print('{}: ACE-IQ age looks incorrect: {}'
+                      .format(psc1, age_ace_iq))
+        age_from_dob_ace_iq = None
+        if psc1 in ace_iq and 'age_from_dob' in ace_iq[psc1]:
+            age_from_dob_ace_iq = ace_iq[psc1]['age_from_dob']
+        age_from_dob_phir = None
+        if psc1 in phir and 'age_from_dob' in phir[psc1]:
+            age_from_dob_phir = phir[psc1]['age_from_dob']
+
         if dob_excel:
-            project_start = date(2016, 6, 1)  # approximation...
-            age_at_project_start = (project_start - dob_excel).days
-            if age_at_project_start < 365.25 * 5 or age_at_project_start > 365.25 * 25:
-                print('{}: Excel date of birth looks incorrect: {}'
-                      .format(psc1, dob_excel))
+            if date_ace_iq:
+                age_from_excel_ace_iq = age(date_ace_iq, dob_excel)
+                if age_from_excel_ace_iq < 6 or age_from_excel_ace_iq > 23:
+                    print('{}: Approximate age ({}) calculated from ACE-IQ and Excel date of birth ({}) looks incorrect'
+                          .format(psc1, age_from_excel_ace_iq, dob_excel))
+            if date_phir:
+                age_from_excel_phir = age(date_phir, dob_excel)
+                if age_from_excel_phir < 6 or age_from_excel_phir > 23:
+                    print('{}: Approximate age ({}) calculated from ACE-IQ and Excel date of birth ({}) looks incorrect'
+                          .format(psc1, age_from_excel_phir, dob_excel))
+
             if dob_ace_iq and dob_phir:
                 if dob_ace_iq != dob_phir:
                     if dob_ace_iq == dob_excel:
@@ -241,6 +277,9 @@ def main():
                         print('{}: ACE-IQ and PHIR dates of birth ({}) are different from Excel date of birth ({})'
                               .format(psc1, dob_ace_iq, dob_excel))
             elif dob_ace_iq:
+                if age_from_dob_ace_iq < 6 or age_from_dob_ace_iq > 23:
+                    print('{}: Age ({}) calculated from ACE-IQ date of birth ({}) looks incorrect'
+                          .format(psc1, age_from_dob_ace_iq, dob_ace_iq))
                 if dob_ace_iq != dob_excel:
                     if double_checked:
                         pass
@@ -248,6 +287,9 @@ def main():
                         print('{}: ACE-IQ date of birth ({}) is different from Excel date of birth ({})'
                               .format(psc1, dob_ace_iq, dob_excel))
             elif dob_phir:
+                if age_from_dob_phir < 6 or age_from_dob_phir > 23:
+                    print('{}: Age ({}) calculated from PHIR date of birth ({}) looks incorrect'
+                          .format(psc1, age_from_dob_phir, dob_phir))
                 if dob_phir != dob_excel:
                     if double_checked:
                         pass
@@ -270,6 +312,41 @@ def main():
         else:
             print('{}: Uh???: {} / {} / {}'
                   .format(psc1, dob_excel, dob_ace_iq, dob_phir))
+
+        age_band_ace_iq = None
+        if psc1 in ace_iq and 'age_band' in ace_iq[psc1]:
+            age_band_ace_iq = ace_iq[psc1]['age_band']
+            if age_band_ace_iq == 'C1':
+                if age_ace_iq:
+                    if age_ace_iq > 11:
+                        print('{}: ACE-IQ age band ({}) inconsistent with ACE-IQ age ({})'
+                              .format(psc1, age_band_ace_iq, age_ace_iq))
+                elif age_from_dob_ace_iq:
+                    if age_from_dob_ace_iq > 11:
+                        print('{}: ACE-IQ age band ({}) inconsistent with age from ACE-IQ date of birth ({})'
+                              .format(psc1, age_band_ace_iq, age_from_dob_ace_iq))
+            if age_band_ace_iq == 'C2':
+                if age_ace_iq:
+                    if age_ace_iq < 12 or age_ace_iq > 17:
+                        print('{}: ACE-IQ age band ({}) inconsistent with ACE-IQ age ({})'
+                              .format(psc1, age_band_ace_iq, age_ace_iq))
+                elif age_from_dob_ace_iq:
+                    if age_from_dob_ace_iq < 12 or age_from_dob_ace_iq > 17:
+                        print('{}: ACE-IQ age band ({}) inconsistent with age from ACE-IQ date of birth ({})'
+                              .format(psc1, age_band_ace_iq, age_from_dob_ace_iq))
+            if age_band_ace_iq == 'C3':
+                if age_ace_iq:
+                    if age_ace_iq < 18:
+                        print('{}: ACE-IQ age band ({}) inconsistent with ACE-IQ age ({})'
+                              .format(psc1, age_band_ace_iq, age_ace_iq))
+                elif age_from_dob_ace_iq:
+                    if age_from_dob_ace_iq < 18:
+                        print('{}: ACE-IQ age band ({}) inconsistent with age from ACE-IQ date of birth ({})'
+                              .format(psc1, age_band_ace_iq, age_from_dob_ace_iq))
+        age_band_phir = None
+        if psc1 in phir and 'age_band' in phir[psc1]:
+            age_band_phir = phir[psc1]['age_band']
+
 
 
 if __name__ == "__main__":
