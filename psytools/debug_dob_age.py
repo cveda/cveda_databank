@@ -246,12 +246,12 @@ def main():
         if dob_excel:
             if date_ace_iq:
                 age_from_excel_ace_iq = age(date_ace_iq, dob_excel)
-                if age_from_excel_ace_iq < 6 or age_from_excel_ace_iq > 23:
+                if (age_from_excel_ace_iq < 6 or age_from_excel_ace_iq > 23) and not double_checked:
                     print('{}: Approximate age ({}) calculated from ACE-IQ and Excel date of birth ({}) looks incorrect'
                           .format(psc1, age_from_excel_ace_iq, dob_excel))
             if date_phir:
                 age_from_excel_phir = age(date_phir, dob_excel)
-                if age_from_excel_phir < 6 or age_from_excel_phir > 23:
+                if (age_from_excel_phir < 6 or age_from_excel_phir > 23) and not double_checked:
                     print('{}: Approximate age ({}) calculated from ACE-IQ and Excel date of birth ({}) looks incorrect'
                           .format(psc1, age_from_excel_phir, dob_excel))
 
@@ -277,7 +277,7 @@ def main():
                         print('{}: ACE-IQ and PHIR dates of birth ({}) are different from Excel date of birth ({})'
                               .format(psc1, dob_ace_iq, dob_excel))
             elif dob_ace_iq:
-                if age_from_dob_ace_iq < 6 or age_from_dob_ace_iq > 23:
+                if (age_from_dob_ace_iq < 6 or age_from_dob_ace_iq > 23) and not double_checked:
                     print('{}: Age ({}) calculated from ACE-IQ date of birth ({}) looks incorrect'
                           .format(psc1, age_from_dob_ace_iq, dob_ace_iq))
                 if dob_ace_iq != dob_excel:
@@ -287,7 +287,7 @@ def main():
                         print('{}: ACE-IQ date of birth ({}) is different from Excel date of birth ({})'
                               .format(psc1, dob_ace_iq, dob_excel))
             elif dob_phir:
-                if age_from_dob_phir < 6 or age_from_dob_phir > 23:
+                if (age_from_dob_phir < 6 or age_from_dob_phir > 23) and not double_checked:
                     print('{}: Age ({}) calculated from PHIR date of birth ({}) looks incorrect'
                           .format(psc1, age_from_dob_phir, dob_phir))
                 if dob_phir != dob_excel:
