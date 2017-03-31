@@ -56,8 +56,8 @@ setup(
     scripts=[
         'psc/cveda_generate_psc1.py',
         'psc/cveda_generate_psc2.py',
-        'psytools/cveda_psytools_anonymize.py',
         'psytools/cveda_psytools_download.py',
+        'psytools/cveda_psytools_deidentify.py',
     ],
     classifiers=[
         "License :: OSI Approved :: CEA CNRS Inria Logiciel Libre License, version 2.1 (CeCILL-2.1)",
