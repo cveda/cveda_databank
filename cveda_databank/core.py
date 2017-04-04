@@ -102,17 +102,12 @@ def _read_excel(path):
             if dob:
                 # clean up and detect invalid dates of birth
                 if isinstance(dob, str):
-                    if dob.startswith('…'):  # blank cells...
-                        continue
                     dob = dob.strip()
                     try:
-                        dob = datetime.strptime(dob, '%d/%m/%Y').date()
+                        dob = datetime.strptime(dob, '%d-%m-%Y').date()
                     except ValueError:
-                        try:
-                            dob = datetime.strptime(dob, '%d.%m.%Y').date()
-                        except ValueError:
-                            logger.error('invalid date of birth: %s', dob)
-                            dob = None
+                        logger.error('invalid date of birth: %s', dob)
+                        dob = None
                 elif isinstance(dob, datetime):
                     dob = dob.date()
                 else:
