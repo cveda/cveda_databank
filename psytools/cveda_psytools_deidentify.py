@@ -95,14 +95,6 @@ def _create_psc2_file(psc1_path, psc2_path):
         convert = [fieldname for fieldname in psc1_reader.fieldnames
                    if fieldname in ANONYMIZED_COLUMNS]
 
-        # anonymize rows with dates
-        ANONYMIZED_ROWS = {
-            'ACEIQ_C2':'%d-%m-%Y',
-            'PDS_07a': '%m-%Y',
-            'PHIR_01': '%d-%m-%Y',
-            'PHIR_02': '%d-%m-%Y',
-        }
-
         with open(psc2_path, 'w') as psc2_file:
             psc2_writer = DictWriter(psc2_file, psc1_reader.fieldnames, dialect='excel')
             psc2_writer.writeheader()
@@ -112,6 +104,7 @@ def _create_psc2_file(psc1_path, psc2_path):
                     logging.debug('skipping line with "id_check_" for %s',
                                   row['User code'])
                     continue
+
                 psc1_suffix = row['User code'].rsplit('-', 1)
                 psc1 = psc1_suffix[0]
                 if psc1 in PSC2_FROM_PSC1:
@@ -132,6 +125,7 @@ def _create_psc2_file(psc1_path, psc2_path):
                         logging.error('unknown PSC1 code %s in user code %s',
                                       psc1, row['User code'])
                     continue
+
                 for fieldname in convert:
                     if psc1 in DOB_FROM_PSC1:
                         birth = DOB_FROM_PSC1[psc1]
@@ -142,21 +136,46 @@ def _create_psc2_file(psc1_path, psc2_path):
                     else:
                         row[fieldname] = None
 
-                if trial in ANONYMIZED_ROWS:
-                    fieldname = 'Trial result'
+                # ACEIQ_C2: What is your date of birth?
+                # PHIR_01: What is (child's name) birthdate?
+                if trial == 'ACEIQ_C2' or trial == 'PHIR_01':
                     if psc1 in DOB_FROM_PSC1:
                         birth = DOB_FROM_PSC1[psc1]
                         try:
-                            timestamp = datetime.strptime(row[fieldname],
-                                                          ANONYMIZED_ROWS[trial]).date()
-                        except ValueError:  # blank or skip_back
-                            row[fieldname] = ''
+                            d = datetime.strptime(row['Trial result'],
+                                                  '%d-%m-%Y').date()
+                        except ValueError:
+                            row['Trial result'] = None
                         else:
-                            age = timestamp - birth
-                            row[fieldname] = str(age.days)
-
+                            age = d - birth
+                            row['Trial result'] = str(age.days)
                     else:
-                        row[fieldname] = None
+                        row['Trial result'] = None
+                # PDS_07a: What was the date of your first period?
+                elif trial == 'PDS_07a':
+                    if psc1 in DOB_FROM_PSC1:
+                        birth = DOB_FROM_PSC1[psc1]
+                        try:
+                            d = datetime.strptime(row['Trial result'],
+                                                  '%m-%Y').date()
+                        except ValueError:
+                            row['Trial result'] = None
+                        else:
+                            age = d - birth
+                            row['Trial result'] = str(age.days)
+                    else:
+                        row['Trial result'] = None
+                # PHIR_02: What is your birthdate?
+                elif trial == 'PHIR_02':
+                    try:
+                        birth = datetime.strptime(row['Trial result'],
+                                                  '%d-%m-%Y').date()
+                    except ValueError:
+                        row['Trial result'] = None
+                    else:
+                        # last 'timestamp' ought to be 'Processed timestamp'
+                        age = timestamp - birth
+                        row['Trial result'] = str(age.days)
 
                 psc2_writer.writerow(row)
 
