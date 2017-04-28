@@ -150,7 +150,7 @@ def _create_psc2_file(psc1_path, psc2_path):
                             timestamp = datetime.strptime(row[fieldname],
                                                           ANONYMIZED_ROWS[trial]).date()
                         except ValueError:  # blank or skip_back
-                            pass
+                            row[fieldname] = ''
                         else:
                             age = timestamp - birth
                             row[fieldname] = str(age.days)
