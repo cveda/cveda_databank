@@ -87,7 +87,7 @@ def _create_psc2_file(psc1_path, psc2_path):
     with open(psc1_path, 'r') as psc1_file:
         psc1_reader = DictReader(psc1_file, dialect='excel')
 
-        # anonymize columns with dates
+        # de-identify columns that contain dates
         ANONYMIZED_COLUMNS = {
             'Completed Timestamp': '%Y-%m-%d %H:%M:%S.%f',
             'Processed Timestamp': '%Y-%m-%d %H:%M:%S.%f',
@@ -100,11 +100,32 @@ def _create_psc2_file(psc1_path, psc2_path):
             psc2_writer.writeheader()
             for row in psc1_reader:
                 trial = row['Trial']
-                if trial.upper().startswith('ID_CHECK_'):
+                # Psytools files contain identifying data,
+                # specifically lines containing items:
+                # - id_check_dob
+                # - id_check_gender
+                #
+                # As the name implies, the purpose of these items is
+                # cross-checking and error detection. They should not
+                # be used for scientific purposes.
+                #
+                # These items should therefore not be exposed to Imagen
+                # users.
+                #
+                # The Scito anoymization pipeline used not to filter
+                # these items out. Since the Imagen V2 server exposes raw
+                # Psytools files to end users, we need to remove these
+                # items sooner, before importing the data into the
+                # CubicWeb database.
+                if 'id_check_' in trial:
                     logging.debug('skipping line with "id_check_" for %s',
                                   row['User code'])
                     continue
 
+                # subject ID is PSC1 followed by either of:
+                #   -C1  age band 6-11
+                #   -C2  age band 12-17
+                #   -C3  age band 18-23
                 psc1_suffix = row['User code'].rsplit('-', 1)
                 psc1 = psc1_suffix[0]
                 if psc1 in PSC2_FROM_PSC1:
@@ -118,7 +139,8 @@ def _create_psc2_file(psc1_path, psc2_path):
                     row['User code'] = psc2_suffix
                 else:
                     u = psc1.upper()
-                    if 'DEMO' in u or 'MOCK' in u or 'TEST' in u or 'PILOT' in u:
+                    if ('DEMO' in u or 'MOCK' in u or 'NPPILOT' in u
+                            or 'TEST' in u):
                         logging.debug('skipping test subject %s',
                                       row['User code'])
                     else:
@@ -126,6 +148,7 @@ def _create_psc2_file(psc1_path, psc2_path):
                                       psc1, row['User code'])
                     continue
 
+                # de-identify columns that contain dates
                 for fieldname in convert:
                     if psc1 in DOB_FROM_PSC1:
                         birth = DOB_FROM_PSC1[psc1]
@@ -136,6 +159,8 @@ def _create_psc2_file(psc1_path, psc2_path):
                     else:
                         row[fieldname] = None
 
+                # de-identify rows that contain dates
+                #
                 # ACEIQ_C2: What is your date of birth?
                 # PHIR_01: What is (child's name) birthdate?
                 if trial == 'ACEIQ_C2' or trial == 'PHIR_01':
