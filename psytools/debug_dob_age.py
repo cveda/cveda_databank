@@ -308,7 +308,7 @@ def main():
                               .format(psc1, dob_phir, dob_excel))
         elif dob_ace_iq and dob_phir:
             if dob_ace_iq != dob_phir:
-                print('{}: ACE-IQ ({}) and PHIR ({}) date of birth are different, Excel date of birth is missing'
+                print('{}: ACE-IQ ({}) and PHIR ({}) dates of birth are different, Excel date of birth is missing'
                       .format(psc1, dob_ace_iq, dob_phir))
         elif dob_ace_iq:
             print('{}: only ACE-IQ date of birth ({}), Excel date of birth is missing'
