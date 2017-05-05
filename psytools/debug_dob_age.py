@@ -323,33 +323,33 @@ def main():
         age_band_ace_iq = None
         if psc1 in ace_iq and 'age_band' in ace_iq[psc1]:
             age_band_ace_iq = ace_iq[psc1]['age_band']
-            if age_band_ace_iq == 'C1':
-                if age_ace_iq:
-                    if age_ace_iq > 11:
-                        print('{}: ACE-IQ age band ({}) inconsistent with ACE-IQ age ({})'
-                              .format(psc1, age_band_ace_iq, age_ace_iq))
-                elif age_from_dob_ace_iq:
-                    if age_from_dob_ace_iq > 11:
-                        print('{}: ACE-IQ age band ({}) inconsistent with age from ACE-IQ date of birth ({})'
-                              .format(psc1, age_band_ace_iq, age_from_dob_ace_iq))
-            if age_band_ace_iq == 'C2':
-                if age_ace_iq:
-                    if age_ace_iq < 12 or age_ace_iq > 17:
-                        print('{}: ACE-IQ age band ({}) inconsistent with ACE-IQ age ({})'
-                              .format(psc1, age_band_ace_iq, age_ace_iq))
-                elif age_from_dob_ace_iq:
-                    if age_from_dob_ace_iq < 12 or age_from_dob_ace_iq > 17:
-                        print('{}: ACE-IQ age band ({}) inconsistent with age from ACE-IQ date of birth ({})'
-                              .format(psc1, age_band_ace_iq, age_from_dob_ace_iq))
-            if age_band_ace_iq == 'C3':
-                if age_ace_iq:
-                    if age_ace_iq < 18:
-                        print('{}: ACE-IQ age band ({}) inconsistent with ACE-IQ age ({})'
-                              .format(psc1, age_band_ace_iq, age_ace_iq))
-                elif age_from_dob_ace_iq:
-                    if age_from_dob_ace_iq < 18:
-                        print('{}: ACE-IQ age band ({}) inconsistent with age from ACE-IQ date of birth ({})'
-                              .format(psc1, age_band_ace_iq, age_from_dob_ace_iq))
+            #~ if age_band_ace_iq == 'C1':
+                #~ if age_ace_iq:
+                    #~ if age_ace_iq > 11:
+                        #~ print('{}: ACE-IQ age band ({}) inconsistent with ACE-IQ age ({})'
+                              #~ .format(psc1, age_band_ace_iq, age_ace_iq))
+                #~ elif age_from_dob_ace_iq:
+                    #~ if age_from_dob_ace_iq > 11:
+                        #~ print('{}: ACE-IQ age band ({}) inconsistent with age from ACE-IQ date of birth ({})'
+                              #~ .format(psc1, age_band_ace_iq, age_from_dob_ace_iq))
+            #~ if age_band_ace_iq == 'C2':
+                #~ if age_ace_iq:
+                    #~ if age_ace_iq < 12 or age_ace_iq > 17:
+                        #~ print('{}: ACE-IQ age band ({}) inconsistent with ACE-IQ age ({})'
+                              #~ .format(psc1, age_band_ace_iq, age_ace_iq))
+                #~ elif age_from_dob_ace_iq:
+                    #~ if age_from_dob_ace_iq < 12 or age_from_dob_ace_iq > 17:
+                        #~ print('{}: ACE-IQ age band ({}) inconsistent with age from ACE-IQ date of birth ({})'
+                              #~ .format(psc1, age_band_ace_iq, age_from_dob_ace_iq))
+            #~ if age_band_ace_iq == 'C3':
+                #~ if age_ace_iq:
+                    #~ if age_ace_iq < 18:
+                        #~ print('{}: ACE-IQ age band ({}) inconsistent with ACE-IQ age ({})'
+                              #~ .format(psc1, age_band_ace_iq, age_ace_iq))
+                #~ elif age_from_dob_ace_iq:
+                    #~ if age_from_dob_ace_iq < 18:
+                        #~ print('{}: ACE-IQ age band ({}) inconsistent with age from ACE-IQ date of birth ({})'
+                              #~ .format(psc1, age_band_ace_iq, age_from_dob_ace_iq))
         age_band_phir = None
         if psc1 in phir and 'age_band' in phir[psc1]:
             age_band_phir = phir[psc1]['age_band']
