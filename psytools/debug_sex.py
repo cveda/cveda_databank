@@ -52,9 +52,14 @@ SDIM : str
 
 # import ../cveda_databank
 import os
+
 import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
+import logging
+logging.getLogger('cveda_databank.core').addHandler(logging.NullHandler())
 from cveda_databank import read_psytools
+
+
 
 ACE_IQ_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
 PDS_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_PDS-BASIC_DIGEST.csv'
