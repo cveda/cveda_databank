@@ -247,12 +247,12 @@ def main():
             if date_ace_iq:
                 age_from_excel_ace_iq = age(date_ace_iq, dob_excel)
                 if age_from_excel_ace_iq < 6 or age_from_excel_ace_iq > 23 and not double_checked:
-                    print('{}: Approximate age ({}) calculated from ACE-IQ and Excel date of birth ({}) looks incorrect'
+                    print('{}: Approximate age ({}) calculated from ACE-IQ and Excel date of birth ({}) look incorrect'
                           .format(psc1, age_from_excel_ace_iq, dob_excel))
             if date_phir:
                 age_from_excel_phir = age(date_phir, dob_excel)
                 if age_from_excel_phir < 6 or age_from_excel_phir > 23 and not double_checked:
-                    print('{}: Approximate age ({}) calculated from ACE-IQ and Excel date of birth ({}) looks incorrect'
+                    print('{}: Approximate age ({}) calculated from ACE-IQ and Excel date of birth ({}) look incorrect'
                           .format(psc1, age_from_excel_phir, dob_excel))
 
             if dob_ace_iq and dob_phir:
