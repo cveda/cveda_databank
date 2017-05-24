@@ -256,9 +256,9 @@ def age_band(age):
         One of 'C1', 'C2', 'C3'.
 
     """
-    if age_in_years <= 11:
+    if age <= 11:
         age_band = 'C1'  # 6-11
-    elif age_in_years <= 17:
+    elif age <= 17:
         age_band = 'C2'  # 12-17
     else:
         age_band = 'C3'  # 18-23
