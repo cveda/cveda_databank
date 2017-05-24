@@ -117,7 +117,7 @@ def _sex_from_psc1(ace_iq_path, pds_path, sdim_path):
             result[psc1] = 'F'
         elif len(m) > len(f):
             result[psc1] = 'M'
-            
+
     return result
 
 
