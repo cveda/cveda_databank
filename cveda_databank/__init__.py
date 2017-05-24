@@ -72,6 +72,7 @@ Classes
    :show-inheritance:
 
 '''
+from .core import age_band
 from .core import PSC2_FROM_PSC1, PSC1_FROM_PSC2
 from .core import DOB_FROM_PSC1, SEX_FROM_PSC1
 from .core import Error

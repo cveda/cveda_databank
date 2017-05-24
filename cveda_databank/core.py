@@ -242,6 +242,29 @@ DOB_FROM_PSC1 = _initialize_dob_from_psc1(_EXCEL_PATH, _ACE_IQ_PATH, _PHIR_PATH)
 SEX_FROM_PSC1 = _initialize_sex_from_psc1(_ACE_IQ_PATH, _PDS_PATH, _SDIM_PATH)
 
 
+def age_band(age):
+    """Theoretical age band from age.
+
+    Parameters
+    ----------
+    age : int
+        Age in years.
+
+    Returns
+    -------
+    str
+        One of 'C1', 'C2', 'C3'.
+
+    """
+    if age_in_years <= 11:
+        age_band = 'C1'  # 6-11
+    elif age_in_years <= 17:
+        age_band = 'C2'  # 12-17
+    else:
+        age_band = 'C3'  # 18-23
+    return age_band
+
+
 class Error:
     """The `Error` exception is raised when an error occurs while parsing
     c-VEDA data files.
