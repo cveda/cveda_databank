@@ -77,7 +77,7 @@ def main():
     sdim_questions = {'SDI_02': None}
     sdim = read_psytools(SDIM_PATH, sdim_questions)
 
-    for psc1 in ace_iq.keys() & pds.keys() & sdim.keys():
+    for psc1 in ace_iq.keys() | pds.keys() | sdim.keys():
         f = []
         m = []
         if psc1 in ace_iq and 'ACEIQ_C1' in ace_iq[psc1]:
