@@ -42,7 +42,7 @@ if (2, 7) <= sys.version_info < (3, 2):
 # reference files
 #
 _PSC_PATH = '/cveda/databank/framework/psc/psc2psc_2016-07-12.txt'
-_EXCEL_PATH = '/cveda/databank/framework/meta_data/PSC1_DOB_2017-05-06.xlsx'
+_EXCEL_PATH = '/cveda/databank/framework/meta_data/PSC1_DOB_2017-05-24.xlsx'
 _ACE_IQ_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
 _PHIR_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_PHIR-BASIC_DIGEST.csv'
 _PDS_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_PDS-BASIC_DIGEST.csv'
