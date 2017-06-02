@@ -131,17 +131,20 @@ class ZipTree:
 
     def _add(self, zipinfo):
         d = self
+
         if zipinfo.filename.endswith('/'):  # directory
             parts = zipinfo.filename.rstrip('/').split('/')
             filename = ''
             for part in parts:
-                filename += part + '/'
-                d = d.directories.setdefault(part, ZipTree(filename))
+                dirname += part + '/'
+                d = d.directories.setdefault(part, ZipTree(dirname))
         else:  # file
             parts = zipinfo.filename.split('/')
             basename = parts.pop()
+            dirname = ''
             for part in parts:
-                d = d.directories.setdefault(part, ZipTree())
+                dirname += part + '/'
+                d = d.directories.setdefault(part, ZipTree(dirname))
             if basename not in d.files:
                 d.files[basename] = zipinfo
             else:
@@ -350,7 +353,6 @@ def _check_sequence_content(path, ziptree, sequence, psc1, date):
 
     # check zip tree is not empty and does not contain empty files
     files = list(_files(ziptree))
-    print(files)  ####### TODO
     if len(files) < 1:
         error_list.append(Error(ziptree.filename, 'Folder is empty'))
     else:
