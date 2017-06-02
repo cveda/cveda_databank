@@ -253,7 +253,7 @@ _SERIES_DESCRIPTION = {
         'B0_map': ['B0 mapping'],
         'dwi': ['DTI_high_32'],
         'dwi_rev': ['DTI_6', 'DTI_high_6', 'DTI (reversed)'],
-        'FLAIR': ['FLAIR'],
+        'FLAIR': ['FLAIR', 'FLAIR_LongTR'],
         'T2w': ['T2W_TSE', 'T2W'],
     },
     'NIMHANS': {
@@ -350,6 +350,7 @@ def _check_sequence_content(path, ziptree, sequence, psc1, date):
 
     # check zip tree is not empty and does not contain empty files
     files = list(_files(ziptree))
+    print(files)  ####### TODO
     if len(files) < 1:
         error_list.append(Error(ziptree.filename, 'Folder is empty'))
     else:
