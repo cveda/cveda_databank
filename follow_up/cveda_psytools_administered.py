@@ -160,7 +160,7 @@ def extract_timestamps(psc1_dir):
             else:
                 age_band = next(iter(value))  # single key / age band
                 logger.debug('%s: using single age band %s', psc1, age_band)
-    
+
             # repack result using the unique or most recent age band
             timestamps[psc1] = {
                 'age_band': age_band,
@@ -212,7 +212,7 @@ def main():
                     row.append(completed_max.strftime('%Y-%m-%d'))
                 processing_gap = (processed_max - completed_max).days
                 if processing_gap > abs(grand_processing_gap):
-                    grand_processing_gap = processing_gap 
+                    grand_processing_gap = processing_gap
             else:
                 row.append('')
         row.append(str((grand_completed_max - grand_completed_min).days))
