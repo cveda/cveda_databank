@@ -134,7 +134,7 @@ class ZipTree:
 
         if zipinfo.filename.endswith('/'):  # directory
             parts = zipinfo.filename.rstrip('/').split('/')
-            filename = ''
+            dirname = ''
             for part in parts:
                 dirname += part + '/'
                 d = d.directories.setdefault(part, ZipTree(dirname))
