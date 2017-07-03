@@ -100,6 +100,8 @@ PSYTOOLS_DATASETS = (
     ('cVEDA_DEBRIEF1', BASIC_DIGEST),  # Debrief
     ('cVEDA_DEBRIEF2', BASIC_DIGEST),  # Debrief
     ('cVEDA_DEBRIEF3', BASIC_DIGEST),  # Debrief
+    ('cVEDA_SDQ_ATQ', BASIC_DIGEST),  # ATQ
+    ('cVEDA_SDQ_ADULT', BASIC_DIGEST),  # SDQ Adult
 )
 
 QUOTED_PATTERN = re.compile(r'".*?"', re.DOTALL)
