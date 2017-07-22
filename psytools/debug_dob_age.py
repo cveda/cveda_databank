@@ -51,7 +51,7 @@ EXCEL : str
 """
 
 from csv import Sniffer, DictReader
-from datetime import datetime, date
+from datetime import datetime
 from openpyxl import load_workbook
 
 import logging

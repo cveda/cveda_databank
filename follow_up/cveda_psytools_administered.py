@@ -53,7 +53,6 @@ Output
 """
 import os
 from csv import DictReader
-from csv import DictWriter
 from datetime import datetime
 
 import logging
@@ -63,10 +62,7 @@ logger = logging.getLogger()
 # import ../cveda_databank
 import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
-from cveda_databank import read_psytools
-from cveda_databank import age_band as cveda_age_band
 from cveda_databank import PSC2_FROM_PSC1
-from cveda_databank import DOB_FROM_PSC1
 
 
 PSYTOOLS_PSC1_DIR = '/cveda/databank/RAW/PSC1/psytools'

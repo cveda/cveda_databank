@@ -53,7 +53,6 @@ Output
 """
 import os
 from csv import DictReader
-from csv import DictWriter
 from datetime import datetime
 
 import logging

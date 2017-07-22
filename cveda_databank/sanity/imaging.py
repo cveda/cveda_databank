@@ -367,7 +367,7 @@ def _check_sequence_content(path, ziptree, sequence, psc1, date):
                         metadata = read_metadata(dicom_file, force=True)
                     except IOError:
                         continue
-                    except AttributeError as e:
+                    except AttributeError:
                         error_list.append(Error(f, 'This is not a valid DICOM file'))
                         break
                     else:
