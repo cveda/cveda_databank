@@ -29,282 +29,278 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-"""Plan follow up assessments based on information from the baseline Psytools.
 
-This script iterates over Psytools CSV files downloaded from the Delosis
-server. For each file it will:
-* find the proper age band (most recent 'Completed timestamp') for each PSC1 code,
-* find the min and max 'Completed timestamp' and 'Processed timestamp' for each PSC1 code,
-* ...
-
-==========
-Attributes
-==========
-
-Input
------
-
-PSYTOOLS_PSC1_DIR : str
-    Source directory to read PSC1-encoded Psytools files from.
-
-Output
-------
-
-"""
-import os
-from csv import DictReader
-from datetime import datetime
-
+from openpyxl import load_workbook, Workbook
+from datetime import datetime, date
+from dateutil.relativedelta import relativedelta
+from random import shuffle
 import logging
-logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger()
 
-# import ../cveda_databank
-import sys
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
-from cveda_databank import read_psytools
-from cveda_databank import age_band as cveda_age_band
-from cveda_databank import PSC2_FROM_PSC1
-from cveda_databank import DOB_FROM_PSC1
+
+# reference file for date of birth, sex, date of baseline assessment
+_EXCEL_REFERENCE_PATH = '/cveda/databank/framework/meta_data/Recruitment sheet for Follow Up.xlsx'
+
+_EXCEL_REFERENCE_HEADER = [
+    'Sl no',
+    'PSC1 Code',
+    'DOB',
+    'Age',
+    'Gender',
+    'Age Band',
+    'Assessment date'
+]
+
+_AGE_BAND = {
+    'C1': 1,
+    'C2': 2,
+    'C3': 3,
+}
 
 
-PSYTOOLS_PSC1_DIR = '/cveda/databank/RAW/PSC1/psytools'
+def _check_excel_reference_header(header):
+    return list(header) == _EXCEL_REFERENCE_HEADER
 
 
-def _sex_from_psc1(ace_iq_path, pds_path, sdim_path):
-    result = {}
+def _remove_line_breaks(s):
+    for c in ('\n','\r'):
+        if c in s:
+            s = s.replace(c, '')
+    return s
 
-    # ACE-IQ questionnaire
-    ace_iq_questions = {'ACEIQ_C1': None}
-    ace_iq = read_psytools(ace_iq_path, ace_iq_questions)
-    # PDS questionnaire
-    pds_questions = {'PDS_gender': None}
-    pds = read_psytools(pds_path, pds_questions)
-    # SDIM questionnaire
-    sdim_questions = {'SDI_02': None}
-    sdim = read_psytools(sdim_path, sdim_questions)
 
-    for psc1 in ace_iq.keys() | pds.keys() | sdim.keys():
-        # skip test entries
-        u = psc1.upper()
-        if ('DEMO' in u or 'MOCK' in u or 'NPPILOT' in u or 'TEST' in u):
-            continue
+def _age_band(age_in_years):
+    # As documented here: https://github.com/cveda/cveda_databank/wiki
+    #   C1:  6-11
+    #   C2: 12-17
+    #   C3: 18-23
+    # The few subjects < 6 and > 23 end up in C1 and C3 respectively.
+    if age_in_years < 12:
+        return 1
+    elif age_in_years < 18:
+        return 2
+    else:
+        return 3
 
-        # count occurrences of 'F' and 'M'
-        f = []
-        m = []
-        if psc1 in ace_iq and 'ACEIQ_C1' in ace_iq[psc1]:
-            ace_iq_sex = ace_iq[psc1]['ACEIQ_C1']
-            if ace_iq_sex == "F":
-                f.append('ACEIQ_C1')
+
+def _season(d):
+    # As documented here: https://en.wikipedia.org/wiki/Climate_of_India
+    #   The nation has four seasons:
+    #   winter (December, January and February),
+    #   summer (March, April and May),
+    #   a monsoon rainy season (June to September),
+    #   and a post-monsoon period (October to November).
+    if d.month in {12, 1, 2}:
+        return 1
+    elif d.month in {3, 4, 5}:
+        return 2
+    elif d.month in {6, 7, 8, 9}:
+        return 3
+    else:  # in {10, 11}
+        return 4
+
+
+def read_excel_reference(path):
+    workbook = load_workbook(path)
+    data = {}
+    for worksheet in workbook:
+        # The Excel file contains a sheet per acquisition centre.
+        center = worksheet.title
+        if center == 'MYSORE':
+            center = 'MYSURU'
+        elif center == 'PGIMER':
+            center = 'CHANDIGARH'
+        elif center == 'KOLKATA':
+            continue  # still empty
+
+        # Process each sheet.
+        header = None
+        for row in worksheet.iter_rows():
+            if not header:
+                # The 1st row is a header with column names.
+                header = [_remove_line_breaks(cell.value.strip())
+                          for cell in row]
+                if not _check_excel_reference_header(header):
+                    print('ERROR: unexpected header: ' + ', '.join(header))
             else:
-                m.append('ACEIQ_C1')
-        if psc1 in pds and 'PDS_gender' in pds[psc1]:
-            pds_sex = pds[psc1]['PDS_gender']
-            if pds_sex == "F":
-                f.append('PDS_gender')
-            else:
-                m.append('PDS_gender')
-        if psc1 in sdim and 'SDI_02' in sdim[psc1]:
-            sdim_sex = sdim[psc1]['SDI_02']
-            if sdim_sex == "F":
-                f.append('SDI_02')
-            else:
-                m.append('SDI_02')
-
-        if len(f) > len(m):
-            result[psc1] = 'F'
-        elif len(m) > len(f):
-            result[psc1] = 'M'
-
-    return result
-
-
-def _extract_timestamps(psc1_path, result):
-    """Extract from a Psytools file a summary of timestamps
-    for each PSC1 code and age band.
-
-    Parameters
-    ----------
-    psc1_path: str
-        Input: PSC1-encoded Psytools file.
-
-    result: dict
-        Input/Output: for each PSC1 code and age band, provide
-        min and max of 'Completed' and 'Processed' timestamps.
-
-    """
-    with open(psc1_path, 'r') as psc1_file:
-        psc1_reader = DictReader(psc1_file, dialect='excel')
-
-        # read header
-        psc1_reader.fieldnames
-
-        # read data
-        for row in psc1_reader:
-            # subject ID is PSC1 followed by either of:
-            #   -C1  age band 6-11
-            #   -C2  age band 12-17
-            #   -C3  age band 18-23
-            psc1_suffix = row['User code'].rsplit('-', 1)
-            psc1 = psc1_suffix[0]
-            if psc1 in PSC2_FROM_PSC1:
-                age_band = psc1_suffix[1]
-            else:
-                u = psc1.upper()
-                if ('DEMO' in u or 'MOCK' in u or 'NPPILOT' in u or
-                        'TEST' in u):
-                    logging.debug('skipping test subject %s',
-                                  row['User code'])
+                # PSC1 Code
+                psc1 = row[1]
+                if psc1.data_type == 's' or psc1.data_type == 'n':
+                    if psc1.data_type == 'n':
+                        psc1 = str(psc1.value)
+                    else:
+                        psc1 = psc1.value
+                    if len(psc1) != 12:
+                        logger.warning('%s: invalid "PSC1 Code"' % psc1)
+                        psc1 = None
                 else:
-                    logging.error('unknown PSC1 code %s in user code %s',
-                                  psc1, row['User code'])
-                continue
+                    logger.warning('%s: incorrect "PSC1 Code" type: %s'
+                                   % (center, psc1.data_type))
+                    psc1 = None
 
-            # acquisition time stamp
-            # depends on acquisition laptop clock - might be wrong
-            completed = datetime.strptime(row['Completed Timestamp'],
-                                          '%Y-%m-%d %H:%M:%S.%f')
-            completed_min, completed_max = result.setdefault(psc1, {}).setdefault(age_band, {}).setdefault('completed', (datetime.max, datetime.min))
-            completed_min = min(completed_min, completed)
-            completed_max = max(completed_max, completed)
-            result[psc1][age_band]['completed'] = (completed_min, completed_max)
+                # DOB
+                dob = row[2]
+                if dob.data_type == 'n' and dob.is_date:
+                    dob = dob.value
+                    if type(dob) == datetime:
+                        dob = dob.date()
+                elif dob.data_type == 's' and dob.value == 'INITIATED':
+                    dob = None
+                else:
+                    logger.warning('%s: incorrect "DOB" type: %s'
+                                   % (psc1, dob.data_type))
+                    dob = None
 
-            # transfer to Delosis server time stamp
-            # depends on server clock - precise but might occur days after acquisition
-            processed = datetime.strptime(row['Processed Timestamp'],
-                                          '%Y-%m-%d %H:%M:%S.%f')
-            processed_min, processed_max = result.setdefault(psc1, {}).setdefault(age_band, {}).setdefault('processed', (datetime.max, datetime.min))
-            processed_min = min(processed_min, processed)
-            processed_max = max(processed_max, processed)
-            result[psc1][age_band]['processed'] = (processed_min, processed_max)
+                # Assessment date
+                assessment = row[6]
+                if assessment.value == None:
+                    assessment = None
+                elif assessment.data_type == 'n' and assessment.is_date:
+                    assessment = assessment.value
+                    if type(assessment) == datetime:
+                        assessment = assessment.date()
+                    else:
+                        logger.warning('%s: unexpected "Assessment date" type: %s'
+                                       % (psc1, type(assessment)))
+                        assessment = None
+                else:
+                    logger.warning('%s: incorrect "Assessment date": %s'
+                                   % (psc1, assessment.value))
+                    assessment = None
 
-    return result
+                # Define the "season" of assessment.
+                if assessment:
+                    season = _season(assessment)
+                else:
+                    season = None
+
+                # Gender/Sex
+                sex = row[4]
+                if sex.data_type == 's':
+                    sex = sex.value
+                    if sex not in {'F', 'M'}:
+                        logger.warning('%s: invalid "Sex": %s' % (psc1, sex))
+                        sex = None
+                else:
+                    if sex.value != None:
+                        logger.warning('%s: incorrect "Sex" type: %s'
+                                       % (psc1, sex.data_type))
+                    sex = None
+
+                # Calculate theoretical age in years at baseline.
+                if dob and assessment:
+                    calculated_age = relativedelta(assessment, dob).years
+                else:
+                    calculated_age = None
+
+                # Age
+                age = row[3]
+                if age.data_type == 'n':
+                    age = age.value
+                    # double check against calculated age
+                    if calculated_age and calculated_age != age and abs(calculated_age - age) > 2:
+                        logger.error('%s: incorrect "Age": %d (%d)'
+                                     % (psc1, age, calculated_age))
+                elif age.data_type == 'f':
+                    pass  # typically '=DATEDIF(date_of_birth,assessment_date,"Y")'
+                    age = calculated_age
+                else:
+                    if age.value != None:
+                        logger.warning('%s: incorrect "Age" type: %s'
+                                       % (psc1, age.data_type))
+                    age = None
+
+                # Calculate age band at baseline.
+                if age:
+                    calculated_band = _age_band(age)
+                else:
+                    calculated_band = None
+
+                # Age Band
+                band = row[5]
+                if band.data_type == 's':
+                    band = band.value
+                    if band in _AGE_BAND:
+                        band = _AGE_BAND[band]
+                        # double check against calculated age band
+                        if age and band != _age_band(age):
+                            logger.error('%s: incorrect "Age Band": C%d (C%d)'
+                                           % (psc1, band, _age_band(age)))
+                    else:
+                        logger.warning('%s: invalid "Age Band": %s' % (psc1, band))
+                        band = None
+                else:
+                    if band.value != None:
+                        logger.warning('%s: incorrect "Age Band" type: %s'
+                                       % (psc1, band.data_type))
+                    band = None
+
+                # Final consistency check: cannot have Age Band without Age!
+                if band and not age:
+                    logger.error('%s: "Age Band" without "Age": C%d'
+                                 % (psc1, band))
+
+                if calculated_band and sex and season:
+                    data.setdefault(center, {}) \
+                        .setdefault(calculated_band, {}) \
+                        .setdefault(sex, {}) \
+                        .setdefault(season, {})[psc1] =  (dob, sex, assessment)
+
+    return data
 
 
-def extract_timestamps(psc1_dir):
-    """Anonymize and re-encode all psytools questionnaires within a directory.
+def randomize(data):
+    follow_ups = ({}, {})  # follow-up 1 and 2
 
-    PSC1-encoded files are read from `master_dir`, anoymized and converted
-    from PSC1 codes to PSC2, and the result is written in `psc2_dir`.
+    for center, bands in data.items():
+        for band, sexes in bands.items():
+            for sex, seasons in sexes.items():
+                for season, subjects in seasons.items():
+                    psc1s = list(subjects.keys())
+                    # Randomly split each gpoup in half.
+                    half_len = len(psc1s) // 2
+                    shuffle(psc1s)
+                    partitions = [psc1s[:half_len], psc1s[half_len:]]
+                    shuffle(partitions)
+                    for i in (0, 1):  # follow-up 1 and 2
+                        follow_ups[i].setdefault(center, {}) \
+                            .update([(psc1, subjects[psc1])
+                                     for psc1 in partitions[i]])
 
-    Parameters
-    ----------
-    psc1_dir: str
-        Input directory with PSC1-encoded questionnaires.
-
-    """
-    result = {}
-
-    for psc1_file in os.listdir(psc1_dir):
-        psc1_path = os.path.join(psc1_dir, psc1_file)
-        _extract_timestamps(psc1_path, result)
-
-    for psc1, value in result.items():
-        if len(value) > 1:
-            # keep the most recent assessment / age band
-            # identified by the largest 'Completed' timestamp
-            age_band = max(value.keys(),
-                           key=lambda k: value[k]['completed'][1])
-            logger.info('%s: selected age band %s over %s',
-                        psc1, age_band,
-                        '/'.join(x for x in value.keys() if x != age_band))
-        else:
-            age_band = next(iter(value))  # single key / age band
-            logger.debug('%s: using single age band %s', psc1, age_band)
-
-        # repack result using the unique or most recent age band
-        result[psc1] = {
-            'age_band': age_band,
-            'completed': value[age_band]['completed'],
-            'processed': value[age_band]['processed'],
-        }
-
-    return result
+    return follow_ups
 
 
 def main():
-    psytools = extract_timestamps(PSYTOOLS_PSC1_DIR)
+    # Read reference Excel file into 192 groups of subjects:
+    #   8 centres × 3 age bands × 2 × 4 seasons
+    data = read_excel_reference(_EXCEL_REFERENCE_PATH)
 
-    SEX_FROM_PSC1 = _sex_from_psc1(os.path.join(PSYTOOLS_PSC1_DIR,
-                                                'cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'),
-                                   os.path.join(PSYTOOLS_PSC1_DIR,
-                                                'cVEDA-cVEDA_PDS-BASIC_DIGEST.csv'),
-                                   os.path.join(PSYTOOLS_PSC1_DIR,
-                                                'cVEDA-cVEDA_SDIM-BASIC_DIGEST.csv'))
+    # Randomly split each group into follow-up 1 / 2.
+    # Return a dictionary of PSC1 codes for follow-up 1 / 2.
+    follow_ups = randomize(data)
 
-    result = []
-
-    for psc1, timestamps in psytools.items():
-        age_band = timestamps['age_band']
-        completed_min, completed_max = timestamps['completed']
-        processed_min, processed_max = timestamps['processed']
-
-        # report Psytools assessments spanning many days
-        if completed_min.date() != completed_max.date():
-            logger.error('%s: multiple "Completed" timestamps for Psytools assessment (gap of %d days)',
-                         psc1, (completed_max.date() - completed_min.date()).days)
-        if processed_min.date() != processed_max.date():
-            logger.error('%s: multiple "Completed" timestamps for Psytools assessment (gap of %d days)',
-                         psc1, (processed_max.date() - processed_min.date()).days)
-
-        # estimate date at baseline Psytools assessment
-        time_to_server = processed_max.date() - completed_max.date()
-        if time_to_server.days >= 0 and time_to_server.days <= 14:
-            baseline = completed_max.date()
-        else:
-            if time_to_server.days < 0:
-                message = '%s: suspect reported date of acquisition (%s) after upload to server (%s)'
-            else:
-                message = '%s: suspect delay of more than 2 weeks between reported date of acquisition (%s) and upload to server (%s)'
-            logger.error(message,
-                         psc1,
-                         completed_max.strftime('%Y-%m-%d'),
-                         processed_max.strftime('%Y-%m-%d'))
-            baseline = processed_max.date()
-
-        # "theoretical" age band is calculated by subtracting
-        # date of Psytools assessment from date of birth
-        if psc1 in DOB_FROM_PSC1:
-            birth = DOB_FROM_PSC1[psc1]
-            age_in_years = (baseline.year - birth.year -
-                            ((baseline.month, baseline.day) <
-                             (birth.month, birth.day)))
-
-            # "theoretical" age band at baseline Psytools assessment
-            baseline_age_band = cveda_age_band(age_in_years)
-
-            # "theoretical" age band at follow up Psytools assessment 1 year later
-            follow_up_age_band = cveda_age_band(age_in_years + 1)
-
-            age_in_years = str(age_in_years)
-        else:
-            logger.error('%s: unknown age', psc1)
-            age_in_years = ''
-            baseline_age_band = ''
-            follow_up_age_band = ''
-
-        # sex is derived from 3 items in 3 different questionnaires
-        if psc1 in SEX_FROM_PSC1:
-            sex = SEX_FROM_PSC1[psc1]
-        else:
-            sex = ''
-
-        result.append((psc1, sex, age_in_years,
-                       age_band, baseline_age_band, follow_up_age_band,
-                       baseline.strftime('%Y-%m-%d')))
-
-    # sort by date of Psytools baseline assessment
-    result.sort(key=lambda x: x[6])
-
-    # print results in CSV format
-    print(', '.join(('PSC1', 'sex', 'age',
-                     'Psytools age band at baseline',
-                     'theoretical age band at baseline',
-                     'theoretical age band at follow up',
-                     'date of baseline assessment')))
-    for x in result:
-        print(', '.join(x))
+    # Prepare nice output.
+    today = datetime.now()
+    for i in (0, 1):  # follow-up 1 and 2
+        workbook = Workbook()
+        workbook.remove_sheet(workbook.active)
+        for center, subjects in follow_ups[i].items():
+            worksheet = workbook.create_sheet(title=center)
+            # sort subjects by assessment date
+            for psc1, (dob, sex, assessment) in sorted(subjects.items(),
+                                                       key=lambda x: x[1][2]):
+                # theoretical follow-up assessment date is 1 / 2 years later
+                years = i + 1
+                # calculate new values at follow-up
+                assessment = assessment + relativedelta(years=years)
+                age = relativedelta(assessment, dob).years
+                band = _age_band(age)
+                calendar_month = assessment.strftime('%B %Y')
+                worksheet.append([calendar_month, assessment,
+                                  psc1, dob, sex,
+                                  age, 'C{}'.format(band)])
+        workbook.save(filename='follow_up_{}_{}.xlsx'
+                               .format(i + 1, today.strftime('%Y-%m-%d')))
 
 
 if __name__ == "__main__":
