@@ -286,6 +286,9 @@ def main():
         workbook.remove_sheet(workbook.active)
         for center, subjects in follow_ups[i].items():
             worksheet = workbook.create_sheet(title=center)
+            worksheet.append(['Follow-up assessment month', 'Baseline assessment date',
+                              'PSC1', 'Date of Birth', 'Sex',
+                              'Planned age', 'Planned age band'])
             # sort subjects by assessment date
             for psc1, (dob, sex, assessment) in sorted(subjects.items(),
                                                        key=lambda x: x[1][2]):
@@ -295,8 +298,8 @@ def main():
                 new_assessment = assessment + relativedelta(years=years)
                 age = relativedelta(new_assessment, dob).years
                 band = _age_band(age)
-                calendar_month = assessment.strftime('%B %Y')
-                worksheet.append([calendar_month, new_assessment,
+                calendar_month = new_assessment.strftime('%B %Y')
+                worksheet.append([calendar_month, assessment,
                                   psc1, dob, sex,
                                   age, 'C{}'.format(band)])
         workbook.save(filename='follow_up_{}_{}.xlsx'
