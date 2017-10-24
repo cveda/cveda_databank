@@ -292,11 +292,11 @@ def main():
                 # theoretical follow-up assessment date is 1 / 2 years later
                 years = i + 1
                 # calculate new values at follow-up
-                assessment = assessment + relativedelta(years=years)
-                age = relativedelta(assessment, dob).years
+                new_assessment = assessment + relativedelta(years=years)
+                age = relativedelta(new_assessment, dob).years
                 band = _age_band(age)
                 calendar_month = assessment.strftime('%B %Y')
-                worksheet.append([calendar_month, assessment,
+                worksheet.append([calendar_month, new_assessment,
                                   psc1, dob, sex,
                                   age, 'C{}'.format(band)])
         workbook.save(filename='follow_up_{}_{}.xlsx'
