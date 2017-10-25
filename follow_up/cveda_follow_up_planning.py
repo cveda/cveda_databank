@@ -198,7 +198,7 @@ def process_worksheet(worksheet):
             if age.data_type == 'n':
                 age = age.value
                 # double check against calculated age
-                if calculated_age and calculated_age != age and abs(calculated_age - age) > 2:
+                if calculated_age and calculated_age != age:
                     logger.error('%s: incorrect "Age": %d (%d)'
                                  % (psc1, age, calculated_age))
             elif age.data_type == 'f':
@@ -234,11 +234,6 @@ def process_worksheet(worksheet):
                     logger.error('%s: incorrect "Age Band" type "%s": %s'
                                  % (psc1, band.data_type, band.value))
                 band = None
-
-            # Final consistency check: cannot have Age Band without Age!
-            if band and not age:
-                logger.error('%s: "Age Band" without "Age": C%d'
-                             % (psc1, band))
 
             if calculated_band and sex and time_block:
                 data.setdefault(calculated_band, {}) \
