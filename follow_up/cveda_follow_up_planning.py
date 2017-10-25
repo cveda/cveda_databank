@@ -83,20 +83,16 @@ def _age_band(age_in_years):
         return 3
 
 
-def _season(d):
-    # As documented here: https://en.wikipedia.org/wiki/Climate_of_India
-    #   The nation has four seasons:
-    #   winter (December, January and February),
-    #   summer (March, April and May),
-    #   a monsoon rainy season (June to September),
-    #   and a post-monsoon period (October to November).
-    if d.month in {12, 1, 2}:
+def _time_block(d):
+    # Ensure that we don't get all the people in the first follow up
+    # coming from the same part of the year.
+    if d.month in {11, 12, 1}:
         return 1
-    elif d.month in {3, 4, 5}:
+    elif d.month in {2, 3, 4}:
         return 2
-    elif d.month in {6, 7, 8, 9}:
+    elif d.month in {5, 6, 7}:
         return 3
-    else:  # in {10, 11}
+    else:  # if d.month in {8, 9, 10}
         return 4
 
 
@@ -168,11 +164,11 @@ def read_excel_reference(path):
                                    % (psc1, assessment.value))
                     assessment = None
 
-                # Define the "season" of assessment.
+                # Define the time-block of assessment.
                 if assessment:
-                    season = _season(assessment)
+                    time_block = _time_block(assessment)
                 else:
-                    season = None
+                    time_block = None
 
                 # Gender/Sex
                 sex = row[4]
@@ -240,11 +236,11 @@ def read_excel_reference(path):
                     logger.error('%s: "Age Band" without "Age": C%d'
                                  % (psc1, band))
 
-                if calculated_band and sex and season:
+                if calculated_band and sex and time_block:
                     data.setdefault(center, {}) \
                         .setdefault(calculated_band, {}) \
                         .setdefault(sex, {}) \
-                        .setdefault(season, {})[psc1] =  (dob, sex, assessment)
+                        .setdefault(time_block, {})[psc1] =  (dob, sex, assessment)
 
     return data
 
@@ -254,8 +250,8 @@ def randomize(data):
 
     for center, bands in data.items():
         for band, sexes in bands.items():
-            for sex, seasons in sexes.items():
-                for season, subjects in seasons.items():
+            for sex, time_blocks in sexes.items():
+                for time_block, subjects in time_blocks.items():
                     psc1s = list(subjects.keys())
                     # Randomly split each gpoup in half.
                     half_len = len(psc1s) // 2
@@ -272,7 +268,7 @@ def randomize(data):
 
 def main():
     # Read reference Excel file into 192 groups of subjects:
-    #   8 centres × 3 age bands × 2 × 4 seasons
+    #   8 centres × 3 age bands × 2 × 4 time-blocks
     data = read_excel_reference(_EXCEL_REFERENCE_PATH)
 
     # Randomly split each group into follow-up 1 / 2.
