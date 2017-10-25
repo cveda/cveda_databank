@@ -97,16 +97,17 @@ def _time_block(d):
 
 
 def process_worksheet(worksheet):
+    data = {}
+
     center = worksheet.title
     if center == 'MYSORE':
         center = 'MYSURU'
     elif center == 'PGIMER':
         center = 'CHANDIGARH'
     elif center == 'KOLKATA':
-        continue  # still empty
+        return center, data  # still empty
 
-    data = {}
-    seen = set()
+    seen = set()  # detect duplicates
 
     header = None
     for row in worksheet.iter_rows():
