@@ -96,157 +96,167 @@ def _time_block(d):
         return 4
 
 
+def process_worksheet(worksheet):
+    center = worksheet.title
+    if center == 'MYSORE':
+        center = 'MYSURU'
+    elif center == 'PGIMER':
+        center = 'CHANDIGARH'
+    elif center == 'KOLKATA':
+        continue  # still empty
+
+    data = {}
+    seen = set()
+
+    header = None
+    for row in worksheet.iter_rows():
+        if not header:
+            # The 1st row is a header with column names.
+            header = [_remove_line_breaks(cell.value.strip())
+                      for cell in row]
+            if not _check_excel_reference_header(header):
+                logger.error('%s: unexpected header: %s'
+                             % (center, ', '.join(header)))
+        else:
+            # PSC1 Code
+            psc1 = row[1]
+            if psc1.data_type == 's' or psc1.data_type == 'n':
+                if psc1.data_type == 'n':
+                    psc1 = str(psc1.value)
+                else:
+                    psc1 = psc1.value
+                    if psc1 in seen:
+                        logger.error('%s: duplicate "PSC1 Code"' % psc1)
+                    else:
+                        seen.add(psc1)
+                if len(psc1) != 12:
+                    logger.error('%s: invalid "PSC1 Code"' % psc1)
+                    psc1 = None
+            else:
+                logger.error('%s: incorrect "PSC1 Code" type "%s": %s'
+                             % (center, psc1.data_type, psc1.value))
+                psc1 = None
+
+            # DOB
+            dob = row[2]
+            if dob.data_type == 'n' and dob.is_date:
+                dob = dob.value
+                if type(dob) == datetime:
+                    dob = dob.date()
+            elif dob.data_type == 's' and dob.value == 'INITIATED':
+                dob = None
+            else:
+                logger.error('%s: incorrect "DOB" type "%s": %s'
+                             % (psc1, dob.data_type, dob.value))
+                dob = None
+
+            # Assessment date
+            assessment = row[6]
+            if assessment.value == None:
+                assessment = None
+            elif assessment.data_type == 'n' and assessment.is_date:
+                assessment = assessment.value
+                if type(assessment) == datetime:
+                    assessment = assessment.date()
+                else:
+                    logger.error('%s: unexpected "Assessment date" type: %s'
+                                 % (psc1, type(assessment)))
+                    assessment = None
+            else:
+                logger.warning('%s: incorrect "Assessment date" "%s": %s'
+                               % (psc1, assessment.data_type, assessment.value))
+                assessment = None
+
+            # Define the time-block of assessment.
+            if assessment:
+                time_block = _time_block(assessment)
+            else:
+                time_block = None
+
+            # Gender/Sex
+            sex = row[4]
+            if sex.data_type == 's':
+                sex = sex.value
+                if sex not in {'F', 'M'}:
+                    logger.error('%s: invalid "Sex": %s' % (psc1, sex))
+                    sex = None
+            else:
+                if sex.value != None:
+                    logger.error('%s: incorrect "Sex" type "%s": %s'
+                                 % (psc1, sex.data_type, sex.value))
+                sex = None
+
+            # Calculate theoretical age in years at baseline.
+            if dob and assessment:
+                calculated_age = relativedelta(assessment, dob).years
+            else:
+                calculated_age = None
+
+            # Age
+            age = row[3]
+            if age.data_type == 'n':
+                age = age.value
+                # double check against calculated age
+                if calculated_age and calculated_age != age and abs(calculated_age - age) > 2:
+                    logger.error('%s: incorrect "Age": %d (%d)'
+                                 % (psc1, age, calculated_age))
+            elif age.data_type == 'f':
+                pass  # typically '=DATEDIF(date_of_birth,assessment_date,"Y")'
+                age = calculated_age
+            else:
+                if age.value != None:
+                    logger.error('%s: incorrect "Age" type "%s": %s'
+                                 % (psc1, age.data_type, age.value))
+                age = None
+
+            # Calculate age band at baseline.
+            if age:
+                calculated_band = _age_band(age)
+            else:
+                calculated_band = None
+
+            # Age Band
+            band = row[5]
+            if band.data_type == 's':
+                band = band.value
+                if band in _AGE_BAND:
+                    band = _AGE_BAND[band]
+                    # double check against calculated age band
+                    if age and band != _age_band(age):
+                        logger.error('%s: incorrect "Age Band": C%d (C%d)'
+                                       % (psc1, band, _age_band(age)))
+                else:
+                    logger.error('%s: invalid "Age Band": %s' % (psc1, band))
+                    band = None
+            else:
+                if band.value != None:
+                    logger.error('%s: incorrect "Age Band" type "%s": %s'
+                                 % (psc1, band.data_type, band.value))
+                band = None
+
+            # Final consistency check: cannot have Age Band without Age!
+            if band and not age:
+                logger.error('%s: "Age Band" without "Age": C%d'
+                             % (psc1, band))
+
+            if calculated_band and sex and time_block:
+                data.setdefault(calculated_band, {}) \
+                    .setdefault(sex, {}) \
+                    .setdefault(time_block, {})[psc1] =  (dob, sex, assessment)
+
+    return center, data
+
+
 def read_excel_reference(path):
     workbook = load_workbook(path)
-    data = {}
-    for worksheet in workbook:
-        # The Excel file contains a sheet per acquisition centre.
-        center = worksheet.title
-        if center == 'MYSORE':
-            center = 'MYSURU'
-        elif center == 'PGIMER':
-            center = 'CHANDIGARH'
-        elif center == 'KOLKATA':
-            continue  # still empty
 
-        # Process each sheet.
-        header = None
-        for row in worksheet.iter_rows():
-            if not header:
-                # The 1st row is a header with column names.
-                header = [_remove_line_breaks(cell.value.strip())
-                          for cell in row]
-                if not _check_excel_reference_header(header):
-                    print('ERROR: unexpected header: ' + ', '.join(header))
-            else:
-                # PSC1 Code
-                psc1 = row[1]
-                if psc1.data_type == 's' or psc1.data_type == 'n':
-                    if psc1.data_type == 'n':
-                        psc1 = str(psc1.value)
-                    else:
-                        psc1 = psc1.value
-                    if len(psc1) != 12:
-                        logger.warning('%s: invalid "PSC1 Code"' % psc1)
-                        psc1 = None
-                else:
-                    logger.warning('%s: incorrect "PSC1 Code" type: %s'
-                                   % (center, psc1.data_type))
-                    psc1 = None
-
-                # DOB
-                dob = row[2]
-                if dob.data_type == 'n' and dob.is_date:
-                    dob = dob.value
-                    if type(dob) == datetime:
-                        dob = dob.date()
-                elif dob.data_type == 's' and dob.value == 'INITIATED':
-                    dob = None
-                else:
-                    logger.warning('%s: incorrect "DOB" type: %s'
-                                   % (psc1, dob.data_type))
-                    dob = None
-
-                # Assessment date
-                assessment = row[6]
-                if assessment.value == None:
-                    assessment = None
-                elif assessment.data_type == 'n' and assessment.is_date:
-                    assessment = assessment.value
-                    if type(assessment) == datetime:
-                        assessment = assessment.date()
-                    else:
-                        logger.warning('%s: unexpected "Assessment date" type: %s'
-                                       % (psc1, type(assessment)))
-                        assessment = None
-                else:
-                    logger.warning('%s: incorrect "Assessment date": %s'
-                                   % (psc1, assessment.value))
-                    assessment = None
-
-                # Define the time-block of assessment.
-                if assessment:
-                    time_block = _time_block(assessment)
-                else:
-                    time_block = None
-
-                # Gender/Sex
-                sex = row[4]
-                if sex.data_type == 's':
-                    sex = sex.value
-                    if sex not in {'F', 'M'}:
-                        logger.warning('%s: invalid "Sex": %s' % (psc1, sex))
-                        sex = None
-                else:
-                    if sex.value != None:
-                        logger.warning('%s: incorrect "Sex" type: %s'
-                                       % (psc1, sex.data_type))
-                    sex = None
-
-                # Calculate theoretical age in years at baseline.
-                if dob and assessment:
-                    calculated_age = relativedelta(assessment, dob).years
-                else:
-                    calculated_age = None
-
-                # Age
-                age = row[3]
-                if age.data_type == 'n':
-                    age = age.value
-                    # double check against calculated age
-                    if calculated_age and calculated_age != age and abs(calculated_age - age) > 2:
-                        logger.error('%s: incorrect "Age": %d (%d)'
-                                     % (psc1, age, calculated_age))
-                elif age.data_type == 'f':
-                    pass  # typically '=DATEDIF(date_of_birth,assessment_date,"Y")'
-                    age = calculated_age
-                else:
-                    if age.value != None:
-                        logger.warning('%s: incorrect "Age" type: %s'
-                                       % (psc1, age.data_type))
-                    age = None
-
-                # Calculate age band at baseline.
-                if age:
-                    calculated_band = _age_band(age)
-                else:
-                    calculated_band = None
-
-                # Age Band
-                band = row[5]
-                if band.data_type == 's':
-                    band = band.value
-                    if band in _AGE_BAND:
-                        band = _AGE_BAND[band]
-                        # double check against calculated age band
-                        if age and band != _age_band(age):
-                            logger.error('%s: incorrect "Age Band": C%d (C%d)'
-                                           % (psc1, band, _age_band(age)))
-                    else:
-                        logger.warning('%s: invalid "Age Band": %s' % (psc1, band))
-                        band = None
-                else:
-                    if band.value != None:
-                        logger.warning('%s: incorrect "Age Band" type: %s'
-                                       % (psc1, band.data_type))
-                    band = None
-
-                # Final consistency check: cannot have Age Band without Age!
-                if band and not age:
-                    logger.error('%s: "Age Band" without "Age": C%d'
-                                 % (psc1, band))
-
-                if calculated_band and sex and time_block:
-                    data.setdefault(center, {}) \
-                        .setdefault(calculated_band, {}) \
-                        .setdefault(sex, {}) \
-                        .setdefault(time_block, {})[psc1] =  (dob, sex, assessment)
-
-    return data
+    return {center: data
+            for (center, data) in [process_worksheet(worksheet)
+                                   for worksheet in workbook]}
 
 
 def randomize(data):
-    follow_ups = ({}, {})  # follow-up 1 and 2
+    follow_ups = ({}, {})  # follow-up 1 and follow-up 2
 
     for center, bands in data.items():
         for band, sexes in bands.items():
@@ -258,7 +268,7 @@ def randomize(data):
                     shuffle(psc1s)
                     partitions = [psc1s[:half_len], psc1s[half_len:]]
                     shuffle(partitions)
-                    for i in (0, 1):  # follow-up 1 and 2
+                    for i in (0, 1):  # follow-up 1 and follow-up 2
                         follow_ups[i].setdefault(center, {}) \
                             .update([(psc1, subjects[psc1])
                                      for psc1 in partitions[i]])
@@ -271,13 +281,13 @@ def main():
     #   8 centres × 3 age bands × 2 × 4 time-blocks
     data = read_excel_reference(_EXCEL_REFERENCE_PATH)
 
-    # Randomly split each group into follow-up 1 / 2.
-    # Return a dictionary of PSC1 codes for follow-up 1 / 2.
+    # Randomly split each group into follow-up 1 / follow-up 2.
+    # Return a dictionary of PSC1 codes for follow-up 1 / follow-up 2.
     follow_ups = randomize(data)
 
     # Prepare nice output.
     today = datetime.now()
-    for i in (0, 1):  # follow-up 1 and 2
+    for i in (0, 1):  # follow-up 1 and follow-up 2
         workbook = Workbook()
         workbook.remove_sheet(workbook.active)
         for center, subjects in follow_ups[i].items():
@@ -288,7 +298,7 @@ def main():
             # sort subjects by assessment date
             for psc1, (dob, sex, assessment) in sorted(subjects.items(),
                                                        key=lambda x: x[1][2]):
-                # theoretical follow-up assessment date is 1 / 2 years later
+                # theoretical follow-up assessment date is 1 or 2 years later
                 years = i + 1
                 # calculate new values at follow-up
                 new_assessment = assessment + relativedelta(years=years)
