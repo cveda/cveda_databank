@@ -35,20 +35,31 @@ from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 from random import shuffle
 import logging
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
 
 # reference file for date of birth, sex, date of baseline assessment
-_EXCEL_REFERENCE_PATH = '/cveda/databank/framework/meta_data/Recruitment sheet for Follow Up.xlsx'
+_EXCEL_REFERENCE_PATH = '/cveda/databank/framework/meta_data/recruitment_file_2017-11-02.xlsx'
 
 _EXCEL_REFERENCE_HEADER = [
-    'Sl no',
-    'PSC1 Code',
-    'DOB',
-    'Age',
-    'Gender',
-    'Age Band',
-    'Assessment date'
+    'Sl no',  # A
+    'PSC1 Code',  # B
+    'DOB',  # C
+    'Age',  # D
+    'Sex',  # E
+    'Age Band',  # F
+    'Assessment date',  # G
+    'MRI',  # H
+    'Correct age',  # I
+    'Age Difference',  # J
+    'Remarks',  # K
+    "PSC1 code matching from Dimitri's list",  # L
+    'Age discrepancy present',  # M
+    'Age band changes',  # N
+    "PSC1 codes not matching in Dimitri's list",  # O
+    'Comment',  # P
+    'Action',  # Q
 ]
 
 _AGE_BAND = {
@@ -57,16 +68,18 @@ _AGE_BAND = {
     'C3': 3,
 }
 
+_CENTERS = {  # select centers and discard spurious sheets in Excel file
+    'CHANDIGARH',
+    'MANIPUR',
+    'MYSURU',
+    'NIMHANS',
+    'SJRI',
+    # 'KOLKATA',
+}
+
 
 def _check_excel_reference_header(header):
     return list(header) == _EXCEL_REFERENCE_HEADER
-
-
-def _remove_line_breaks(s):
-    for c in ('\n','\r'):
-        if c in s:
-            s = s.replace(c, '')
-    return s
 
 
 def _age_band(age_in_years):
@@ -99,37 +112,33 @@ def _time_block(d):
 def process_worksheet(worksheet):
     data = {}
 
+    # spurious sheets *must* have been filtered out at this point
     center = worksheet.title
-    if center == 'MYSORE':
-        center = 'MYSURU'
-    elif center == 'PGIMER':
-        center = 'CHANDIGARH'
-    elif center == 'KOLKATA':
-        return center, data  # still empty
 
     seen = set()  # detect duplicates
+    discard = set()  # discard PSC1 entries yet to be fixed
 
     header = None
     for row in worksheet.iter_rows():
         if not header:
             # The 1st row is a header with column names.
-            header = [_remove_line_breaks(cell.value.strip())
-                      for cell in row]
+            header = [cell.value.strip() for cell in row]
             if not _check_excel_reference_header(header):
                 logger.error('%s: unexpected header: %s'
                              % (center, ', '.join(header)))
         else:
             # PSC1 Code
-            psc1 = row[1]
+            psc1 = row[1]  # B
             if psc1.data_type == 's' or psc1.data_type == 'n':
                 if psc1.data_type == 'n':
                     psc1 = str(psc1.value)
                 else:
                     psc1 = psc1.value
-                    if psc1 in seen:
-                        logger.error('%s: duplicate "PSC1 Code"' % psc1)
-                    else:
-                        seen.add(psc1)
+                if psc1 in seen:
+                    logger.error('%s: duplicate "PSC1 Code"' % psc1)
+                else:
+                    logger.info('%s: first occurrence of this "PSC1 Code"' % psc1)
+                    seen.add(psc1)
                 if len(psc1) != 12:
                     logger.error('%s: invalid "PSC1 Code"' % psc1)
                     psc1 = None
@@ -139,7 +148,7 @@ def process_worksheet(worksheet):
                 psc1 = None
 
             # DOB
-            dob = row[2]
+            dob = row[2]  # C
             if dob.data_type == 'n' and dob.is_date:
                 dob = dob.value
                 if type(dob) == datetime:
@@ -152,7 +161,7 @@ def process_worksheet(worksheet):
                 dob = None
 
             # Assessment date
-            assessment = row[6]
+            assessment = row[6]  # G
             if assessment.value == None:
                 assessment = None
             elif assessment.data_type == 'n' and assessment.is_date:
@@ -174,8 +183,8 @@ def process_worksheet(worksheet):
             else:
                 time_block = None
 
-            # Gender/Sex
-            sex = row[4]
+            # Sex
+            sex = row[4]  # E
             if sex.data_type == 's':
                 sex = sex.value
                 if sex not in {'F', 'M'}:
@@ -194,7 +203,7 @@ def process_worksheet(worksheet):
                 calculated_age = None
 
             # Age
-            age = row[3]
+            age = row[3]  # D
             if age.data_type == 'n':
                 age = age.value
                 # double check against calculated age
@@ -202,30 +211,56 @@ def process_worksheet(worksheet):
                     logger.error('%s: incorrect "Age": %d (%d)'
                                  % (psc1, age, calculated_age))
             elif age.data_type == 'f':
-                pass  # typically '=DATEDIF(date_of_birth,assessment_date,"Y")'
-                age = calculated_age
-            else:
-                if age.value != None:
-                    logger.error('%s: incorrect "Age" type "%s": %s'
-                                 % (psc1, age.data_type, age.value))
+                # typically '=DATEDIF(date_of_birth, assessment_date, "Y")'
+                age = None
+            elif age.value != None:
+                logger.error('%s: incorrect "Age" type "%s": %s'
+                             % (psc1, age.data_type, age.value))
                 age = None
 
+            #  Correct age
+            correct_age = row[8]  # I
+            if correct_age.data_type == 'n':
+                correct_age = correct_age.value
+                # double check against calculated age
+                if calculated_age and calculated_age != correct_age:
+                    logger.error('%s: incorrect "Correct age": %d (%d)'
+                                 % (psc1, correct_age, calculated_age))
+            elif correct_age.data_type == 'f':
+                # typically '=INT((assessment_date - date_of_birth) / 365)'
+                correct_age = None
+            elif correct_age.value != None:
+                logger.error('%s: incorrect "Correct age" type "%s": %s'
+                             % (psc1, correct_age.data_type, correct_age.value))
+                correct_age = None
+
             # Calculate age band at baseline.
-            if age:
+            if calculated_age:
+                calculated_band = _age_band(calculated_age)
+                logger.info('%s: age band from calculated age: %d -> C%d'
+                               % (psc1, calculated_age, calculated_band))
+            elif correct_age:
+                calculated_band = _age_band(correct_age)
+                logger.warning('%s: age band from "Correct age": %d -> C%d'
+                               % (psc1, correct_age, calculated_band))
+            elif age:
                 calculated_band = _age_band(age)
+                logger.warning('%s: age band from "Age": %d -> C%d'
+                               % (psc1, age, calculated_band))
             else:
+                logger.error('%s: cannot determine age band' % psc1)
                 calculated_band = None
 
             # Age Band
-            band = row[5]
+            band = row[5]  # F
             if band.data_type == 's':
                 band = band.value
                 if band in _AGE_BAND:
                     band = _AGE_BAND[band]
                     # double check against calculated age band
-                    if age and band != _age_band(age):
+                    if calculated_band and band != calculated_band:
                         logger.error('%s: incorrect "Age Band": C%d (C%d)'
-                                       % (psc1, band, _age_band(age)))
+                                       % (psc1, band, calculated_band))
                 else:
                     logger.error('%s: invalid "Age Band": %s' % (psc1, band))
                     band = None
@@ -235,10 +270,35 @@ def process_worksheet(worksheet):
                                  % (psc1, band.data_type, band.value))
                 band = None
 
+            # PSC1 codes not matching in Dimitri's list
+            bogus = row[14]  # O
+            if bogus.data_type == 's' or bogus.data_type == 'n':
+                if bogus.data_type == 'n':
+                    bogus = str(bogus.value)
+                else:
+                    bogus = bogus.value
+                if bogus and len(bogus) != 12:
+                    logger.error('%s: invalid bogus "PSC1 Code"' % bogus)
+                    bogus = None
+            else:
+                logger.error('%s: incorrect bogus "PSC1 Code" type "%s": %s'
+                             % (center, bogus.data_type, bogus.value))
+                bogus = None
+            if bogus:
+                logger.info('%s: bogus "PSC1 Code" will be discarded' % bogus)
+                discard.add(bogus)
+
             if calculated_band and sex and time_block:
                 data.setdefault(calculated_band, {}) \
                     .setdefault(sex, {}) \
                     .setdefault(time_block, {})[psc1] =  (dob, sex, assessment)
+
+    for band, sexes in data.items():
+        for sex, time_blocks in sexes.items():
+            for time_block, subjects in time_blocks.items():
+                for key in discard.intersection(subjects.keys()):
+                    logger.warning('%s: discard!' % key)
+                    del subjects[key]
 
     return center, data
 
@@ -248,7 +308,8 @@ def read_excel_reference(path):
 
     return {center: data
             for (center, data) in [process_worksheet(worksheet)
-                                   for worksheet in workbook]}
+                                   for worksheet in workbook
+                                   if worksheet.title in _CENTERS]}
 
 
 def randomize(data):
