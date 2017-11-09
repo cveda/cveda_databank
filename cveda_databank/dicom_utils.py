@@ -271,7 +271,7 @@ def read_metadata(path, force=False):
 
     # find c-VEDA subject ID
     if 'CommentsOnThePerformedProcedureStep' in dataset and dataset.CommentsOnThePerformedProcedureStep:
-        # MYSURU?
+        # MYSURU
         metadata['PatientID'] = dataset.CommentsOnThePerformedProcedureStep
     elif 'PatientComments' in dataset and dataset.PatientComments:
         # NIMHANS with RIS (starting from 2017-01-19)
