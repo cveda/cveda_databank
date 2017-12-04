@@ -413,7 +413,7 @@ def check_zip_content(path, psc1=None, date=None, expected=None):
         'dwi': 'Doubtful',
         'dwi_rev': 'Bad',
         'FLAIR': 'Missing',
-        'T2w', 'Good',
+        'T2w': 'Good',
     }
 
     Parameters

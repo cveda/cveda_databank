@@ -272,16 +272,20 @@ def read_metadata(path, force=False):
     # find c-VEDA subject ID
     if 'CommentsOnThePerformedProcedureStep' in dataset and dataset.CommentsOnThePerformedProcedureStep:
         # MYSURU
+        # (0040,0280)
         metadata['PatientID'] = dataset.CommentsOnThePerformedProcedureStep
     elif 'PatientComments' in dataset and dataset.PatientComments:
         # NIMHANS with RIS (starting from 2017-01-19)
+        # (0010,4000)
         metadata['PatientID'] = dataset.PatientComments
     elif 'StudyComments' in dataset and dataset.StudyComments:
         # NIMHANS with RIS (single dataset on 2016-12-31)
+        # (0032,4000)
         metadata['PatientID'] = dataset.StudyComments
     elif 'PatientID' in dataset:
         # CHANDIGARH
         # NIMHANS before RIS (from pilots in May 2016 to 2016-12-17)
+        # (0010,0020)
         metadata['PatientID'] = dataset.PatientID
 
     return metadata
