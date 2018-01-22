@@ -250,7 +250,7 @@ _SERIES_DESCRIPTION = {
         'FLAIR': ['2D fast FLAIR'],
         'T2w': ['2D T2 weighted'],
     },
-    'MYSURU': {
+    'MYSORE': {
         'T1w': ['sT1W_3D_TFE', '3D T1W'],
         'rest': ['FE_EPI 160', 'RESTING STATE'],
         'B0_map': ['B0 mapping'],

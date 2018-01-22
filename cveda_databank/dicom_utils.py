@@ -271,7 +271,7 @@ def read_metadata(path, force=False):
 
     # find c-VEDA subject ID
     if 'CommentsOnThePerformedProcedureStep' in dataset and dataset.CommentsOnThePerformedProcedureStep:
-        # MYSURU
+        # MYSORE
         # (0040,0280)
         metadata['PatientID'] = dataset.CommentsOnThePerformedProcedureStep
     elif 'PatientComments' in dataset and dataset.PatientComments:

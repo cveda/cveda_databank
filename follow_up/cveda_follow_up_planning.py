@@ -71,7 +71,7 @@ _AGE_BAND = {
 _CENTERS = {  # select centers and discard spurious sheets in Excel file
     'CHANDIGARH',
     'MANIPUR',
-    'MYSURU',
+    'MYSORE',
     'NIMHANS',
     'SJRI',
     # 'KOLKATA',
