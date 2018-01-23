@@ -45,14 +45,14 @@ PSYTOOLS_PSC1_DIR : str
 
 """
 
-import logging
-logging.basicConfig(level=logging.ERROR)
-
 import os
 import requests
 from io import BytesIO, TextIOWrapper
 import gzip
 import re
+
+import logging
+logging.basicConfig(level=logging.ERROR)
 
 PSYTOOLS_PSC1_DIR = '/cveda/databank/RAW/PSC1/psytools'
 BASE_URL = 'https://www.delosis.com/psytools-server/dataservice/dataset/'
@@ -102,6 +102,28 @@ PSYTOOLS_DATASETS = (
     ('cVEDA_DEBRIEF3', BASIC_DIGEST),  # Debrief
     ('cVEDA_ATQ', BASIC_DIGEST),  # ATQ
     ('cVEDA_SDQ_ADULT', BASIC_DIGEST),  # SDQ Adult
+    ('cVEDA_EEQ_FU1', BASIC_DIGEST),  # Environmental Exposures Questionnaire
+    ('cVEDA_PDS_FU1', BASIC_DIGEST),  # Physical Development
+    ('cVEDA_TS_FU1', BASIC_DIGEST),  # Testing Situation
+    ('cVEDA_SDIM_FU1', BASIC_DIGEST),  # SDI Migration
+    ('cVEDA_DEBRIEF3_FU1', BASIC_DIGEST),  # Debrief
+    ('cVEDA_SDQ_PARENT_FU1', BASIC_DIGEST),  # SDQ Parent
+    ('cVEDA_ASSIST_FU1', BASIC_DIGEST),  # ASSIST
+    ('cVEDA_DEBRIEF2_FU1', BASIC_DIGEST),  # Debrief
+    ('cVEDA_SDQ_ADULT_FU1', BASIC_DIGEST),  # SDQ Adult
+    ('cVEDA_MPQ_FU1', BASIC_DIGEST),  # Medical Problems
+    ('cVEDA_DEBRIEF1_FU1', BASIC_DIGEST),  # Debrief
+    ('cVEDA_FHQ_FU1', BASIC_DIGEST),  # Family history
+    ('cVEDA_SDQ_CHILD_FU1', BASIC_DIGEST),  # SDQ Child
+    ('cVEDA_SDQ_ADULT_M_FU1', BASIC_DIGEST),  # SDQ Adult
+    ('cVEDA_ASSIST_F_FU1', BASIC_DIGEST),  # ASSIST
+    ('cVEDA_SDQ_ADULT_F_FU1', BASIC_DIGEST),  # SDQ Adult
+    ('cVEDA_ASSIST_M_FU1', BASIC_DIGEST),  # ASSIST
+    ('cVEDA_MINI5KID_FU1', BASIC_DIGEST),  # M.I.N.I KID
+    ('cVEDA_ACEIQ_FU1', BASIC_DIGEST),  # ACEIQ
+    ('cVEDA_ANTHROPOMETRY_FU1', BASIC_DIGEST),  # ANTHROPOMETRY
+    ('cVEDA_SDQ_PARENT_SELF_FU1', BASIC_DIGEST),  # SDQ Parent SELF
+    ('cVEDA_MINI5_FU1', BASIC_DIGEST),  # M.I.N.I 5
 )
 
 QUOTED_PATTERN = re.compile(r'".*?"', re.DOTALL)
