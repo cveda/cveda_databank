@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2010-2017 CEA
+# Copyright (c) 2010-2018 CEA
 #
 # This software is governed by the CeCILL license under French law and
 # abiding by the rules of distribution of free software. You can use,
@@ -128,8 +128,15 @@ def _create_psc2_file(psc1_path, psc2_path):
                 #   -C3  age band 18-23
                 psc1_suffix = row['User code'].rsplit('-', 1)
                 psc1 = psc1_suffix[0]
+                if psc1.endswith('FU1'):
+                    psc1 = psc1[:-len('FU1')]
+                    fu = psc1[-len('FU1'):]
+                else:
+                    fu = None
                 if psc1 in PSC2_FROM_PSC1:
                     psc2 = PSC2_FROM_PSC1[psc1]
+                    if fu:
+                        psc2 += fu
                     if len(psc1_suffix) > 1:
                         psc2_suffix = '-'.join((psc2, psc1_suffix[1]))
                     else:
