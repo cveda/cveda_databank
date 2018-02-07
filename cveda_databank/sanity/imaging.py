@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2014-2017 CEA
+# Copyright (c) 2014-2018 CEA
 #
 # This software is governed by the CeCILL license under French law and
 # abiding by the rules of distribution of free software. You can use,
@@ -75,7 +75,7 @@ def _check_psc1(subject_id, suffix=None, psc1=None):
             yield 'PSC1 code "{0}" was expected to be "{1}"'.format(subject_id, psc1)
 
 
-def check_zip_name(path, psc1=None):
+def check_zip_name(path, timepoint=None, psc1=None):
     """Check correctness of a ZIP filename.
 
     Parameters
@@ -97,8 +97,12 @@ def check_zip_name(path, psc1=None):
     basename = os.path.basename(path)
     if basename.endswith('.zip'):
         subject_id = basename[:-len('.zip')]
+        if (timepoint and timepoint == 'BL'):
+            suffix = None
+        else:
+            suffix = timepoint
         error_list = [Error(basename, 'Incorrect ZIP file name: ' + message)
-                      for message in _check_psc1(subject_id, None, psc1)]
+                      for message in _check_psc1(subject_id, suffix, psc1)]
         return subject_id, error_list
     else:
         return None, [Error(basename, 'Not a valid ZIP file name')]
@@ -401,7 +405,7 @@ def _check_sequence_content(path, ziptree, sequence, psc1, date):
     return subject_ids, error_list
 
 
-def check_zip_content(path, psc1=None, date=None, expected=None):
+def check_zip_content(path, timepoint=None, psc1=None, date=None, expected=None):
     """Rapid sanity check of a ZIP file containing imaging data for a subject.
 
     Expected sequences and tests are described as a dict:
@@ -420,6 +424,8 @@ def check_zip_content(path, psc1=None, date=None, expected=None):
     ----------
     path : str
         Path to the ZIP file.
+    timepoint : str, optional
+        Time point identifier, found as a suffix in subject identifiers.
     psc1 : str, optional
         Expected 12-digit PSC1 code.
     date : datetime.date, optional
