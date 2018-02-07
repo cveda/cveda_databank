@@ -60,7 +60,6 @@ logging.getLogger('cveda_databank.core').addHandler(logging.NullHandler())
 from cveda_databank import read_psytools
 
 
-
 ACE_IQ_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
 PDS_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_PDS-BASIC_DIGEST.csv'
 SDIM_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_SDIM-BASIC_DIGEST.csv'

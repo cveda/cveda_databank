@@ -112,7 +112,7 @@ def read_psytools(path, questions=None):
                 logger.info('ill-formed user code: %s', code)
                 continue
             psc1 = code[:-3]
-            age_band = code [-2:]
+            age_band = code[-2:]
             if age_band not in {'C1', 'C2', 'C3'}:
                 logger.info('unknown age band: %s', age_band)
                 continue

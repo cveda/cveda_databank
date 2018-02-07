@@ -162,7 +162,7 @@ def process_worksheet(worksheet):
 
             # Assessment date
             assessment = row[6]  # G
-            if assessment.value == None:
+            if assessment.value is None:
                 assessment = None
             elif assessment.data_type == 'n' and assessment.is_date:
                 assessment = assessment.value
@@ -191,7 +191,7 @@ def process_worksheet(worksheet):
                     logger.error('%s: invalid "Sex": %s' % (psc1, sex))
                     sex = None
             else:
-                if sex.value != None:
+                if sex.value is not None:
                     logger.error('%s: incorrect "Sex" type "%s": %s'
                                  % (psc1, sex.data_type, sex.value))
                 sex = None
@@ -213,7 +213,7 @@ def process_worksheet(worksheet):
             elif age.data_type == 'f':
                 # typically '=DATEDIF(date_of_birth, assessment_date, "Y")'
                 age = None
-            elif age.value != None:
+            elif age.value is not None:
                 logger.error('%s: incorrect "Age" type "%s": %s'
                              % (psc1, age.data_type, age.value))
                 age = None
@@ -229,7 +229,7 @@ def process_worksheet(worksheet):
             elif correct_age.data_type == 'f':
                 # typically '=INT((assessment_date - date_of_birth) / 365)'
                 correct_age = None
-            elif correct_age.value != None:
+            elif correct_age.value is not None:
                 logger.error('%s: incorrect "Correct age" type "%s": %s'
                              % (psc1, correct_age.data_type, correct_age.value))
                 correct_age = None
@@ -265,7 +265,7 @@ def process_worksheet(worksheet):
                     logger.error('%s: invalid "Age Band": %s' % (psc1, band))
                     band = None
             else:
-                if band.value != None:
+                if band.value is not None:
                     logger.error('%s: incorrect "Age Band" type "%s": %s'
                                  % (psc1, band.data_type, band.value))
                 band = None
@@ -291,7 +291,7 @@ def process_worksheet(worksheet):
             if calculated_band and sex and time_block:
                 data.setdefault(calculated_band, {}) \
                     .setdefault(sex, {}) \
-                    .setdefault(time_block, {})[psc1] =  (dob, sex, assessment)
+                    .setdefault(time_block, {})[psc1] = (dob, sex, assessment)
 
     for band, sexes in data.items():
         for sex, time_blocks in sexes.items():
