@@ -10,6 +10,9 @@ Databank operations are documented in the `project wiki`_.
 ``docs``
     Reference documentation_ of *cveda_databank*.
 
+``follow_up``
+  Follow-up planning: half the subjects will be reassesed 1 year after base line and the other half 2 years after base line.
+
 ``psc``
   Generate PSC1 and PSC2 subject identifiers.
 
