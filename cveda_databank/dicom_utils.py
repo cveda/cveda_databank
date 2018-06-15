@@ -283,7 +283,7 @@ def read_metadata(path, force=False):
         # (0032,4000)
         metadata['PatientID'] = dataset.StudyComments
     elif 'PatientID' in dataset:
-        # CHANDIGARH
+        # PGIMER (formerly CHANDIGARH)
         # NIMHANS before RIS (from pilots in May 2016 to 2016-12-17)
         # (0010,0020)
         metadata['PatientID'] = dataset.PatientID

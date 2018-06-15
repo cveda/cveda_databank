@@ -245,7 +245,7 @@ def _check_empty_files(ziptree):
 
 
 _SERIES_DESCRIPTION = {
-    'CHANDIGARH': {
+    'PGIMER': {
         'T1w': ['3DT1 weighted volume'],
         'rest': ['Resting state fMRI'],
         'B0_map': ['B0 mapping'],
