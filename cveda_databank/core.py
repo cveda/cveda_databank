@@ -28,6 +28,7 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
+import os
 from datetime import datetime
 from openpyxl import load_workbook
 from .psytools import read_psytools
@@ -42,7 +43,16 @@ if (2, 7) <= sys.version_info < (3, 2):
 # reference files
 #
 _PSC_PATH = '/cveda/databank/framework/psc/psc2psc_2016-07-12.txt'
-_EXCEL_PATH = '/cveda/databank/framework/meta_data/PSC1_DOB_2017-05-24.xlsx'
+_RECRUITMENT_FILES_DIR = '/cveda/databank/framework/meta_data'
+_RECRUITMENT_FILES = (
+    'recruitment_file_PGIMER_04-06-2018.xlsx',
+    'recruitment_file_MANIPUR_31-05-2018.xlsx',
+    'recruitment_file_KOLKATA_31-05-2018.xlsx',
+    'recruitment_file_RISHIVALLEY_02-06-2018.xlsx',
+    'recruitment_file_MYSORE_31-05-2018.xlsx',
+    'recruitment_file_NIMHANS_31-05-2018.xlsx',
+    'recruitment_file_SJRI_31-05-2018.xlsx',
+)
 _ACE_IQ_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
 _PHIR_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_PHIR-BASIC_DIGEST.csv'
 _PDS_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_PDS-BASIC_DIGEST.csv'
@@ -80,45 +90,45 @@ def _initialize_psc2_from_psc1(path):
 def _read_excel(path):
     excel = {}
     workbook = load_workbook(path)
-    for worksheet in workbook:
-        rows = list(worksheet.rows)
-        index = {cell.value: i for i, cell in enumerate(rows[0])
-                 if cell.value}
-        for row in rows[1:]:
-            psc1 = row[index['PSC1 CODE']].value
-            if psc1:
-                # clean up and detect invalid PSC1 codes
-                if isinstance(psc1, int):
-                    psc1 = str(psc1)
-                psc1 = psc1.strip()
-                if psc1.isdigit():
-                    if len(psc1) != 12:
-                        logger.error('invalid PSC1: %s', psc1)
-                        psc1 = None
-                else:
-                    logger.warn('invalid PSC1: %s', psc1)
+    worksheet = workbook.active  # hopefully the active sheet is the proper one...
+    rows = list(worksheet.rows)
+    index = {cell.value: i for i, cell in enumerate(rows[0])
+             if cell.value}
+    for row in rows[1:]:
+        psc1 = row[index['PSC1']].value
+        if psc1:
+            # clean up and detect invalid PSC1 codes
+            if isinstance(psc1, int):
+                psc1 = str(psc1)
+            psc1 = psc1.strip()
+            if psc1.isdigit():
+                if len(psc1) != 12:
+                    logger.error('invalid PSC1: %s', psc1)
                     psc1 = None
-            dob = row[index['DOB']].value
-            if dob:
-                # clean up and detect invalid dates of birth
-                if isinstance(dob, str):
-                    dob = dob.strip()
-                    try:
-                        dob = datetime.strptime(dob, '%d-%m-%Y').date()
-                    except ValueError:
-                        logger.error('invalid date of birth: %s', dob)
-                        dob = None
-                elif isinstance(dob, datetime):
-                    dob = dob.date()
-                else:
-                    logger.error('invalid date of birth: %s', str(dob))
+            else:
+                logger.warn('invalid PSC1: %s', psc1)
+                psc1 = None
+        dob = row[index['DOB']].value
+        if dob:
+            # clean up and detect invalid dates of birth
+            if isinstance(dob, str):
+                dob = dob.strip()
+                try:
+                    dob = datetime.strptime(dob, '%d-%m-%Y').date()
+                except ValueError:
+                    logger.error('invalid date of birth: %s', dob)
                     dob = None
-            if psc1 and dob:
-                excel[psc1] = dob
+            elif isinstance(dob, datetime):
+                dob = dob.date()
+            else:
+                logger.error('invalid date of birth: %s', str(dob))
+                dob = None
+        if psc1 and dob:
+            excel[psc1] = dob
     return excel
 
 
-def _initialize_dob_from_psc1(excel_path, ace_iq_path, phir_path):
+def _initialize_dob_from_psc1(excel_paths, ace_iq_path, phir_path):
     """Build dictionnary to map PSC1 code to date of birth of subject.
 
     Parameters
@@ -138,7 +148,9 @@ def _initialize_dob_from_psc1(excel_path, ace_iq_path, phir_path):
     """
     dob_from_psc1 = {}
 
-    excel = _read_excel(excel_path)
+    excel = {}
+    for excel_path in excel_paths:
+        excel.update(_read_excel(excel_path))
     ace_iq_questions = {'ACEIQ_C2': 'datetime.date'}
     ace_iq = read_psytools(ace_iq_path, ace_iq_questions)
     phir_questions = {'PHIR_01': 'datetime.date'}
@@ -238,7 +250,9 @@ def _initialize_sex_from_psc1(ace_iq_path, pds_path, sdim_path):
 
 PSC2_FROM_PSC1 = _initialize_psc2_from_psc1(_PSC_PATH)
 PSC1_FROM_PSC2 = {v: k for k, v in PSC2_FROM_PSC1.items()}
-DOB_FROM_PSC1 = _initialize_dob_from_psc1(_EXCEL_PATH, _ACE_IQ_PATH, _PHIR_PATH)
+_recruitment_files = (os.path.join(_RECRUITMENT_FILES_DIR, recruitment_file)
+                      for recruitment_file in _RECRUITMENT_FILES)
+DOB_FROM_PSC1 = _initialize_dob_from_psc1(_recruitment_files, _ACE_IQ_PATH, _PHIR_PATH)
 SEX_FROM_PSC1 = _initialize_sex_from_psc1(_ACE_IQ_PATH, _PDS_PATH, _SDIM_PATH)
 
 
