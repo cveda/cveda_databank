@@ -50,6 +50,7 @@ EXCEL : str
 
 """
 
+import os
 from csv import Sniffer, DictReader
 from datetime import datetime
 from openpyxl import load_workbook
@@ -171,43 +172,46 @@ def read_phir(path):
 def read_excel(path):
     excel = {}
     workbook = load_workbook(path)
-    for worksheet in workbook:
-        rows = list(worksheet.rows)
-        index = {cell.value: i for i, cell in enumerate(rows[0])
-                 if cell.value}
-        for row in rows[1:]:
-            psc1 = row[index['PSC1 CODE']].value
-            if not psc1:
+    worksheet = workbook.active
+    rows = list(worksheet.rows)  # hopefully the active sheet is the proper one...
+    index = {cell.value: i for i, cell in enumerate(rows[0])
+             if cell.value}
+    if 'PSC1' not in index:
+        logging.fatal('%s: PSC1 missing from header: %s',
+                      path, index)
+    for row in rows[1:]:
+        psc1 = row[index['PSC1']].value
+        if not psc1:
+            continue
+        if isinstance(psc1, int):
+            psc1 = str(psc1)
+        psc1 = psc1.strip()
+        if len(psc1) != 12 or not psc1.isdigit():
+            logger.warn('bogus PSC1: %s', psc1)
+            continue
+        dob = row[index['DOB']].value
+        if not dob:
+            continue
+        if 'Comments' in index and row[index['Comments']].value:
+            double_checked = row[index['Comments']].value
+        else:
+            double_checked = None
+        if isinstance(dob, str):
+            if dob.startswith('…'):  # blank cells...
                 continue
-            if isinstance(psc1, int):
-                psc1 = str(psc1)
-            psc1 = psc1.strip()
-            if len(psc1) != 12 or not psc1.isdigit():
-                logger.warn('bogus PSC1: %s', psc1)
-                continue
-            dob = row[index['DOB']].value
-            if not dob:
-                continue
-            if 'Comments' in index and row[index['Comments']].value:
-                double_checked = row[index['Comments']].value
-            else:
-                double_checked = None
-            if isinstance(dob, str):
-                if dob.startswith('…'):  # blank cells...
-                    continue
-                dob = dob.strip()
+            dob = dob.strip()
+            try:
+                dob = datetime.strptime(dob, '%d/%m/%Y').date()
+            except ValueError:
                 try:
-                    dob = datetime.strptime(dob, '%d/%m/%Y').date()
+                    dob = datetime.strptime(dob, '%d.%m.%Y').date()
                 except ValueError:
-                    try:
-                        dob = datetime.strptime(dob, '%d.%m.%Y').date()
-                    except ValueError:
-                        logger.error('bogus DOB: %s', dob)
-            elif isinstance(dob, datetime):
-                dob = dob.date()
-            else:
-                logger.error('bogus DOB: %s', str(dob))
-            excel[psc1] = (dob, double_checked)
+                    logger.error('bogus DOB: %s', dob)
+        elif isinstance(dob, datetime):
+            dob = dob.date()
+        else:
+            logger.error('bogus DOB: %s', str(dob))
+        excel[psc1] = (dob, double_checked)
     return excel
 
 
@@ -218,8 +222,12 @@ def main():
     # PHIR questionnaire
     phir = read_phir(PHIR)
 
-    # Excel additional file
-    excel = read_excel(EXCEL)
+    # Excel recruitment files
+    excel_paths = (os.path.join(_RECRUITMENT_FILES_DIR, excel_file)
+                   for excel_file in _RECRUITMENT_FILES)
+    excel = {}
+    for excel_path in excel_paths:
+        excel.update(read_excel(excel_path))
 
     for psc1 in set(ace_iq) | set(phir) | set(excel):
         date_ace_iq = None
