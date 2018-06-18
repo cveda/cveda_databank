@@ -61,7 +61,16 @@ logger = logging.getLogger()
 
 ACE_IQ = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
 PHIR = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_PHIR-BASIC_DIGEST.csv'
-EXCEL = '/cveda/databank/framework/meta_data/PSC1_DOB_2017-05-24.xlsx'
+_RECRUITMENT_FILES_DIR = '/cveda/databank/framework/meta_data/recruitment_files/'
+_RECRUITMENT_FILES = (
+    'recruitment_file_PGIMER.xlsx',
+    'recruitment_file_MANIPUR.xlsx',
+    'recruitment_file_KOLKATA.xlsx',
+    'recruitment_file_RISHIVALLEY.xlsx',
+    'recruitment_file_MYSORE.xlsx',
+    'recruitment_file_NIMHANS.xlsx',
+    'recruitment_file_SJRI.xlsx',
+)
 
 
 def age(today, birth):

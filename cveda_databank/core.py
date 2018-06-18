@@ -43,15 +43,15 @@ if (2, 7) <= sys.version_info < (3, 2):
 # reference files
 #
 _PSC_PATH = '/cveda/databank/framework/psc/psc2psc_2016-07-12.txt'
-_RECRUITMENT_FILES_DIR = '/cveda/databank/framework/meta_data'
+_RECRUITMENT_FILES_DIR = '/cveda/databank/framework/meta_data/recruitment_files'
 _RECRUITMENT_FILES = (
-    'recruitment_file_PGIMER_04-06-2018.xlsx',
-    'recruitment_file_MANIPUR_31-05-2018.xlsx',
-    'recruitment_file_KOLKATA_31-05-2018.xlsx',
-    'recruitment_file_RISHIVALLEY_02-06-2018.xlsx',
-    'recruitment_file_MYSORE_31-05-2018.xlsx',
-    'recruitment_file_NIMHANS_31-05-2018.xlsx',
-    'recruitment_file_SJRI_31-05-2018.xlsx',
+    'recruitment_file_PGIMER.xlsx',
+    'recruitment_file_MANIPUR.xlsx',
+    'recruitment_file_KOLKATA.xlsx',
+    'recruitment_file_RISHIVALLEY.xlsx',
+    'recruitment_file_MYSORE.xlsx',
+    'recruitment_file_NIMHANS.xlsx',
+    'recruitment_file_SJRI.xlsx',
 )
 _ACE_IQ_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_ACEIQ-BASIC_DIGEST.csv'
 _PHIR_PATH = '/cveda/databank/RAW/PSC1/psytools/cVEDA-cVEDA_PHIR-BASIC_DIGEST.csv'
