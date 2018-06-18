@@ -90,41 +90,44 @@ def _initialize_psc2_from_psc1(path):
 def _read_excel(path):
     excel = {}
     workbook = load_workbook(path)
-    worksheet = workbook.active  # hopefully the active sheet is the proper one...
-    rows = list(worksheet.rows)
-    index = {cell.value: i for i, cell in enumerate(rows[0])
-             if cell.value}
-    for row in rows[1:]:
-        psc1 = row[index['PSC1']].value
-        if psc1:
-            # clean up and detect invalid PSC1 codes
-            if isinstance(psc1, int):
-                psc1 = str(psc1)
-            psc1 = psc1.strip()
-            if psc1.isdigit():
-                if len(psc1) != 12:
-                    logger.error('invalid PSC1: %s', psc1)
+    for worksheet in workbook.worksheets:
+        rows = list(worksheet.rows)
+        index = {cell.value: i for i, cell in enumerate(rows[0])
+                 if cell.value}
+        if 'PSC1' not in index:
+            logging.fatal('%s: PSC1 missing from header: %s',
+                          path, index)
+        for row in rows[1:]:
+            psc1 = row[index['PSC1']].value
+            if psc1:
+                # clean up and detect invalid PSC1 codes
+                if isinstance(psc1, int):
+                    psc1 = str(psc1)
+                psc1 = psc1.strip()
+                if psc1.isdigit():
+                    if len(psc1) != 12:
+                        logger.error('invalid PSC1: %s', psc1)
+                        psc1 = None
+                else:
+                    logger.warn('invalid PSC1: %s', psc1)
                     psc1 = None
-            else:
-                logger.warn('invalid PSC1: %s', psc1)
-                psc1 = None
-        dob = row[index['DOB']].value
-        if dob:
-            # clean up and detect invalid dates of birth
-            if isinstance(dob, str):
-                dob = dob.strip()
-                try:
-                    dob = datetime.strptime(dob, '%d-%m-%Y').date()
-                except ValueError:
-                    logger.error('invalid date of birth: %s', dob)
+            dob = row[index['DOB']].value
+            if dob:
+                # clean up and detect invalid dates of birth
+                if isinstance(dob, str):
+                    dob = dob.strip()
+                    try:
+                        dob = datetime.strptime(dob, '%d-%m-%Y').date()
+                    except ValueError:
+                        logger.error('invalid date of birth: %s', dob)
+                        dob = None
+                elif isinstance(dob, datetime):
+                    dob = dob.date()
+                else:
+                    logger.error('invalid date of birth: %s', str(dob))
                     dob = None
-            elif isinstance(dob, datetime):
-                dob = dob.date()
-            else:
-                logger.error('invalid date of birth: %s', str(dob))
-                dob = None
-        if psc1 and dob:
-            excel[psc1] = dob
+            if psc1 and dob:
+                excel[psc1] = dob
     return excel
 
 

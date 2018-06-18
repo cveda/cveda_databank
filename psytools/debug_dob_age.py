@@ -172,46 +172,46 @@ def read_phir(path):
 def read_excel(path):
     excel = {}
     workbook = load_workbook(path)
-    worksheet = workbook.active
-    rows = list(worksheet.rows)  # hopefully the active sheet is the proper one...
-    index = {cell.value: i for i, cell in enumerate(rows[0])
-             if cell.value}
-    if 'PSC1' not in index:
-        logging.fatal('%s: PSC1 missing from header: %s',
-                      path, index)
-    for row in rows[1:]:
-        psc1 = row[index['PSC1']].value
-        if not psc1:
-            continue
-        if isinstance(psc1, int):
-            psc1 = str(psc1)
-        psc1 = psc1.strip()
-        if len(psc1) != 12 or not psc1.isdigit():
-            logger.warn('bogus PSC1: %s', psc1)
-            continue
-        dob = row[index['DOB']].value
-        if not dob:
-            continue
-        if 'Comments' in index and row[index['Comments']].value:
-            double_checked = row[index['Comments']].value
-        else:
-            double_checked = None
-        if isinstance(dob, str):
-            if dob.startswith('…'):  # blank cells...
-                continue
-            dob = dob.strip()
-            try:
-                dob = datetime.strptime(dob, '%d/%m/%Y').date()
-            except ValueError:
-                try:
-                    dob = datetime.strptime(dob, '%d.%m.%Y').date()
-                except ValueError:
-                    logger.error('bogus DOB: %s', dob)
-        elif isinstance(dob, datetime):
-            dob = dob.date()
-        else:
-            logger.error('bogus DOB: %s', str(dob))
-        excel[psc1] = (dob, double_checked)
+    for worksheet in workbook.worksheets:
+        rows = list(worksheet.rows)
+        index = {cell.value: i for i, cell in enumerate(rows[0])
+                 if cell.value}
+        if 'PSC1' not in index:
+            logging.fatal('%s: PSC1 missing from header: %s',
+                          path, index)
+        for row in rows[1:]:
+            psc1 = row[index['PSC1']].value
+            if psc1:
+                # clean up and detect invalid PSC1 codes
+                if isinstance(psc1, int):
+                    psc1 = str(psc1)
+                psc1 = psc1.strip()
+                if psc1.isdigit():
+                    if len(psc1) != 12:
+                        logger.error('invalid PSC1: %s', psc1)
+                        psc1 = None
+                else:
+                    logger.warn('invalid PSC1: %s', psc1)
+                    psc1 = None
+            dob = row[index['DOB']].value
+            if dob:
+                if isinstance(dob, str):
+                    dob = dob.strip()
+                    try:
+                        dob = datetime.strptime(dob, '%d/%m/%Y').date()
+                    except ValueError:
+                        try:
+                            dob = datetime.strptime(dob, '%d.%m.%Y').date()
+                        except ValueError:
+                            logger.error('invalid date of birth: %s', dob)
+                            dob = None
+                elif isinstance(dob, datetime):
+                    dob = dob.date()
+                else:
+                    logger.error('invalid date of birth: %s', str(dob))
+                    dob = None
+            if psc1 and dob:
+                excel[psc1] = (dob)
     return excel
 
 
@@ -230,6 +230,8 @@ def main():
         excel.update(read_excel(excel_path))
 
     for psc1 in set(ace_iq) | set(phir) | set(excel):
+        double_checked = None
+
         date_ace_iq = None
         if psc1 in ace_iq and 'date' in ace_iq[psc1]:
             date_ace_iq = ace_iq[psc1]['date']
@@ -243,9 +245,9 @@ def main():
         dob_phir = None
         if psc1 in phir and 'dob' in phir[psc1]:
             dob_phir = phir[psc1]['dob']
-        dob_excel, double_checked = None, False
+        dob_excel = None
         if psc1 in excel:
-            dob_excel, double_checked = excel[psc1]
+            dob_excel = excel[psc1]
 
         age_ace_iq = None
         if psc1 in ace_iq and 'age' in ace_iq[psc1]:
@@ -264,12 +266,12 @@ def main():
             if date_ace_iq:
                 age_from_excel_ace_iq = age(date_ace_iq, dob_excel)
                 if age_from_excel_ace_iq < 6 or age_from_excel_ace_iq > 23 and not double_checked:
-                    print('{}: Approximate age ({}) calculated from ACE-IQ and Excel date of birth ({}) look incorrect'
+                    print('{}: Approximate age ({}) calculated from ACE-IQ and Excel date of birth ({}) looks incorrect'
                           .format(psc1, age_from_excel_ace_iq, dob_excel))
             if date_phir:
                 age_from_excel_phir = age(date_phir, dob_excel)
                 if age_from_excel_phir < 6 or age_from_excel_phir > 23 and not double_checked:
-                    print('{}: Approximate age ({}) calculated from ACE-IQ and Excel date of birth ({}) look incorrect'
+                    print('{}: Approximate age ({}) calculated from ACE-IQ and Excel date of birth ({}) looks incorrect'
                           .format(psc1, age_from_excel_phir, dob_excel))
 
             if dob_ace_iq and dob_phir:
