@@ -46,7 +46,7 @@ _PSC_PATH = '/cveda/databank/framework/psc/psc2psc_2016-07-12.txt'
 _RECRUITMENT_FILES_DIR = '/cveda/databank/framework/meta_data/recruitment_files'
 _RECRUITMENT_FILES = (
     'recruitment_file_PGIMER.xlsx',
-    'recruitment_file_MANIPUR.xlsx',
+    'recruitment_file_IMPHAL.xlsx',
     'recruitment_file_KOLKATA.xlsx',
     'recruitment_file_RISHIVALLEY.xlsx',
     'recruitment_file_MYSORE.xlsx',
