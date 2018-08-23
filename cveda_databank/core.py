@@ -42,7 +42,7 @@ if (2, 7) <= sys.version_info < (3, 2):
 #
 # reference files
 #
-_PSC_PATH = '/cveda/databank/framework/psc/psc2psc_2016-07-12.txt'
+_PSC_PATH = '/cveda/databank/framework/psc/psc2psc_2018-06-23.txt'
 _RECRUITMENT_FILES_DIR = '/cveda/databank/framework/meta_data/recruitment_files'
 _RECRUITMENT_FILES = (
     'recruitment_file_PGIMER.xlsx',
