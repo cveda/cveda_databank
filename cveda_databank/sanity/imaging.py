@@ -272,6 +272,9 @@ _SERIES_DESCRIPTION = {
                 'DTI'],
         'dwi_rev': ['DTI REVERSED_DFC', 'DTI REVERSED_DFC_MIX', 'DTI _6_DFC_MIX',
                     'DTI REVERSED'],
+        # "old" and "final" versions of AP sequence on Siemens Skyra scanner
+        'dwi_ap': ['DTI  20 A>>P_DFC_MIX', 'DTI 20 A>>P_DFC',
+                   'DTI 32 A>>P FOLLOW UP_DFC_MIX'],
         'FLAIR': ['2D FAST FLAIR'],
         'T2w': ['2D T2 WEIGHTED'],
     },
