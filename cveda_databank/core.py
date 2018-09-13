@@ -39,6 +39,11 @@ import sys
 if (2, 7) <= sys.version_info < (3, 2):
     logger.addHandler(logging.NullHandler())
 
+if sys.version_info[0] < 3:
+    integer_types = (int, long)
+else:
+    integer_types = (int,)
+
 #
 # reference files
 #
@@ -101,7 +106,7 @@ def _read_excel(path):
             psc1 = row[index['PSC1']].value
             if psc1:
                 # clean up and detect invalid PSC1 codes
-                if isinstance(psc1, (int, long)):
+                if isinstance(psc1, integer_types):
                     psc1 = str(psc1)
                 psc1 = psc1.strip()
                 if psc1.isdigit():
