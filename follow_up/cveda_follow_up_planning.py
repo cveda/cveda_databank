@@ -31,7 +31,7 @@
 
 
 from openpyxl import load_workbook, Workbook
-from datetime import datetime, date
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from random import shuffle
 import logging
@@ -316,9 +316,9 @@ def randomize(data):
     follow_ups = ({}, {})  # follow-up 1 and follow-up 2
 
     for center, bands in data.items():
-        for band, sexes in bands.items():
-            for sex, time_blocks in sexes.items():
-                for time_block, subjects in time_blocks.items():
+        for sexes in bands.values():
+            for time_blocks in sexes.values():
+                for subjects in time_blocks.values():
                     psc1s = list(subjects.keys())
                     # Randomly split each gpoup in half.
                     half_len = len(psc1s) // 2
