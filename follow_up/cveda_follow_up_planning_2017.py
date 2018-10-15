@@ -40,7 +40,7 @@ logger = logging.getLogger()
 
 
 # reference file for date of birth, sex, date of baseline assessment
-_EXCEL_REFERENCE_PATH = '/cveda/databank/framework/meta_data/recruitment_file_2017-11-03.xlsx'
+_EXCEL_REFERENCE_PATH = '/cveda/databank/framework/meta_data/follow_up/randomization_2017/recruitment_file_2017-11-03.xlsx'
 
 _EXCEL_REFERENCE_HEADER = [
     'Sl no',  # A
