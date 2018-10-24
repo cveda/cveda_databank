@@ -365,8 +365,8 @@ def main():
                 worksheet.append([calendar_month, assessment,
                                   psc1, dob, sex,
                                   age, 'C{}'.format(band)])
-        workbook.save(filename='follow_up_{}_{}.xlsx'
-                               .format(i + 1, today.strftime('%Y-%m-%d')))
+        workbook.save(filename='follow_up_{}_{}_{}.xlsx'
+                               .format(center, i + 1, today.strftime('%Y-%m-%d')))
 
 
 if __name__ == "__main__":
