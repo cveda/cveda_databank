@@ -63,36 +63,11 @@ _PSC1_CODES = (
     '/cveda/databank/framework/psc/PSC1_NIMHANS_2018-06-23.txt',
 )
 
-_EXCEL_REFERENCE_HEADER = [
-    'Sl no',  # A
-    'PSC1 Code',  # B
-    'DOB',  # C
-    'Age',  # D
-    'Sex',  # E
-    'Age Band',  # F
-    'Assessment date',  # G
-    'MRI',  # H
-    'Correct age',  # I
-    'Age Difference',  # J
-    'Remarks',  # K
-    "PSC1 code matching from Dimitri's list",  # L
-    'Age discrepancy present',  # M
-    'Age band changes',  # N
-    "PSC1 codes not matching in Dimitri's list",  # O
-    'Comment',  # P
-    'Action',  # Q
-]
-
 _AGE_BAND = {
     'C1': 1,
     'C2': 2,
     'C3': 3,
 }
-
-
-
-def _check_excel_reference_header(header):
-    return list(header) == _EXCEL_REFERENCE_HEADER
 
 
 def _age_band(age_in_years):
