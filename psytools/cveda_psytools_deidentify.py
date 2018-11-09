@@ -102,8 +102,8 @@ def _create_psc2_file(psc1_path, psc2_path):
                 trial = row['Trial']
                 # Psytools files contain identifying data,
                 # specifically lines containing items:
-                # - id_check_dob
-                # - id_check_gender
+                # - ID_check_dob
+                # - ID_check_gender
                 #
                 # As the name implies, the purpose of these items is
                 # cross-checking and error detection. They should not
@@ -117,8 +117,8 @@ def _create_psc2_file(psc1_path, psc2_path):
                 # Psytools files to end users, we need to remove these
                 # items sooner, before importing the data into the
                 # CubicWeb database.
-                if 'id_check_' in trial:
-                    logging.debug('skipping line with "id_check_" for %s',
+                if 'ID_check_' in trial:
+                    logging.debug('skipping line with "ID_check_" for %s',
                                   row['User code'])
                     continue
 
