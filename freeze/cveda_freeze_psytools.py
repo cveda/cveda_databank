@@ -71,6 +71,8 @@ def main():
 
     # keep only frozen participants
     for psytools in os.listdir(_IN_PATH):
+        if '_FU1-' in psytools:
+            continue  # only baseline (BL) for 1.0
         inpath = os.path.join(_IN_PATH, psytools)
         outpath = os.path.join(_OUT_PATH, psytools)
         with open(inpath, 'r') as infile, open(outpath, 'w') as outfile:
