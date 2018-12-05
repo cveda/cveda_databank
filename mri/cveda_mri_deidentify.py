@@ -42,8 +42,8 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-QUARANTINE = '/cveda/databank/RAW/QUARANTINE'
-DATABANK_PATH = '/cveda/databank'
+QUARANTINE_PATH = '/cveda/databank/RAW/QUARANTINE'
+BIDS_PATH = '/cveda/databank/processed/mri'
 
 
 def quarantine_filename_semantics(filename):
@@ -195,12 +195,11 @@ _DWI_MAPPING = {
 }
 
 
-def deidentify(timepoint, psc1, zip_path):
+def deidentify(timepoint, psc1, zip_path, bids_path):
     logger.info('%s/%s: deidentify', psc1, timepoint)
 
     psc2 = PSC2_FROM_PSC1[psc1]
-    out_ses_path = os.path.join(DATABANK_PATH, 'processed', 'mri',
-                                'sub-' + psc2, 'ses-' + timepoint)
+    out_ses_path = os.path.join(bids_path, 'sub-' + psc2, 'ses-' + timepoint)
 
     # skip ZIP files that have already been processed
     if os.path.isdir(out_ses_path):
@@ -315,11 +314,11 @@ def deidentify(timepoint, psc1, zip_path):
 
 
 def main():
-    datasets = list_datasets(QUARANTINE)
+    datasets = list_datasets(QUARANTINE_PATH)
 
     for timepoint, timepoint_datasets in datasets.items():
         for psc1, (zip_path, increment, timestamp) in timepoint_datasets.items():
-            deidentify(timepoint, psc1, zip_path)
+            deidentify(timepoint, psc1, zip_path, BIDS_PATH)
 
 
 if __name__ == "__main__":
