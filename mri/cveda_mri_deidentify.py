@@ -37,6 +37,7 @@ from datetime import datetime
 import shutil
 import subprocess
 from cveda_databank import PSC2_FROM_PSC1
+import json
 import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -44,6 +45,7 @@ logging.basicConfig(level=logging.INFO)
 
 QUARANTINE_PATH = '/cveda/databank/RAW/QUARANTINE'
 BIDS_PATH = '/cveda/databank/processed/mri'
+SKIP_PATH = '/cveda/databank/framework/meta_data/errors/mri_skip.json'
 
 
 def quarantine_filename_semantics(filename):
@@ -199,7 +201,8 @@ def deidentify(timepoint, psc1, zip_path, bids_path):
     logger.info('%s/%s: deidentify', psc1, timepoint)
 
     psc2 = PSC2_FROM_PSC1[psc1]
-    out_ses_path = os.path.join(bids_path, 'sub-' + psc2, 'ses-' + timepoint)
+    out_sub_path = os.path.join(bids_path, 'sub-' + psc2)
+    out_ses_path = os.path.join(out_sub_path, 'ses-' + timepoint)
 
     # skip ZIP files that have already been processed
     if os.path.isdir(out_ses_path):
@@ -296,6 +299,8 @@ def deidentify(timepoint, psc1, zip_path, bids_path):
 
     if status:
         shutil.rmtree(out_ses_path)
+        if not os.listdir(out_sub_path):  # empty directory
+            os.rmdir(out_sub_path)
     else:
         # rename some directories for BIDS compliance
         for modality in os.listdir(out_ses_path):
@@ -318,6 +323,10 @@ def main():
 
     for timepoint, timepoint_datasets in datasets.items():
         for psc1, (zip_path, increment, timestamp) in timepoint_datasets.items():
+            with open(SKIP_PATH) as skip_file:
+                skip = json.load(skip_file)
+                if timepoint in skip and psc1 in skip[timepoint]:
+                    continue
             deidentify(timepoint, psc1, zip_path, BIDS_PATH)
 
 
