@@ -296,6 +296,10 @@ def deidentify(timepoint, psc1, zip_path, bids_path):
                     root = root[:-len('_e1')]
                     os.rename(os.path.join(dst, f),
                               os.path.join(dst, root + '_magnitude1' + ext))
+                elif root.endswith("a"):  # two images for a single sequence!
+                    logger.error('%s/%s: second image for a single sequence: %s',
+                                 psc1, timepoint, f)
+                    status = -1
 
     if status:
         shutil.rmtree(out_ses_path)
