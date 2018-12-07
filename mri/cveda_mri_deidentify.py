@@ -295,7 +295,7 @@ def deidentify(timepoint, psc1, zip_path, bids_path):
                 elif root.endswith('_e1'):  # PGIMER Philips Ingenia
                     root = root[:-len('_e1')]
                     os.rename(os.path.join(dst, f),
-                              os.path.join(dst, root + '_magnitude1' + ext))
+                              os.path.join(dst, root + '_magnitude' + ext))
                 elif root.endswith("a"):  # two images for a single sequence!
                     logger.error('%s/%s: second image for a single sequence: %s',
                                  psc1, timepoint, f)
