@@ -173,6 +173,7 @@ def dcm2nii(src, dst, filename, comment, bvec_bval=False):
                 else:
                     bvec = False
                     bval = False
+                    nii_gz = False
                     for f in os.listdir(tempdir):
                         if f.endswith('.bvec'):
                             bvec = True
@@ -182,8 +183,14 @@ def dcm2nii(src, dst, filename, comment, bvec_bval=False):
                             bval = True
                             os.rename(os.path.join(tempdir, f),
                                       os.path.join(dst, filename + '.bval'))
-                    if not bvec or not bval:
-                        logger.error('%s: dcm2nii failed to create bvec/bval',
+                        elif f.endswith('.nii.gz'):
+                            nii_gz = True
+                            # On Unix, if destination exists and is a file,
+                            # it will be replaced silently if the user has permission.
+                            os.rename(os.path.join(tempdir, f),
+                                      os.path.join(dst, filename + '.nii.gz'))
+                    if not bvec or not bval or not nii_gz:
+                        logger.error('%s: dcm2nii failed to create expected files',
                                      src)
                         status = -1
 
