@@ -44,7 +44,7 @@ else:
     integer_types = (int,)
 
 # PSC1 to PSC2 conversion table
-_PSC_PATH = '/cveda/databank/framework/psc/psc2psc_2018-06-23.txt'
+_PSC_PATH = '/cveda/databank/framework/psc/psc2psc_2019-02-07.txt'
 
 # recruitment file with reference date of birth / sex information
 _RECRUITMENT_FILES_DIR = '/cveda/databank/framework/meta_data/recruitment_files'

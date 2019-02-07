@@ -43,7 +43,7 @@ Constants
 
    This dictionary maps PSC1 codes to PSC2 codes.
    At module initialization, we read PSC1 keys and PSC2 values as 12-digit
-   strings from file *psc2psc_2016-07-12.txt*.
+   strings from file *psc2psc_2019-02-07.txt*.
 
 .. py:data:: PSC1_FROM_PSC2
 
