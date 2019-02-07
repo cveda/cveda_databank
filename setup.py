@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2017 CEA
+# Copyright (c) 2016-2019 CEA
 #
 # This software is governed by the CeCILL license under French law and
 # abiding by the rules of distribution of free software. You can use,
@@ -54,10 +54,15 @@ setup(
     url='https://github.com/cveda/cveda_databank',
     packages=['cveda_databank'],
     scripts=[
+        'follow_up/cveda_follow_up_planning_2017.py',
+        'follow_up/cveda_follow_up_planning_2018.py',
+        'freeze/cveda_freeze_psytools.py',
+        'mri/cveda_mri_deidentify.py',
         'psc/cveda_generate_psc1.py',
         'psc/cveda_generate_psc2.py',
         'psytools/cveda_psytools_download.py',
         'psytools/cveda_psytools_deidentify.py',
+        'recruitment_files/cveda_recruitment_files.py',
     ],
     classifiers=[
         "License :: OSI Approved :: CEA CNRS Inria Logiciel Libre License, version 2.1 (CeCILL-2.1)",
