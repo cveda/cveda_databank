@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2010-2018 CEA
+# Copyright (c) 2010-2019 CEA
 #
 # This software is governed by the CeCILL license under French law and
 # abiding by the rules of distribution of free software. You can use,
@@ -264,7 +264,7 @@ def deidentify(timepoint, psc1, zip_path, bids_path):
             else:
                 filename = ('sub-' + psc2
                             + '_ses-' + timepoint
-                            + '_mod-' + modality)
+                            + '_' + modality)
                 bvec_bval = False
 
             os.makedirs(dst)
@@ -278,6 +278,7 @@ def deidentify(timepoint, psc1, zip_path, bids_path):
                 break
 
             # rename some files for BIDS compliance
+            # remove useless extra files (such as ADC files)
             for f in os.listdir(dst):
                 root, ext = os.path.splitext(f)
                 if ext == '.gz':
@@ -289,8 +290,7 @@ def deidentify(timepoint, psc1, zip_path, bids_path):
                               os.path.join(dst, root + ext))
                 elif root.endswith('_dwi_ADC'):  # NIMHANS Siemens Skyra
                     root = root[:-len('_dwi_ADC')]
-                    os.rename(os.path.join(dst, f),
-                              os.path.join(dst, root + '_acq-adc_dwi' + ext))
+                    os.remove(os.path.join(dst, f))
                 elif root.endswith('_e2_ph'):  # Siemens
                     root = root[:-len('_e2_ph')]
                     os.rename(os.path.join(dst, f),
