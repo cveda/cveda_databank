@@ -131,6 +131,15 @@ def _create_psc2_file(psc1_path, psc2_path):
                 if psc1.endswith('FU1'):
                     psc1 = psc1[:-len('FU1')]
                     fu = psc1[-len('FU1'):]
+                elif psc1.endswith('FU2'):
+                    psc1 = psc1[:-len('FU2')]
+                    fu = psc1[-len('FU2'):]
+                elif psc1.endswith('FUMRI1'):
+                    psc1 = psc1[:-len('FUMRI1')]
+                    fu = 'FU1'
+                elif psc1.endswith('FUMRI2'):
+                    psc1 = psc1[:-len('FUMRI2')]
+                    fu = 'FU2'
                 else:
                     fu = None
                 if psc1 in PSC2_FROM_PSC1:
