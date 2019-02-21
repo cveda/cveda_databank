@@ -49,13 +49,13 @@ _PSC_PATH = '/cveda/databank/framework/psc/psc2psc_2019-02-07.txt'
 # recruitment file with reference date of birth / sex information
 _RECRUITMENT_FILES_DIR = '/cveda/databank/framework/meta_data/recruitment_files'
 _RECRUITMENT_FILES = (
-    'recruitment_file_PGIMER_2018-10-31.xlsx',
-    'recruitment_file_IMPHAL_2018-10-31.xlsx',
-    'recruitment_file_KOLKATA_2018-10-31.xlsx',
-    'recruitment_file_RISHIVALLEY_2018-10-31.xlsx',
-    'recruitment_file_MYSORE_2018-10-31.xlsx',
-    'recruitment_file_NIMHANS_2018-10-31.xlsx',
-    'recruitment_file_SJRI_2018-10-31.xlsx',
+    'recruitment_file_PGIMER_2018-12-31.xlsx',
+    'recruitment_file_IMPHAL_2018-12-31.xlsx',
+    'recruitment_file_KOLKATA_2018-12-31.xlsx',
+    'recruitment_file_RISHIVALLEY_2018-12-31.xlsx',
+    'recruitment_file_MYSORE_2018-12-31.xlsx',
+    'recruitment_file_NIMHANS_2018-12-31.xlsx',
+    'recruitment_file_SJRI_2018-12-31.xlsx',
 )
 
 
