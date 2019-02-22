@@ -37,7 +37,7 @@ import pandas
 from dateutil.relativedelta import relativedelta
 
 import logging
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger()
 
 
@@ -53,20 +53,41 @@ _RECRUITMENT_FILES = (
     'recruitment_file_SJRI_2018-12-31.xlsx',
 )
 
+_FOLLOW_UP_FILES = {
+    'FU1': '/cveda/framework/meta_data/freeze/1.1/follow_up_1.txt',
+    'FU2': '/cveda/framework/meta_data/freeze/1.1/follow_up_2.txt',
+}
+
+_RECRUITMENT_CENTRE = {
+    '11': 'PGIMER',
+    '12': 'IMPHAL',
+    '13': 'KOLKATA',
+    '14': 'RISHIVALLEY',
+    '15': 'MYSORE',
+    '16': 'NIMHANS',
+    '17': 'SJRI',
+}
+
 
 def main():
     recruitment_data = _read_recruitment_files(os.path.join(_RECRUITMENT_FILES_DIR, f)
-                                               for f in _RECRUITMENT_FILES) 
+                                               for f in _RECRUITMENT_FILES)
 
-    print(','.join(('PSC2', 'recruitment centre', 'sex', 'age band', 'baseline age', 'baseline age in days')))
+    follow_up = {}
+    for time_point, path in _FOLLOW_UP_FILES.items():
+        with open(path) as f:
+            follow_up[time_point] = set(line.strip() for line in f)
+
+    print(','.join(('PSC2', 'recruitment centre', 'sex', 'age band', 'baseline age', 'baseline age in days', 'follow up')))
     for row in recruitment_data.itertuples(index=False):
         psc1 = row.PSC1
         site = psc1[:2]
-        if psc1 not in PSC2_FROM_PSC1:
+
+        if psc1 in PSC2_FROM_PSC1:
+            psc2 = PSC2_FROM_PSC1[psc1]
+        else:
             logger.error('%s: invalid PSC1 code in recruitment file', psc1)
             psc2 = None
-        else:
-            psc2 = PSC2_FROM_PSC1[psc1]
 
         if row.SEX not in {'F', 'M'}:
             logger.error('%s: invalid value for sex: "%s"', psc1, row.SEX)
@@ -90,13 +111,21 @@ def main():
             baseline_age = None
             baseline_age_days = None
 
-        if psc1 in PSC2_FROM_PSC1:
-            print(','.join((PSC2_FROM_PSC1[psc1],
-                            psc1[:2],
+        for time_point, participants in follow_up.items():
+            if psc2 in participants:
+                break
+        else:
+            logger.warning('%s: not in follow up', psc1)
+            time_point = None
+
+        if psc2:
+            print(','.join((psc2,
+                            _RECRUITMENT_CENTRE[site],
                             '' if sex is None else sex,
                             '' if age_band is None else age_band,
                             '' if baseline_age is None else str(baseline_age),
-                            '' if baseline_age is None else str(baseline_age_days))))
+                            '' if baseline_age is None else str(baseline_age_days),
+                            '' if time_point is None else time_point)))
 
 
 if __name__ == "__main__":
