@@ -43,7 +43,7 @@ _EXCEL_FREEZE_FILE = '/cveda/databank/framework/meta_data/freeze/1.0/cVEDA_PSC_D
 
 # in/out paths
 _IN_PATH = '/cveda/databank/processed/psytools'
-_OUT_PATH = '/cveda/databank/1.0/psytools'
+_OUT_PATH = '/cveda/databank/PUBLICATION/1.1/psytools'
 
 
 def read_freeze(path):
@@ -72,7 +72,7 @@ def main():
     # keep only frozen participants
     for psytools in os.listdir(_IN_PATH):
         if '_FU1-' in psytools:
-            continue  # only baseline (BL) for 1.0
+            continue  # only baseline (BL) for 1.1
         inpath = os.path.join(_IN_PATH, psytools)
         outpath = os.path.join(_OUT_PATH, psytools)
         with open(inpath, 'r') as infile, open(outpath, 'w') as outfile:
