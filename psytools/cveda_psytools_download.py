@@ -125,6 +125,21 @@ PSYTOOLS_DATASETS = (
     ('cVEDA_SDQ_PARENT_SELF_FU1', BASIC_DIGEST),  # SDQ Parent SELF
     ('cVEDA_MINI5_FU1', BASIC_DIGEST),  # M.I.N.I 5
     ('cVEDA_LEQ', BASIC_DIGEST),  # Life Events Questionnaire
+    ('cVEDA_WCST_FU1', BASIC_DIGEST),  # Sort the cards
+    ('cVEDA_BART_FU1', BASIC_DIGEST),  # BART
+    ('cVEDA_ERT_FU1', BASIC_DIGEST),  # Emotion Recognition
+    ('cVEDA_SST_FU1', BASIC_DIGEST),  # SST
+    ('cVEDA_SCAMP_PARENT_FU1', BASIC_DIGEST),  # SCAMP PARENT questionnaire
+    ('cVEDA_EATQr_SELF_FU1', BASIC_DIGEST),  # EATQr_SELF
+    ('cVEDA_ATQ_FU1', BASIC_DIGEST),  # ATQ
+    ('cVEDA_TMT_FU1', TMT_DIGEST),  # Trail making task
+    ('cVEDA_CBQ_PARENT_FU1', BASIC_DIGEST),  # CBQ
+    ('cVEDA_SCAMP_SELF_FU1', BASIC_DIGEST),  # SCAMP SELF questionnaire
+    ('cVEDA_CORSI_FU1', BASIC_DIGEST),  # Corsi
+    ('cVEDA_SOCRATIS_FU1', BASIC_DIGEST),  # SOCRATIS
+    ('cVEDA_DS_FU1', BASIC_DIGEST),  # Digit Span
+    ('cVEDA_SCQ_FU1', BASIC_DIGEST),  # School Climate Questionnaire
+    ('cVEDA_KIRBY_FU1', BASIC_DIGEST),  # Now or later?
 )
 
 QUOTED_PATTERN = re.compile(r'".*?"', re.DOTALL)
