@@ -33,7 +33,6 @@
 from cveda_databank import PSC2_FROM_PSC1, DOB_FROM_PSC1
 from cveda_databank.core import _read_recruitment_files
 import os
-import pandas
 from dateutil.relativedelta import relativedelta
 
 import logging
