@@ -44,7 +44,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 QUARANTINE_PATH = '/cveda/databank/RAW/QUARANTINE'
-BIDS_PATH = '/cveda/databank/processed/mri'
+BIDS_PATH = '/cveda/databank/processed/nifti'
 SKIP_PATH = '/cveda/databank/framework/meta_data/errors/mri_skip.json'
 
 
