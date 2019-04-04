@@ -254,6 +254,15 @@ _SERIES_DESCRIPTION = {
         'FLAIR': ['2D fast FLAIR'],
         'T2w': ['2D T2 weighted'],
     },
+    'KOLKATA': {
+        'T1w': ['MPRAGE'],
+        'rest': ['ep2d_bold_moco_fmri'],
+        'B0_map': ['gre_field_mapping'],
+        'dwi': ['ep2d_diff_mddw_30_P>>A_p2_DFC'],
+        'dwi_rev': ['ep2d_diff_mddw_6_rev_A>>P_p2'],
+        'FLAIR': ['t2_tirm_tra_dark-fluid_fast_p2'],
+        'T2w': ['t2_tse_tra_p2'],
+    },
     'MYSORE': {
         'T1w': ['sT1W_3D_TFE', '3D T1W'],
         'rest': ['FE_EPI 160', 'RESTING STATE'],
