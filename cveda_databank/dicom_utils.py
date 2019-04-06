@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2014-2017 CEA
+# Copyright (c) 2014-2019 CEA
 #
 # This software is governed by the CeCILL license under French law and
 # abiding by the rules of distribution of free software. You can use,
@@ -282,10 +282,14 @@ def read_metadata(path, force=False):
         # NIMHANS with RIS (single dataset on 2016-12-31)
         # (0032,4000)
         metadata['PatientID'] = dataset.StudyComments
-    elif 'PatientID' in dataset:
-        # PGIMER (formerly CHANDIGARH)
-        # NIMHANS before RIS (from pilots in May 2016 to 2016-12-17)
+    elif 'PatientID' in dataset and dataset.PatientID:
+        # PGIMER
+        # NIMHANS before RIS (pilots from May 2016 to 2016-12-17)
         # (0010,0020)
         metadata['PatientID'] = dataset.PatientID
+    elif 'PatientName' in dataset and dataset.PatientName:
+        # KOLKATA
+        # (0010,0010)
+        metadata['PatientID'] = dataset.PatientName
 
     return metadata

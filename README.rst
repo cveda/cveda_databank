@@ -29,3 +29,4 @@ Databank operations are documented in the `project wiki`_.
   Extract information from Excel recruitment files maintained by recruitment centres and convert from PSC1 to PSC2.
 
 .. _`project wiki`: https://github.com/cveda/cveda_databank/wiki
+.. _documentation: https://readthedocs.org/projects/c-veda-databank/
