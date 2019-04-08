@@ -258,7 +258,7 @@ _SERIES_DESCRIPTION = {
         'T1w': ['MPRAGE'],
         'rest': ['ep2d_bold_moco_fmri'],
         'B0_map': ['gre_field_mapping'],
-        'dwi': ['ep2d_diff_mddw_30_P>>A_p2_DFC'],
+        'dwi': ['ep2d_diff_mddw_30_P>>A_p2_DFC', 'ep2d_diff_mddw_30_P>>A_p2_DFC_MIX'],
         'dwi_rev': ['ep2d_diff_mddw_6_rev_A>>P_p2'],
         'FLAIR': ['t2_tirm_tra_dark-fluid_fast_p2'],
         'T2w': ['t2_tse_tra_p2'],
