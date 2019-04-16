@@ -119,7 +119,6 @@ _BIDS_MAPPING = {
     'T1w': 'anat',
     'T2w': 'anat',
     'FLAIR': 'anat',
-    'FLAIR': 'anat',
     'rest': 'func',
     'B0_map': 'fmap',
     'dwi': 'dwi',
@@ -128,9 +127,7 @@ _BIDS_MAPPING = {
 }
 
 
-def dcm2nii(src, dst, filename, comment, bvec_bval=False):
-    status = 0
-
+def dcm2nii(src, dst, filename, comment):
     logger.info('%s: running dcm2niix: %s', src, dst)
 
     dcm2niix = ['dcm2niix',
@@ -145,56 +142,9 @@ def dcm2nii(src, dst, filename, comment, bvec_bval=False):
     if completed.returncode:
         logger.error('%s: dcm2niix failed: %s',
                      src, completed.stdout)
-        status = completed.returncode
-    elif bvec_bval:
-        # sometimes dcm2niix fails to create bvec/bval files
-        # fall back to dcm2nii
-        bvec = False
-        bval = False
-        for f in os.listdir(dst):
-            if f.endswith('.bvec'):
-                bvec = True
-            elif f.endswith('.bval'):
-                bval = True
-        if not bvec or not bval:
-            prefix = 'cveda-bvec_bval-'
-            with tempfile.TemporaryDirectory(prefix=prefix, dir=dst) as tempdir:
-                logger.info('%s: running dcm2nii: %s', src, tempdir)
-                dcm2nii = ['dcm2nii',
-                           '-o', tempdir,
-                           src]
-                completed = subprocess.run(dcm2nii,
-                                           stdout=subprocess.PIPE,
-                                           stderr=subprocess.PIPE)
-                if completed.returncode:
-                    logger.error('%s: dcm2nii failed: %s',
-                                 src, completed.stdout)
-                    status = completed.returncode
-                else:
-                    bvec = False
-                    bval = False
-                    nii_gz = False
-                    for f in os.listdir(tempdir):
-                        if f.endswith('.bvec'):
-                            bvec = True
-                            os.rename(os.path.join(tempdir, f),
-                                      os.path.join(dst, filename + '.bvec'))
-                        elif f.endswith('.bval'):
-                            bval = True
-                            os.rename(os.path.join(tempdir, f),
-                                      os.path.join(dst, filename + '.bval'))
-                        elif f.endswith('.nii.gz'):
-                            nii_gz = True
-                            # On Unix, if destination exists and is a file,
-                            # it will be replaced silently if the user has permission.
-                            os.rename(os.path.join(tempdir, f),
-                                      os.path.join(dst, filename + '.nii.gz'))
-                    if not bvec or not bval or not nii_gz:
-                        logger.error('%s: dcm2nii failed to create expected files',
-                                     src)
-                        status = -1
+        return completed.returncode
 
-    return status
+    return 0
 
 
 _DWI_MAPPING = {
@@ -240,37 +190,25 @@ def deidentify(timepoint, psc1, zip_path, bids_path):
 
             # name files as suggested in BIDS
             if _BIDS_MAPPING[modality] == 'func':
-                filename = ('sub-' + psc2
-                            + '_ses-' + timepoint
-                            + '_task-' + modality
-                            + '_bold')
-                bvec_bval = False
+                filename = ('sub-' + psc2 + '_ses-' + timepoint +
+                            '_task-' + modality +
+                            '_bold')
             elif _BIDS_MAPPING[modality] == 'fmap':
-                filename = ('sub-' + psc2
-                            + '_ses-' + timepoint)
-                bvec_bval = False
+                filename = ('sub-' + psc2 + '_ses-' + timepoint)
             elif _BIDS_MAPPING[modality] == 'dwi':
                 acq = _DWI_MAPPING[modality]
                 if acq is None:
-                    filename = ('sub-' + psc2
-                                + '_ses-' + timepoint
-                                + '_dwi')
+                    filename = ('sub-' + psc2 + '_ses-' + timepoint +
+                                '_dwi')
                 else:
-                    filename = ('sub-' + psc2
-                                + '_ses-' + timepoint
-                                + '_acq-' + acq
-                                + '_dwi')
-                bvec_bval = True
+                    filename = ('sub-' + psc2 + '_ses-' + timepoint +
+                                '_acq-' + acq + '_dwi')
             else:
-                filename = ('sub-' + psc2
-                            + '_ses-' + timepoint
-                            + '_' + modality)
-                bvec_bval = False
+                filename = ('sub-' + psc2 + '_ses-' + timepoint +
+                            '_' + modality)
 
             os.makedirs(dst)
-            status = dcm2nii(src, dst,
-                             filename, psc2 + '/' + timepoint,
-                             bvec_bval)
+            status = dcm2nii(src, dst, filename, psc2 + '/' + timepoint)
             if status:
                 logger.error('%s/%s: cannot convert %s from DICOM to NIfTI: %d',
                              psc1, timepoint, modality, status)
@@ -289,7 +227,8 @@ def deidentify(timepoint, psc1, zip_path, bids_path):
                     os.rename(os.path.join(dst, f),
                               os.path.join(dst, root + ext))
                 elif root.endswith('_dwi_ADC'):  # NIMHANS Siemens Skyra
-                    root = root[:-len('_dwi_ADC')]
+                    logger.warning('%s/%s: DICOM conversion generates extra NIfTI file: %s',
+                                   psc1, timepoint, f)
                     os.remove(os.path.join(dst, f))
                 elif root.endswith('_e2_ph'):  # Siemens
                     root = root[:-len('_e2_ph')]
@@ -303,10 +242,22 @@ def deidentify(timepoint, psc1, zip_path, bids_path):
                     root = root[:-len('_e1')]
                     os.rename(os.path.join(dst, f),
                               os.path.join(dst, root + '_magnitude' + ext))
-                elif root.endswith("a"):  # two images for a single sequence!
-                    logger.error('%s/%s: second image for a single sequence: %s',
-                                 psc1, timepoint, f)
-                    status = -1
+                else:
+                    root = root.replace('sub-' + psc2 + '_ses-' +
+                                        timepoint + '_', '')
+                    EXPECTED = {
+                        'T1w',
+                        'T2w',
+                        'FLAIR',
+                        'task-rest_bold',
+                        'dwi', 'acq-ap_dwi',
+                        'acq-rev_dwi',
+                        'phasediff', 'magnitude',
+                    }
+                    if root not in EXPECTED:
+                        logger.error('%s/%s: unexpected BIDS file: %s',
+                                     psc1, timepoint, f)
+                        status = -1
 
     if status:
         shutil.rmtree(out_ses_path)
