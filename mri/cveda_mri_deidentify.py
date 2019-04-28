@@ -289,8 +289,8 @@ def deidentify(timepoint, psc1, zip_path, bids_path):
                     root = root[:-len('_e2_ph')]
                     os.rename(os.path.join(dst, f),
                               os.path.join(dst, root + '_phasediff' + ext))
-                elif root.endswith('_e2'):  # Philips
-                    root = root[:-len('_e2')]
+                elif root.endswith('_e2_real'):  # Philips
+                    root = root[:-len('_e2_real')]
                     os.rename(os.path.join(dst, f),
                               os.path.join(dst, root + '_phasediff' + ext))
                 elif root.endswith('_e1a'):  # Philips
