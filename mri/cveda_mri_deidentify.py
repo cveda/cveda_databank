@@ -127,7 +127,9 @@ _BIDS_MAPPING = {
 }
 
 
-def dcm2nii(src, dst, filename, comment):
+def dcm2nii(src, dst, filename, comment, bvec_bval=False):
+    status = 0
+
     logger.info('%s: running dcm2niix: %s', src, dst)
 
     dcm2niix = ['dcm2niix',
@@ -142,9 +144,56 @@ def dcm2nii(src, dst, filename, comment):
     if completed.returncode:
         logger.error('%s: dcm2niix failed: %s',
                      src, completed.stdout)
-        return completed.returncode
+        status = completed.returncode
+    elif bvec_bval:
+        # sometimes dcm2niix fails to create bvec/bval files
+        # fall back to dcm2nii
+        bvec = False
+        bval = False
+        for f in os.listdir(dst):
+            if f.endswith('.bvec'):
+                bvec = True
+            elif f.endswith('.bval'):
+                bval = True
+        if not bvec or not bval:
+            prefix = 'cveda-bvec_bval-'
+            with tempfile.TemporaryDirectory(prefix=prefix, dir=dst) as tempdir:
+                logger.info('%s: running dcm2nii: %s', src, tempdir)
+                dcm2nii = ['dcm2nii',
+                           '-o', tempdir,
+                           src]
+                completed = subprocess.run(dcm2nii,
+                                           stdout=subprocess.PIPE,
+                                           stderr=subprocess.PIPE)
+                if completed.returncode:
+                    logger.error('%s: dcm2nii failed: %s',
+                                 src, completed.stdout)
+                    status = completed.returncode
+                else:
+                    bvec = False
+                    bval = False
+                    nii_gz = False
+                    for f in os.listdir(tempdir):
+                        if f.endswith('.bvec'):
+                            bvec = True
+                            os.rename(os.path.join(tempdir, f),
+                                      os.path.join(dst, filename + '.bvec'))
+                        elif f.endswith('.bval'):
+                            bval = True
+                            os.rename(os.path.join(tempdir, f),
+                                      os.path.join(dst, filename + '.bval'))
+                        elif f.endswith('.nii.gz'):
+                            nii_gz = True
+                            # On Unix, if destination exists and is a file,
+                            # it will be replaced silently if the user has permission.
+                            os.rename(os.path.join(tempdir, f),
+                                      os.path.join(dst, filename + '.nii.gz'))
+                    if not bvec or not bval or not nii_gz:
+                        logger.error('%s: dcm2nii failed to create expected files',
+                                     src)
+                        status = -1
 
-    return 0
+    return status
 
 
 _DWI_MAPPING = {
@@ -193,8 +242,10 @@ def deidentify(timepoint, psc1, zip_path, bids_path):
                 filename = ('sub-' + psc2 + '_ses-' + timepoint +
                             '_task-' + modality +
                             '_bold')
+                bvec_bval = False
             elif _BIDS_MAPPING[modality] == 'fmap':
                 filename = ('sub-' + psc2 + '_ses-' + timepoint)
+                bvec_bval = False
             elif _BIDS_MAPPING[modality] == 'dwi':
                 acq = _DWI_MAPPING[modality]
                 if acq is None:
@@ -203,12 +254,16 @@ def deidentify(timepoint, psc1, zip_path, bids_path):
                 else:
                     filename = ('sub-' + psc2 + '_ses-' + timepoint +
                                 '_acq-' + acq + '_dwi')
+                bvec_bval = True
             else:
                 filename = ('sub-' + psc2 + '_ses-' + timepoint +
                             '_' + modality)
+                bvec_bval = False
 
             os.makedirs(dst)
-            status = dcm2nii(src, dst, filename, psc2 + '/' + timepoint)
+            status = dcm2nii(src, dst,
+                             filename, psc2 + '/' + timepoint,
+                             bvec_bval)
             if status:
                 logger.error('%s/%s: cannot convert %s from DICOM to NIfTI: %d',
                              psc1, timepoint, modality, status)
