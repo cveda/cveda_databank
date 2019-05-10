@@ -150,12 +150,31 @@ def dcm2nii(src, dst, filename, comment, bvec_bval=False):
         # fall back to dcm2nii
         bvec = False
         bval = False
+        json = None
         for f in os.listdir(dst):
             if f.endswith('.bvec'):
                 bvec = True
             elif f.endswith('.bval'):
                 bval = True
+            elif f.endswith('.json'):
+                json = os.path.join(dst, f)
         if not bvec or not bval:
+            # change "ConversionSoftware" in JSON sidecar
+            if json:
+                with open(json, 'r') as f:
+                    lines = f.readlines()
+                for line in lines:
+                    SOFTWARE = '"ConversionSoftware": '
+                    SOFTWARE_VERSION = '"ConversionSoftwareVersion": '
+                    if SOFTWARE in line:
+                        index = line.find(SOFTWARE) + len(SOFTWARE)
+                        line = line[:index] + '"dcm2nii",\n'
+                    elif SOFTWARE_VERSION in line:
+                        index = line.find(SOFTWARE_VERSION) + len(SOFTWARE_VERSION)
+                        line = line[:index] + '"4AUGUST2014 (Debian)"\n'  # HARDCODED!!!
+                with open(json, 'w') as f:
+                    f.writelines(lines)
+            # convert with dcm2nii and overwrite imaging files left by dcm2niix
             prefix = 'cveda-bvec_bval-'
             with tempfile.TemporaryDirectory(prefix=prefix, dir=dst) as tempdir:
                 logger.info('%s: running dcm2nii: %s', src, tempdir)
