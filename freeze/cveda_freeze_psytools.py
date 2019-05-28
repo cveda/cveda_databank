@@ -43,7 +43,7 @@ _EXCEL_FREEZE_FILE = '/cveda/databank/framework/meta_data/freeze/1.0/cVEDA_PSC_D
 
 # in/out paths
 _IN_PATH = '/cveda/databank/processed/psytools'
-_OUT_PATH = '/cveda/databank/PUBLICATION/1.1/psytools'
+_OUT_PATH = '/cveda/databank/PUBLICATION/1.2/psytools'
 
 
 def read_freeze(path):
