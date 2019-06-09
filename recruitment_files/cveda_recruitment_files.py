@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2018 CEA
+# Copyright (c) 2018-2019 CEA
 #
 # This software is governed by the CeCILL license under French law and
 # abiding by the rules of distribution of free software. You can use,
@@ -34,6 +34,7 @@ from cveda_databank import PSC2_FROM_PSC1, DOB_FROM_PSC1
 from cveda_databank.core import _read_recruitment_files
 import os
 from dateutil.relativedelta import relativedelta
+from pandas import isnull
 
 import logging
 logging.basicConfig(level=logging.WARNING)
@@ -44,12 +45,12 @@ logger = logging.getLogger()
 _RECRUITMENT_FILES_DIR = '/cveda/databank/framework/meta_data/recruitment_files'
 _RECRUITMENT_FILES = (
     'recruitment_file_PGIMER_2019-04-30.xlsx',
-    'recruitment_file_IMPHAL_2019-04-30.xlsx',
-    'recruitment_file_KOLKATA_2019-04-30.xlsx',
-    'recruitment_file_RISHIVALLEY_2019-04-30.xlsx',
-    'recruitment_file_MYSORE_2019-04-30.xlsx',
-    'recruitment_file_NIMHANS_2019-04-30.xlsx',
-    'recruitment_file_SJRI_2019-04-30.xlsx',
+    'recruitment_file_IMPHAL_2019-06-06.xlsx',
+    'recruitment_file_KOLKATA_2019-06-06.xlsx',
+    'recruitment_file_RISHIVALLEY_2019-06-06.xlsx',
+    'recruitment_file_MYSORE_2019-06-06.xlsx',
+    'recruitment_file_NIMHANS_2019-06-06.xlsx',
+    'recruitment_file_SJRI_2019-06-06.xlsx',
 )
 
 _FOLLOW_UP_FILES = {
@@ -72,12 +73,19 @@ def main():
     recruitment_data = _read_recruitment_files(os.path.join(_RECRUITMENT_FILES_DIR, f)
                                                for f in _RECRUITMENT_FILES)
 
+    # rename columns with spaces
+    recruitment_data.columns = [c.replace(' ', '_')
+                                for c in recruitment_data.columns]
+
     follow_up = {}
     for time_point, path in _FOLLOW_UP_FILES.items():
         with open(path) as f:
             follow_up[time_point] = set(line.strip() for line in f)
 
-    print(','.join(('PSC2', 'recruitment centre', 'sex', 'age band', 'baseline age', 'baseline age in days', 'follow up')))
+    print(','.join(('PSC2', 'recruitment centre', 'sex', 'age band',
+                    'baseline assessment age', 'baseline assessment age in days',
+                    'baseline MRI scan age', 'baseline MRI scan age in days',
+                     'follow up')))
     for row in recruitment_data.itertuples(index=False):
         psc1 = row.PSC1
         site = psc1[:2]
@@ -94,21 +102,19 @@ def main():
         else:
             sex = row.SEX
 
-        age_band = row[4]  # Age band
+        age_band = row.Age_band
         if age_band not in {'C1', 'C2', 'C3'}:
             logger.error('%s: invalid value for age band: "%s"',
                          psc1, row[4])
             age_band = None
 
-        baseline_date = row[5]  # Base line assessment date
-        ### try:
+        baseline_age = None
+        baseline_age_days = None
+        baseline_date = row.Base_line_assessment_date
         baseline_date = baseline_date.date()
         if psc1 in DOB_FROM_PSC1:
             baseline_age = relativedelta(baseline_date, DOB_FROM_PSC1[psc1]).years
             baseline_age_days = (baseline_date - DOB_FROM_PSC1[psc1]).days
-        else:
-            baseline_age = None
-            baseline_age_days = None
 
         for time_point, participants in follow_up.items():
             if psc2 in participants:
@@ -117,6 +123,15 @@ def main():
             logger.warning('%s: not in follow up', psc1)
             time_point = None
 
+        baseline_mri_age = None
+        baseline_mri_age_days = None
+        if 'MRI_date' in recruitment_data.columns:  # some centres don't do MRI
+            baseline_mri_date = row.MRI_date
+            if not isnull(baseline_mri_date) and psc1 in DOB_FROM_PSC1:
+                baseline_mri_date = baseline_mri_date.date()
+                baseline_mri_age = relativedelta(baseline_mri_date, DOB_FROM_PSC1[psc1]).years
+                baseline_mri_age_days = (baseline_mri_date - DOB_FROM_PSC1[psc1]).days
+
         if psc2:
             print(','.join((psc2,
                             _RECRUITMENT_CENTRE[site],
@@ -124,6 +139,8 @@ def main():
                             '' if age_band is None else age_band,
                             '' if baseline_age is None else str(baseline_age),
                             '' if baseline_age is None else str(baseline_age_days),
+                            '' if baseline_mri_age is None else str(baseline_mri_age),
+                            '' if baseline_mri_age is None else str(baseline_mri_age_days),
                             '' if time_point is None else time_point)))
 
 
