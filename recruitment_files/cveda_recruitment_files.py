@@ -54,8 +54,8 @@ _RECRUITMENT_FILES = (
 )
 
 _FOLLOW_UP_FILES = {
-    'FU1': '/cveda/framework/meta_data/freeze/1.1/follow_up_1.txt',
-    'FU2': '/cveda/framework/meta_data/freeze/1.1/follow_up_2.txt',
+    'FU1': '/cveda/databank/framework/meta_data/freeze/1.1/follow_up_1.txt',
+    'FU2': '/cveda/databank/framework/meta_data/freeze/1.1/follow_up_2.txt',
 }
 
 _RECRUITMENT_CENTRE = {
