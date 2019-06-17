@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2018 CEA
+# Copyright (c) 2018-2019 CEA
 #
 # This software is governed by the CeCILL license under French law and
 # abiding by the rules of distribution of free software. You can use,
@@ -38,12 +38,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
 
-# frozen PSC1 codes
-_EXCEL_FREEZE_FILE = '/cveda/databank/framework/meta_data/freeze/1.0/cVEDA_PSC_Data_Freeze.xlsx'
-
 # in/out paths
 _IN_PATH = '/cveda/databank/processed/psytools'
-_OUT_PATH = '/cveda/databank/PUBLICATION/1.2/psytools'
+_OUT_PATH = '/cveda/databank/PUBLICATION/1.3/psytools'
 
 
 def read_freeze(path):
@@ -65,14 +62,9 @@ def read_psc1_codes(files):
 
 
 def main():
-    # frozen participants
-    frozen = set(PSC2_FROM_PSC1[psc1] for psc1
-                 in read_freeze(_EXCEL_FREEZE_FILE))
-
-    # keep only frozen participants
     for psytools in os.listdir(_IN_PATH):
         if '_FU1-' in psytools:
-            continue  # only baseline (BL) for 1.1
+            continue  # only baseline (BL) for 1.3
         inpath = os.path.join(_IN_PATH, psytools)
         outpath = os.path.join(_OUT_PATH, psytools)
         with open(inpath, 'r') as infile, open(outpath, 'w') as outfile:
@@ -80,8 +72,7 @@ def main():
             outfile.write(line)
             for line in infile:
                 psc2 = line[:12]
-                if psc2 in frozen:
-                    outfile.write(line)
+                outfile.write(line)
 
 
 if __name__ == "__main__":
