@@ -56,8 +56,8 @@ _EXCEL_FOLLOW_UP = {
     'NIMHANS_FU2_2018': '/cveda/databank/framework/meta_data/follow_up/randomization_2018/follow_up_NIMHANS_2_2018-10-22.xlsx',
     'PGIMER_FU1_2018': '/cveda/databank/framework/meta_data/follow_up/randomization_2018/follow_up_PGIMER_1_2018-10-22.xlsx',
     'PGIMER_FU2_2018': '/cveda/databank/framework/meta_data/follow_up/randomization_2018/follow_up_PGIMER_2_2018-10-22.xlsx',
-    'RISHI_VALLEY_FU1_2018': '/cveda/databank/framework/meta_data/follow_up/randomization_2018/follow_up_RISHI_VALLEY_1_2018-10-22.xlsx',
-    'RISHI_VALLEY_FU2_2018': '/cveda/databank/framework/meta_data/follow_up/randomization_2018/follow_up_RISHI_VALLEY_2_2018-10-22.xlsx',
+    'RISHIVALLEY_FU1_2018': '/cveda/databank/framework/meta_data/follow_up/randomization_2018/follow_up_RISHIVALLEY_1_2018-10-22.xlsx',
+    'RISHIVALLEY_FU2_2018': '/cveda/databank/framework/meta_data/follow_up/randomization_2018/follow_up_RISHIVALLEY_2_2018-10-22.xlsx',
     'SJRI_FU1_2018': '/cveda/databank/framework/meta_data/follow_up/randomization_2018/follow_up_SJRI_1_2018-10-22.xlsx',
     'SJRI_FU2_2018': '/cveda/databank/framework/meta_data/follow_up/randomization_2018/follow_up_SJRI_2_2018-10-22.xlsx',
 }
