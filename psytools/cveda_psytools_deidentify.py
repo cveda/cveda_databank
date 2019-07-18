@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2010-2018 CEA
+# Copyright (c) 2010-2019 CEA
 #
 # This software is governed by the CeCILL license under French law and
 # abiding by the rules of distribution of free software. You can use,
@@ -31,11 +31,9 @@
 
 """Re-encode and anonymize Psytools files.
 
-This script iterates over Psytools CSV files downloaded from the Delosis
-server. For each file it will:
+This script iterates over derived Psytools CSV files. For each file it will:
 * substitute the PSC1 code for a PSC2 code,
-* change acquisition dates into age in days at acquisition,
-* remove some data (such as date of birth) used for cross-checking.
+* change event dates into age in days at event.
 
 ==========
 Attributes
@@ -44,19 +42,19 @@ Attributes
 Input
 -----
 
-PSYTOOLS_PSC1_DIR : str
-    Source directory to read PSC1-encoded Psytools files from.
+PSYTOOLS_DERIVED_DIR : str
+    Source directory to read derived PSC1-encoded Psytools files from.
 
 Output
 ------
 
 PSYTOOLS_PSC2_DIR : str
-    Target directory to write PSC2-encoded Psytools files to.
+    Target directory to write PSC2-encoded Psytools files into.
 
 """
 
-PSYTOOLS_PSC1_DIR = '/cveda/databank/RAW/PSC1/psytools'
-PSYTOOLS_PSC2_DIR = '/cveda/databank/RAW/PSC2/psytools'
+PSYTOOLS_DERIVED_DIR = '/cveda/chroot/data/tmp/psytools'
+PSYTOOLS_PSC2_DIR = '/cveda/databank/processed/psytools'
 
 import logging
 logging.basicConfig(level=logging.ERROR)
@@ -95,142 +93,106 @@ def _create_psc2_file(psc1_path, psc2_path):
         convert = [fieldname for fieldname in psc1_reader.fieldnames
                    if fieldname in ANONYMIZED_COLUMNS]
 
+        # read/process each row and save for later writing
+        rows = {}
+        for row in psc1_reader:
+            psc1 = row['User code']
+            if psc1 in PSC2_FROM_PSC1:
+                psc2 = PSC2_FROM_PSC1[psc1]
+                logging.debug('converting from %s to %s',
+                              row['User code'], psc2)
+                row['User code'] = psc2
+            else:
+                logging.error('unknown PSC1 code %s in user code %s',
+                              psc1, row['User code'])
+                continue
+
+            # de-identify columns with timestamps
+            for fieldname in convert:
+                if psc1 in DOB_FROM_PSC1:
+                    birth = DOB_FROM_PSC1[psc1]
+                    try:
+                        timestamp = datetime.strptime(row[fieldname],
+                                                      ANONYMIZED_COLUMNS[fieldname]).date()
+                    except ValueError:
+                        logging.error('%s: invalid "%s": %s',
+                                      psc1, fieldname, row[fieldname])
+                        row[fieldname] = None
+                    else:
+                        age = timestamp - birth
+                        row[fieldname] = str(age.days)
+                else:
+                    row[fieldname] = None
+
+            # convert to age in days at date of birth - should be 0 if correct!
+            # ACEIQ_C2: What is your date of birth?
+            # PHIR_01: What is (child's name) birthdate?
+            for column in ('ACEIQ_C2', 'PHIR_01'):
+                if column in psc1_reader.fieldnames:
+                    if psc1 in DOB_FROM_PSC1:
+                        birth = DOB_FROM_PSC1[psc1]
+                        try:
+                            d = datetime.strptime(row[column],
+                                                  '%d-%m-%Y').date()
+                        except ValueError:
+                            row[column] = None
+                        else:
+                            age = d - birth
+                            row[column] = str(age.days)
+                    else:
+                        row[column] = None
+
+            # convert to age in days at the date of first period
+            # PDS_07a: What was the date of your first period?
+            column = 'PDS_07a'
+            if column in psc1_reader.fieldnames:
+                if psc1 in DOB_FROM_PSC1:
+                    birth = DOB_FROM_PSC1[psc1]
+                    try:
+                        d = datetime.strptime(row[column],
+                                              '%m-%Y').date()
+                    except ValueError:
+                        row[column] = None
+                    else:
+                        age = d - birth
+                        row[column] = str(age.days)
+                else:
+                    row[column] = None
+
+            # PHIR_02: What is your birthdate?
+            column = 'PHIR_02'
+            if column in psc1_reader.fieldnames:
+                try:
+                    birth = datetime.strptime(row[column],
+                                              '%d-%m-%Y').date()
+                except ValueError:
+                    row[column] = None
+                else:
+                    # last 'timestamp' ought to be 'Processed timestamp'
+                    age = timestamp - birth
+                    row[column] = str(age.days)
+
+            rows.setdefault(psc2, []).append(row)
+
+        # save rows into output file, sort by PSC2
         with open(psc2_path, 'w') as psc2_file:
             psc2_writer = DictWriter(psc2_file, psc1_reader.fieldnames, dialect='excel')
             psc2_writer.writeheader()
-            for row in psc1_reader:
-                trial = row['Trial']
-                # Psytools files contain identifying data,
-                # specifically lines containing items:
-                # - ID_check_dob
-                # - ID_check_gender
-                #
-                # As the name implies, the purpose of these items is
-                # cross-checking and error detection. They should not
-                # be used for scientific purposes.
-                #
-                # These items should therefore not be exposed to Imagen
-                # users.
-                #
-                # The Scito anoymization pipeline used not to filter
-                # these items out. Since the Imagen V2 server exposes raw
-                # Psytools files to end users, we need to remove these
-                # items sooner, before importing the data into the
-                # CubicWeb database.
-                if 'ID_check_' in trial:
-                    logging.debug('skipping line with "ID_check_" for %s',
-                                  row['User code'])
-                    continue
-
-                # subject ID is PSC1 followed by either of:
-                #   -C1  age band 6-11
-                #   -C2  age band 12-17
-                #   -C3  age band 18-23
-                psc1_suffix = row['User code'].rsplit('-', 1)
-                psc1 = psc1_suffix[0]
-                if psc1.endswith('FU1'):
-                    psc1 = psc1[:-len('FU1')]
-                    fu = psc1[-len('FU1'):]
-                elif psc1.endswith('FU2'):
-                    psc1 = psc1[:-len('FU2')]
-                    fu = psc1[-len('FU2'):]
-                elif psc1.endswith('FUMRI1'):
-                    psc1 = psc1[:-len('FUMRI1')]
-                    fu = 'FU1'
-                elif psc1.endswith('FUMRI2'):
-                    psc1 = psc1[:-len('FUMRI2')]
-                    fu = 'FU2'
-                else:
-                    fu = None
-                if psc1 in PSC2_FROM_PSC1:
-                    psc2 = PSC2_FROM_PSC1[psc1]
-                    if fu:
-                        psc2 += fu
-                    if len(psc1_suffix) > 1:
-                        psc2_suffix = '-'.join((psc2, psc1_suffix[1]))
-                    else:
-                        psc2_suffix = psc2
-                    logging.debug('converting from %s to %s',
-                                  row['User code'], psc2_suffix)
-                    row['User code'] = psc2_suffix
-                else:
-                    u = psc1.upper()
-                    if ('DEMO' in u or 'MOCK' in u or 'NPPILOT' in u
-                            or 'TEST' in u):
-                        logging.debug('skipping test subject %s',
-                                      row['User code'])
-                    else:
-                        logging.error('unknown PSC1 code %s in user code %s',
-                                      psc1, row['User code'])
-                    continue
-
-                # de-identify columns that contain dates
-                for fieldname in convert:
-                    if psc1 in DOB_FROM_PSC1:
-                        birth = DOB_FROM_PSC1[psc1]
-                        timestamp = datetime.strptime(row[fieldname],
-                                                      ANONYMIZED_COLUMNS[fieldname]).date()
-                        age = timestamp - birth
-                        row[fieldname] = str(age.days)
-                    else:
-                        row[fieldname] = None
-
-                # de-identify rows that contain dates
-                #
-                # ACEIQ_C2: What is your date of birth?
-                # PHIR_01: What is (child's name) birthdate?
-                if trial == 'ACEIQ_C2' or trial == 'PHIR_01':
-                    if psc1 in DOB_FROM_PSC1:
-                        birth = DOB_FROM_PSC1[psc1]
-                        try:
-                            d = datetime.strptime(row['Trial result'],
-                                                  '%d-%m-%Y').date()
-                        except ValueError:
-                            row['Trial result'] = None
-                        else:
-                            age = d - birth
-                            row['Trial result'] = str(age.days)
-                    else:
-                        row['Trial result'] = None
-                # PDS_07a: What was the date of your first period?
-                elif trial == 'PDS_07a':
-                    if psc1 in DOB_FROM_PSC1:
-                        birth = DOB_FROM_PSC1[psc1]
-                        try:
-                            d = datetime.strptime(row['Trial result'],
-                                                  '%m-%Y').date()
-                        except ValueError:
-                            row['Trial result'] = None
-                        else:
-                            age = d - birth
-                            row['Trial result'] = str(age.days)
-                    else:
-                        row['Trial result'] = None
-                # PHIR_02: What is your birthdate?
-                elif trial == 'PHIR_02':
-                    try:
-                        birth = datetime.strptime(row['Trial result'],
-                                                  '%d-%m-%Y').date()
-                    except ValueError:
-                        row['Trial result'] = None
-                    else:
-                        # last 'timestamp' ought to be 'Processed timestamp'
-                        age = timestamp - birth
-                        row['Trial result'] = str(age.days)
-
-                psc2_writer.writerow(row)
+            for psc2 in sorted(rows):
+                for row in rows[psc2]:
+                    psc2_writer.writerow(row)
 
 
 def create_psc2_files(psc1_dir, psc2_dir):
     """Anonymize and re-encode all psytools questionnaires within a directory.
 
-    PSC1-encoded files are read from `master_dir`, anoymized and converted
+    PSC1-encoded files are read from `psc1_dir`, anoymized and converted
     from PSC1 codes to PSC2, and the result is written in `psc2_dir`.
 
     Parameters
     ----------
     psc1_dir: str
-        Input directory with PSC1-encoded questionnaires.
+        Input directory with PSC1-encoded derived questionnaires.
     psc2_dir: str
         Output directory with PSC2-encoded and anonymized questionnaires.
 
@@ -242,7 +204,7 @@ def create_psc2_files(psc1_dir, psc2_dir):
 
 
 def main():
-    create_psc2_files(PSYTOOLS_PSC1_DIR, PSYTOOLS_PSC2_DIR)
+    create_psc2_files(PSYTOOLS_DERIVED_DIR, PSYTOOLS_PSC2_DIR)
 
 
 if __name__ == "__main__":
