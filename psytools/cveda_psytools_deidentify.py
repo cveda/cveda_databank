@@ -93,6 +93,11 @@ def _create_psc2_file(psc1_path, psc2_path):
         convert = [fieldname for fieldname in psc1_reader.fieldnames
                    if fieldname in ANONYMIZED_COLUMNS]
 
+        # discard other columns with dates
+        DISCARDED_COLUMNS = {
+            'ID_check_dob', 'ID_check_gender',
+        }
+
         # read/process each row and save for later writing
         rows = {}
         for row in psc1_reader:
@@ -172,11 +177,18 @@ def _create_psc2_file(psc1_path, psc2_path):
                     age = timestamp - birth
                     row[column] = str(age.days)
 
+            # discard other columns with dates
+            for column in DISCARDED_COLUMNS:
+                if column in psc1_reader.fieldnames:
+                    del row[column]
+
             rows.setdefault(psc2, []).append(row)
 
         # save rows into output file, sort by PSC2
         with open(psc2_path, 'w') as psc2_file:
-            psc2_writer = DictWriter(psc2_file, psc1_reader.fieldnames, dialect='excel')
+            fieldnames = [fieldname for fieldname in psc1_reader.fieldnames
+                          if fieldname not in DISCARDED_COLUMNS]
+            psc2_writer = DictWriter(psc2_file, fieldnames, dialect='excel')
             psc2_writer.writeheader()
             for psc2 in sorted(rows):
                 for row in rows[psc2]:
