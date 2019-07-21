@@ -85,7 +85,7 @@ def _create_psc2_file(psc1_path, psc2_path):
     with open(psc1_path, 'r') as psc1_file:
         psc1_reader = DictReader(psc1_file, dialect='excel')
 
-        # de-identify columns that contain dates
+        # de-identify columns with timestamps
         ANONYMIZED_COLUMNS = {
             'Completed Timestamp': '%Y-%m-%d %H:%M:%S.%f',
             'Processed Timestamp': '%Y-%m-%d %H:%M:%S.%f',
