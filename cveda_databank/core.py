@@ -55,7 +55,7 @@ _RECRUITMENT_FILES = (
     'recruitment_file_RISHIVALLEY_2019-06-06.xlsx',
     'recruitment_file_MYSORE_2019-06-06.xlsx',
     'recruitment_file_NIMHANS_2019-06-06.xlsx',
-    'recruitment_file_SJRI_2019-06-06.xlsx',
+    'recruitment_file_SJRI_2019-09-12.xlsx',
 )
 
 
