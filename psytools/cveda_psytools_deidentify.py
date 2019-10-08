@@ -210,9 +210,15 @@ def create_psc2_files(psc1_dir, psc2_dir):
 
     """
     for psc1_file in os.listdir(psc1_dir):
-        psc1_path = os.path.join(psc1_dir, psc1_file)
-        psc2_path = os.path.join(psc2_dir, psc1_file)
-        _create_psc2_file(psc1_path, psc2_path)
+        root, ext = os.path.splitext(psc1_file)
+        if ext == '.csv':
+            psc1_path = os.path.join(psc1_dir, psc1_file)
+            psc2_path = os.path.join(psc2_dir, psc1_file)
+            _create_psc2_file(psc1_path, psc2_path)
+        elif ext == '.zsav':
+            pass  # TODO
+        else:
+            logging.error('%s: unknown file extension', psc1_file)
 
 
 def main():

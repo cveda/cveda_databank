@@ -159,9 +159,6 @@ def main():
         with gzip.GzipFile(fileobj=delosis_stream) as uncompressed_stream:
             uncompressed_data = TextIOWrapper(uncompressed_stream,
                                               encoding='utf_8').read()
-        # unfold quoted text spanning multiple lines
-        data = QUOTED_PATTERN.sub(lambda x: x.group().replace('\n', '/'),
-                                  uncompressed_data)
         # skip files that have not changed since last update
         psytools_path = os.path.join(PSYTOOLS_PSC1_DIR, dataset)
         if os.path.isfile(psytools_path):
