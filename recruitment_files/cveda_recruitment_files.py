@@ -42,7 +42,7 @@ logger = logging.getLogger()
 
 
 # recruitment file with reference information
-_RECRUITMENT_FILES_DIR = '/cveda/databank/framework/meta_data/recruitment_files'
+_RECRUITMENT_FILES_DIR = '/cveda/databank/framework/meta_data/recruitment'
 _RECRUITMENT_FILES = (
     'recruitment_file_PGIMER_2019-06-12.xlsx',
     'recruitment_file_IMPHAL_2019-06-06.xlsx',
