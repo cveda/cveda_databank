@@ -34,7 +34,7 @@ from cveda_databank import PSC2_FROM_PSC1, DOB_FROM_PSC1
 from cveda_databank.core import _read_recruitment_files
 import os
 from dateutil.relativedelta import relativedelta
-from pandas import isnull
+import pandas
 
 import logging
 logging.basicConfig(level=logging.WARNING)
@@ -53,9 +53,49 @@ _RECRUITMENT_FILES = (
     'recruitment_file_SJRI_2019-09-12.xlsx',
 )
 
+# follow-up planning files with target follow-up time point
+_FOLLOW_UP_FILES_DIR = '/cveda/databank/framework/meta_data/follow_up'
 _FOLLOW_UP_FILES = {
-    'FU1': '/cveda/databank/framework/meta_data/freeze/1.1/follow_up_1.txt',
-    'FU2': '/cveda/databank/framework/meta_data/freeze/1.1/follow_up_2.txt',
+    'FU1': (
+        # 2017
+        'randomization_2017/follow_up_1_2017-12-21.xlsx',
+        # 2018
+        'randomization_2018/follow_up_PGIMER_1_2018-10-22.xlsx',
+        'randomization_2018/follow_up_IMPHAL_1_2018-10-22.xlsx',
+        'randomization_2018/follow_up_KOLKATA_1_2018-10-22.xlsx',
+        'randomization_2018/follow_up_RISHIVALLEY_1_2018-10-22.xlsx',
+        'randomization_2018/follow_up_MYSORE_1_2018-10-22.xlsx',
+        'randomization_2018/follow_up_NIMHANS_1_2018-10-22.xlsx',
+        'randomization_2018/follow_up_SJRI_1_2018-10-22.xlsx',
+        # 2019
+        'randomization_2019/follow_up_PGIMER_1_2019-06-21.xlsx',
+        'randomization_2019/follow_up_IMPHAL_1_2019-06-21.xlsx',
+        'randomization_2019/follow_up_KOLKATA_1_2019-06-21.xlsx',
+        'randomization_2019/follow_up_RISHIVALLEY_1_2019-06-21.xlsx',
+        'randomization_2019/follow_up_MYSORE_1_2019-06-21.xlsx',
+        'randomization_2019/follow_up_NIMHANS_1_2019-06-21.xlsx',
+        'randomization_2019/follow_up_SJRI_1_2019-06-21.xlsx',
+    ),
+    'FU2': (
+        # 2017
+        'randomization_2017/follow_up_2_2017-12-21.xlsx',
+        # 2018
+        'randomization_2018/follow_up_PGIMER_2_2018-10-22.xlsx',
+        'randomization_2018/follow_up_IMPHAL_2_2018-10-22.xlsx',
+        'randomization_2018/follow_up_KOLKATA_2_2018-10-22.xlsx',
+        'randomization_2018/follow_up_RISHIVALLEY_2_2018-10-22.xlsx',
+        'randomization_2018/follow_up_MYSORE_2_2018-10-22.xlsx',
+        'randomization_2018/follow_up_NIMHANS_2_2018-10-22.xlsx',
+        'randomization_2018/follow_up_SJRI_2_2018-10-22.xlsx',
+        # 2019
+        'randomization_2019/follow_up_PGIMER_2_2019-06-21.xlsx',
+        'randomization_2019/follow_up_IMPHAL_2_2019-06-21.xlsx',
+        'randomization_2019/follow_up_KOLKATA_2_2019-06-21.xlsx',
+        'randomization_2019/follow_up_RISHIVALLEY_2_2019-06-21.xlsx',
+        'randomization_2019/follow_up_MYSORE_2_2019-06-21.xlsx',
+        'randomization_2019/follow_up_NIMHANS_2_2019-06-21.xlsx',
+        'randomization_2019/follow_up_SJRI_2_2019-06-21.xlsx',
+    ),
 }
 
 _RECRUITMENT_CENTRE = {
@@ -69,6 +109,26 @@ _RECRUITMENT_CENTRE = {
 }
 
 
+def _read_follow_up_file(path):
+    with pandas.ExcelFile(path) as excel_file:
+        converters = {
+            'PSC1': str,
+        }
+        # read all sheets into a single dataframe
+        df = pandas.concat(pandas.read_excel(excel_file,
+                                             sheet_name=None, sheetname=None,
+                                             converters=converters),
+                           ignore_index=True)
+        return df['PSC1'].tolist()
+
+
+def _read_follow_up_files(paths):
+    result = set()
+    for path in paths:
+        result.update(_read_follow_up_file(path))
+    return result
+
+
 def main():
     recruitment_data = _read_recruitment_files(os.path.join(_RECRUITMENT_FILES_DIR, f)
                                                for f in _RECRUITMENT_FILES)
@@ -77,15 +137,16 @@ def main():
     recruitment_data.columns = [c.replace(' ', '_')
                                 for c in recruitment_data.columns]
 
-    follow_up = {}
-    for time_point, path in _FOLLOW_UP_FILES.items():
-        with open(path) as f:
-            follow_up[time_point] = set(line.strip() for line in f)
+    follow_up = {
+        time_point: _read_follow_up_files(os.path.join(_FOLLOW_UP_FILES_DIR, f)
+                                          for f in files)
+        for time_point, files in _FOLLOW_UP_FILES.items()
+    }
 
     print(','.join(('PSC2', 'recruitment centre', 'sex', 'age band',
                     'baseline assessment age', 'baseline assessment age in days',
                     'baseline MRI scan age', 'baseline MRI scan age in days',
-                     'follow up')))
+                    'follow up')))
     for row in recruitment_data.itertuples(index=False):
         psc1 = row.PSC1
         site = psc1[:2]
@@ -117,7 +178,7 @@ def main():
             baseline_age_days = (baseline_date - DOB_FROM_PSC1[psc1]).days
 
         for time_point, participants in follow_up.items():
-            if psc2 in participants:
+            if psc1 in participants:
                 break
         else:
             logger.warning('%s: not in follow up', psc1)
@@ -127,7 +188,7 @@ def main():
         baseline_mri_age_days = None
         if 'MRI_date' in recruitment_data.columns:  # some centres don't do MRI
             baseline_mri_date = row.MRI_date
-            if not isnull(baseline_mri_date) and psc1 in DOB_FROM_PSC1:
+            if not pandas.isnull(baseline_mri_date) and psc1 in DOB_FROM_PSC1:
                 baseline_mri_date = baseline_mri_date.date()
                 baseline_mri_age = relativedelta(baseline_mri_date, DOB_FROM_PSC1[psc1]).years
                 baseline_mri_age_days = (baseline_mri_date - DOB_FROM_PSC1[psc1]).days
