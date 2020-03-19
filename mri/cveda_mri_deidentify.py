@@ -243,13 +243,13 @@ def deidentify(timepoint, psc1, zip_path, bids_path):
     prefix = 'cveda-mri-' + psc1
     with tempfile.TemporaryDirectory(prefix=prefix) as tempdir:
         # unpack ZIP file into temporary directory
-        zip_file = zipfile.ZipFile(zip_path)
-        try:
-            zip_file.extractall(tempdir)
-        except (zipfile.BadZipFile, OSError, EOFError, zlib.error) as e:
-            logger.error('%s/%s: corrupt ZIP file: %s',
-                         psc1, timepoint,  str(e))
-            return
+        with zipfile.ZipFile(zip_path) as zip_file:
+            try:
+                zip_file.extractall(tempdir)
+            except (zipfile.BadZipFile, OSError, EOFError, zlib.error) as e:
+                logger.error('%s/%s: corrupt ZIP file: %s',
+                             psc1, timepoint,  str(e))
+                return
 
         # process each sequence found in ZIP file
         for modality in os.listdir(tempdir):
