@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2010-2018 CEA
+# Copyright (c) 2010-2020 CEA
 #
 # This software is governed by the CeCILL license under French law and
 # abiding by the rules of distribution of free software. You can use,
@@ -157,7 +157,7 @@ def main():
         # read stream of CSV data sent by Delosis web service
         delosis_stream = BytesIO(r.content)
         with gzip.GzipFile(fileobj=delosis_stream) as uncompressed_stream:
-            uncompressed_data = TextIOWrapper(uncompressed_stream,
+            data = TextIOWrapper(uncompressed_stream,
                                               encoding='utf_8').read()
         # skip files that have not changed since last update
         psytools_path = os.path.join(PSYTOOLS_PSC1_DIR, dataset)
