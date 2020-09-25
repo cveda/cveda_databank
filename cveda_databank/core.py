@@ -97,7 +97,7 @@ def _read_recruitment_file(path):
 
 def _read_recruitment_files(paths):
     return pandas.concat((_read_recruitment_file(path) for path in paths),
-                         ignore_index=True)
+                         ignore_index=True, sort=False)
 
 
 def _initialize_dob_sex(paths):
