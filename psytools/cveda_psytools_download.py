@@ -158,7 +158,7 @@ def main():
         delosis_stream = BytesIO(r.content)
         with gzip.GzipFile(fileobj=delosis_stream) as uncompressed_stream:
             data = TextIOWrapper(uncompressed_stream,
-                                              encoding='utf_8').read()
+                                 encoding='utf_8').read()
         # skip files that have not changed since last update
         psytools_path = os.path.join(PSYTOOLS_PSC1_DIR, dataset)
         if os.path.isfile(psytools_path):
