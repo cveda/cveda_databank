@@ -140,6 +140,7 @@ PSYTOOLS_DATASETS = (
     ('cVEDA_DS_FU1', BASIC_DIGEST),  # Digit Span
     ('cVEDA_SCQ_FU1', BASIC_DIGEST),  # School Climate Questionnaire
     ('cVEDA_KIRBY_FU1', BASIC_DIGEST),  # Now or later?
+    ('cVEDA_TS_P_FU1', BASIC_DIGEST),  # Testing Situation
 )
 
 QUOTED_PATTERN = re.compile(r'".*?"', re.DOTALL)
