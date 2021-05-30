@@ -47,7 +47,7 @@ else:
 _PSC_PATH = '/cveda/databank/framework/psc/psc2psc_2019-02-07.txt'
 
 # recruitment file with reference date of birth / sex information
-_RECRUITMENT_FILES_DIR = '/cveda/databank/framework/meta_data/recruitment'
+_RECRUITMENT_FILES_DIR = '/cveda/databank/framework/meta_data/recruitment/BL'
 _RECRUITMENT_FILES = (
     'recruitment_file_PGIMER_2019-06-12.xlsx',
     'recruitment_file_IMPHAL_2019-06-06.xlsx',

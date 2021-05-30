@@ -144,8 +144,8 @@ def main():
     }
 
     print(','.join(('PSC2', 'recruitment centre', 'sex', 'age band',
-                    'baseline assessment age', 'baseline assessment age in days',
-                    'baseline MRI scan age', 'baseline MRI scan age in days',
+                    'assessment age', 'assessment age in days',
+                    'MRI scan age', 'MRI scan age in days',
                     'follow up')))
     for row in recruitment_data.itertuples(index=False):
         psc1 = row.PSC1
