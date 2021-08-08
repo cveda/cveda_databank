@@ -135,7 +135,7 @@ def report_image_data(path, force=False):
                                               acquisition_date.month,
                                               acquisition_date.day)
 
-        # build the dictionnary of series using 'SeriesInstanceUID' as a key
+        # build the dictionary of series using 'SeriesInstanceUID' as a key
         if series_uid not in series_dict:
             metadata = {
                 'SeriesNumber': Counter([series_number]),

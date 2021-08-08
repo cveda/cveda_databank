@@ -60,7 +60,7 @@ _RECRUITMENT_FILES = (
 
 
 def _initialize_psc2_from_psc1(path):
-    """Returns dictionnary to map PSC1 to PSC2.
+    """Returns dictionary to map PSC1 to PSC2.
 
     Parameters
     ----------
@@ -101,7 +101,7 @@ def _read_recruitment_files(paths):
 
 
 def _initialize_dob_sex(paths):
-    """Build dictionnary to map PSC1 code to date of birth of subject.
+    """Build dictionary to map PSC1 code to date of birth of subject.
 
     Parameters
     ----------
