@@ -57,7 +57,7 @@ MIN_DISTANCE = 3
 
 
 def largest_int_with_less_digits(n):
-    """Returns the largets integer with less digits than the argument.
+    """Returns the largest integer with less digits than the argument.
 
     Depending on the integer argument, it will typically return 9, 99,
     999, 9999, ...
